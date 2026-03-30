@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>온마을 스테이패스</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700;900&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { min-height: 100vh; background: #0a1a0a; font-family: 'Noto Sans KR', sans-serif; color: #c8e6c9; display: flex; align-items: center; justify-content: center; }
+.wrap { width: 100%; max-width: 400px; padding: 40px 24px 60px; display: flex; flex-direction: column; align-items: center; }
+.logo-sub { font-size: 12px; letter-spacing: 4px; color: #4a7a4a; text-transform: uppercase; margin-bottom: 6px; }
+.logo-main { font-size: 22px; font-weight: 700; color: #c8e6c9; letter-spacing: -0.5px; margin-bottom: 36px; }
+.card { width: 100%; background: #111e11; border: 1px solid #2a4a2a; border-radius: 20px; padding: 28px 24px; text-align: center; }
+.loading { color: #4a7a4a; font-size: 14px; padding: 48px 0; }
+.loading-dot { display: inline-block; animation: blink 1.2s ease-in-out infinite; }
+.loading-dot:nth-child(2) { animation-delay: 0.2s; }
+.loading-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes blink { 0%,80%,100%{opacity:0} 40%{opacity:1} }
+.cust-name { font-size: 28px; font-weight: 900; color: #c8e6c9; margin-bottom: 4px; }
+.cust-program { font-size: 13px; color: #4a7a4a; margin-bottom: 24px; }
+.qr-wrap { background: #fff; border-radius: 14px; padding: 16px; display: inline-block; margin-bottom: 20px; line-height: 0; }
+#qr-box img, #qr-box canvas { display: block; width: 200px !important; height: 200px !important; }
+.pass-num-box { background: #0a150a; border-radius: 10px; padding: 14px; margin-bottom: 16px; }
+.pass-num-label { font-size: 10px; color: #4a7a4a; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 6px; }
+.pass-num-val { font-size: 13px; font-family: monospace; color: #81c784; letter-spacing: 1px; word-break: break-all; }
+.info-row { display: flex; justify-content: space-between; }
+.info-item { text-align: left; } .info-item:last-child { text-align: right; }
+.info-label { font-size: 10px; color: #4a7a4a; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
+.info-val { font-size: 15px; font-weight: 700; color: #c8e6c9; }
+.tier-badge { display: inline-block; font-size: 12px; font-weight: 700; padding: 4px 14px; border-radius: 20px; margin: 12px 0 0; }
+.tier-bronze { background: #3d2b1f; color: #cd7f32; border: 1px solid #7a4020; }
+.tier-silver { background: #1e2a2a; color: #a0b0b0; border: 1px solid #4a6060; }
+.tier-gold   { background: #2a2000; color: #ffd700; border: 1px solid #7a5a00; }
+.tier-vip    { background: #1a0a2a; color: #c084fc; border: 1px solid #6a2aaa; }
+.visit-count { font-size: 32px; font-weight: 900; color: #81c784; margin-top: 12px; }
+.visit-label { font-size: 13px; color: #4a7a4a; }
+.visit-next { font-size: 12px; color: #3a6a3a; margin-top: 4px; }
+.footer-note { margin-top: 20px; font-size: 12px; color: #2a4a2a; text-align: center; line-height: 2; }
+.error-msg { color: #ef9a9a; font-size: 14px; padding: 32px 0; line-height: 2; }
+/* 액션 버튼 */
+.action-btns {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 20px;
+}
+.btn-kakao {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  width: 100%; padding: 16px;
+  background: #FEE500; color: #191600;
+  border: none; border-radius: 14px;
+  font-size: 15px; font-weight: 700; font-family: inherit;
+  cursor: pointer; text-decoration: none;
+  transition: background 0.15s, transform 0.1s;
+}
+.btn-kakao:active { transform: scale(0.97); background: #F5DA00; }
+.btn-kakao-send {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  width: 100%; padding: 18px;
+  background: #FEE500; color: #191600;
+  border: none; border-radius: 14px;
+  font-size: 15px; font-weight: 700; font-family: inherit;
+  cursor: pointer; text-decoration: none;
+  transition: background 0.15s, transform 0.1s;
+  box-shadow: 0 4px 16px rgba(254,229,0,0.2);
+}
+.btn-kakao-send:active { transform: scale(0.97); background: #F5DA00; }
+/* 전송 완료 토스트 */
+.pass-toast {
+  position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(20px);
+  background: #1b3a1b; border: 1px solid #2a5a2a;
+  color: #81c784; font-size: 13px; font-weight: 600;
+  padding: 12px 24px; border-radius: 24px;
+  opacity: 0; transition: all 0.3s; pointer-events: none;
+  white-space: nowrap; z-index: 9999;
+}
+.pass-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.footer-note { margin-top: 16px; font-size: 11px; color: #2a4a2a; text-align: center; line-height: 2; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="logo-sub">ONMAEUL GAPYEONG</div>
+  <div class="logo-main">온마을 스테이패스</div>
+  <div class="card">
+    <div class="loading" id="loading">
+      불러오는 중<span class="loading-dot">.</span><span class="loading-dot">.</span><span class="loading-dot">.</span>
+    </div>
+    <div id="content" style="display:none;">
+      <div class="cust-name" id="cust-name"></div>
+      <div class="cust-program" id="cust-program"></div>
+      <div class="qr-wrap"><div id="qr-box"></div></div>
+      <div class="pass-num-box">
+        <div class="pass-num-label">PASS NUMBER</div>
+        <div class="pass-num-val" id="pass-num"></div>
+      </div>
+      <div class="info-row">
+        <div class="info-item">
+          <div class="info-label">체험 날짜</div>
+          <div class="info-val" id="cust-date">-</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">인원</div>
+          <div class="info-val" id="cust-people">-</div>
+        </div>
+      </div>
+      <div class="visit-count" id="visit-count">0</div>
+      <div class="visit-label">회 방문</div>
+      <div class="tier-badge tier-bronze" id="tier-badge">BRONZE</div>
+      <div class="visit-next" id="visit-next"></div>
+    </div>
+    <div class="error-msg" id="error" style="display:none;">
+      유효하지 않은 패스입니다.<br>
+      <span style="font-size:12px;color:#4a7a4a;">패스번호를 다시 확인해 주세요.</span>
+    </div>
+  </div>
+  <!-- 액션 버튼 -->
+  <div class="action-btns" id="action-btns" style="display:none;">
+    <!-- 카카오 나에게 전송 (단일 버튼) -->
+    <button class="btn-kakao-send" onclick="sendToMyKakao()">
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+        <ellipse cx="11" cy="10" rx="9" ry="8" fill="#3B1E08" opacity="0.9"/>
+        <path d="M11 4.5C7.41 4.5 4.5 6.74 4.5 9.5c0 1.78 1.1 3.34 2.75 4.27l-.7 2.57 3.07-2.02c.44.07.9.11 1.38.11 3.59 0 6.5-2.24 6.5-5s-2.91-4.93-6.5-4.93z" fill="#FEE500"/>
+      </svg>
+      카카오톡 · 나에게 전송
+    </button>
+  </div>
+
+  <!-- 전송 완료 토스트 -->
+  <div class="pass-toast" id="pass-toast">✓ 카카오톡 나에게 전송 완료</div>
+
+  <div class="footer-note">업주에게 이 화면을 보여주세요 · 카카오채널 @온마을가평</div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+var fbConfig = {
+  apiKey:"AIzaSyBFBX_W5Qk-XKL9K918e6NUwXwG8pLvETk",
+  authDomain:"onmaeul-2e7ea.firebaseapp.com",
+  projectId:"onmaeul-2e7ea",
+  storageBucket:"onmaeul-2e7ea.firebasestorage.app",
+  messagingSenderId:"448985054380",
+  appId:"1:448985054380:web:e93f7e4d0b2fa92c95f309"
+};
+firebase.initializeApp(fbConfig);
+var db = firebase.firestore();
+
+function getTier(cnt) {
+  if (cnt >= 20) return { label:'VIP',    cls:'tier-vip',    next:null };
+  if (cnt >= 10) return { label:'GOLD',   cls:'tier-gold',   next:'VIP까지 '+(20-cnt)+'회' };
+  if (cnt >= 5)  return { label:'SILVER', cls:'tier-silver', next:'GOLD까지 '+(10-cnt)+'회' };
+  return         { label:'BRONZE', cls:'tier-bronze', next:'SILVER까지 '+(5-cnt)+'회' };
+}
+
+function drawQR(tokenText) {
+  var box = document.getElementById('qr-box');
+  box.innerHTML = '';
+  try {
+    new QRCode(box, {
+      text: tokenText,
+      width: 200, height: 200,
+      colorDark: '#000000',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.M
+    });
+  } catch(e) {
+    box.innerHTML = '<div style="width:200px;height:200px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#666;word-break:break-all;padding:10px;">'+tokenText+'</div>';
+  }
+}
+
+function showPass(cust, visitCnt) {
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('content').style.display = 'block';
+  document.getElementById('cust-name').textContent    = cust.name    || '온마을 패스';
+  document.getElementById('cust-program').textContent = cust.program || '온마을 가평 체험';
+  document.getElementById('pass-num').textContent     = cust.qrToken || '-';
+  document.getElementById('cust-date').textContent    = cust.date    || '-';
+  document.getElementById('cust-people').textContent  = cust.people  ? cust.people+'명' : '-';
+  document.getElementById('visit-count').textContent  = visitCnt;
+  var tier = getTier(visitCnt);
+  var badge = document.getElementById('tier-badge');
+  badge.textContent = tier.label;
+  badge.className   = 'tier-badge '+tier.cls;
+  document.getElementById('visit-next').textContent =
+    tier.next ? '다음 등급까지 '+tier.next : '🏆 최상위 등급!';
+  drawQR(cust.qrToken || token);
+
+  // 패스 로드 완료 → 액션 버튼 표시
+  document.getElementById('action-btns').style.display = 'flex';
+}
+
+/* ── 패스 이미지 저장 ── */
+function sendToMyKakao() {
+  var passUrl  = location.href;   // 현재 패스 URL 그대로
+  var custName = document.getElementById('cust-name').textContent || '온마을 패스';
+  var msg      = '온마을 스테이패스\n' + custName + '님의 패스를 저장해두세요 :)\n' + passUrl;
+
+  /* ① Web Share API — iOS Safari / Android Chrome 기본 공유 시트
+        사용자가 카카오톡 → 나에게 보내기 선택 가능 */
+  if (navigator.share) {
+    navigator.share({
+      title: '온마을 스테이패스',
+      text:  custName + '님의 온마을 패스',
+      url:   passUrl
+    }).then(function() {
+      showPassToast('카카오톡으로 저장해 두세요 :)');
+    }).catch(function(e) {
+      if (e.name !== 'AbortError') fallbackCopy(msg, passUrl);
+    });
+    return;
+  }
+
+  /* ② Web Share 미지원 → 클립보드 복사 후 카카오톡 열기 */
+  fallbackCopy(msg, passUrl);
+}
+
+function fallbackCopy(msg, passUrl) {
+  /* 클립보드에 패스 링크 복사 */
+  var copied = false;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(passUrl).then(function() {
+      showPassToast('링크 복사 완료 · 카카오톡 나에게 보내기에 붙여넣기 하세요');
+      openKakao();
+    }).catch(function() { legacyCopy(passUrl); });
+    return;
+  }
+  legacyCopy(passUrl);
+}
+
+function legacyCopy(passUrl) {
+  var ta = document.createElement('textarea');
+  ta.value = passUrl;
+  ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px';
+  document.body.appendChild(ta);
+  ta.focus(); ta.select();
+  try { document.execCommand('copy'); showPassToast('링크 복사 완료 · 카카오톡 나에게 보내기에 붙여넣기 하세요'); }
+  catch(e) { showPassToast('링크를 길게 눌러 복사한 후 카카오톡 나에게 보내기로 전송하세요'); }
+  document.body.removeChild(ta);
+  openKakao();
+}
+
+function openKakao() {
+  /* 카카오톡 앱 딥링크 → 나에게 보내기 화면으로 직접 이동 */
+  setTimeout(function() {
+    var isIOS     = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    var isAndroid = /android/i.test(navigator.userAgent);
+    if (isIOS)     { location.href = 'kakaotalk://'; }
+    else if (isAndroid) { location.href = 'intent://talk/more#Intent;scheme=kakaolink;package=com.kakao.talk;end'; }
+    else { window.open('https://talk.kakao.com', '_blank'); }
+  }, 300);
+}
+
+function showPassToast(msg) {
+  var t = document.getElementById('pass-toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, 3500);
+}
+
+function showError() {
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('error').style.display   = 'block';
+}
+
+var params = new URLSearchParams(location.search);
+var token  = params.get('pass');
+
+if (!token) {
+  location.replace('https://lovewinsall78.github.io/onmaeul_gapyeong/');
+} else {
+  firebase.auth().signInAnonymously()
+    .then(function() {
+      return db.collection('customers').where('qrToken','==',token).limit(1).get();
+    })
+    .then(function(snap) {
+      if (snap.empty) { showError(); return; }
+      var cust = snap.docs[0].data();
+      return db.collection('visits').where('customerId','==',cust.id).get()
+        .then(function(vSnap) { showPass(cust, vSnap.size); });
+    })
+    .catch(function(err) {
+      console.error('pass.html error:', err);
+      showError();
+    });
+}
+</script>
+</body>
+</html>
