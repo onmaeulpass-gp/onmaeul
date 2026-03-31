@@ -254,6 +254,40 @@ tr:last-child td { border-bottom: none; }
   transition: background .2s;
 }
 .login-btn:hover { background: var(--primary-dark); }
+/* ── 업체 설정 메뉴 ── */
+.settings-card { background:var(--card); border:1.5px solid var(--border); border-radius:14px; padding:24px; margin-bottom:16px; }
+.settings-card h4 { font-size:14px; font-weight:700; color:var(--primary-dark); margin-bottom:16px; display:flex; align-items:center; gap:8px; }
+.settings-row { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px; flex-wrap:wrap; }
+.settings-label { font-size:13px; font-weight:600; color:var(--text); min-width:80px; }
+.settings-input { padding:9px 14px; border:1.5px solid var(--border); border-radius:8px; font-size:14px; width:100px; text-align:center; font-weight:700; outline:none; }
+.settings-input:focus { border-color:var(--primary); }
+.discount-slider { flex:1; min-width:120px; accent-color:var(--primary); cursor:pointer; }
+.settings-save-btn { width:100%; padding:12px; background:var(--primary); color:#fff; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; transition:background .2s; margin-top:8px; }
+.settings-save-btn:hover { background:var(--primary-dark); }
+
+/* ── 업무일지 공개 팝업 ── */
+.diary-notice-overlay { position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:10000; display:flex; align-items:center; justify-content:center; padding:20px; }
+.diary-notice-box { background:#fff; border-radius:18px; padding:28px 24px; max-width:420px; width:100%; box-shadow:0 20px 60px rgba(0,0,0,.25); }
+.diary-notice-badge { display:inline-block; background:var(--primary); color:#fff; font-size:11px; font-weight:700; padding:3px 10px; border-radius:20px; margin-bottom:10px; }
+.diary-notice-title { font-size:17px; font-weight:800; color:var(--primary-dark); margin-bottom:6px; }
+.diary-notice-date  { font-size:12px; color:var(--text-muted); margin-bottom:14px; }
+.diary-notice-body  { font-size:13px; line-height:1.8; color:var(--text); background:#f8fffe; border-radius:10px; padding:14px; margin-bottom:18px; white-space:pre-wrap; }
+.diary-notice-close { width:100%; padding:11px; background:var(--primary); color:#fff; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; }
+
+/* ── 업체 모드 — 인쇄/출력 숨기기 ── */
+body.biz-mode [onclick*="window.print"],
+body.biz-mode [onclick*="printWorkStats"],
+body.biz-mode .no-print-biz { display: none !important; }
+
+/* ── 일정·업무 선택 팝업 ── */
+.day-action-overlay { position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:9998; display:flex; align-items:flex-end; justify-content:center; }
+.day-action-sheet { background:#fff; border-radius:18px 18px 0 0; padding:24px 20px 32px; width:100%; max-width:480px; }
+.day-action-title { font-size:13px; color:var(--text-muted); margin-bottom:16px; text-align:center; }
+.day-action-btn { display:block; width:100%; padding:14px; border:none; border-radius:12px; font-size:15px; font-weight:700; cursor:pointer; margin-bottom:10px; transition:background .15s; }
+.day-action-btn.primary { background:var(--primary); color:#fff; }
+.day-action-btn.secondary { background:#f5f5f5; color:var(--text); }
+.day-action-btn.cancel { background:none; color:var(--text-muted); font-weight:400; font-size:13px; }
+
 
 .login-tabs {
   display: flex; gap: 4px; margin-bottom: 16px;
@@ -649,8 +683,14 @@ body.role-viewer .perm-write { display: none !important; }
     <a onclick="showModule('report')" id="nav-report" class="perm-admin">
       <span class="ico">📊</span> 월별리포트
     </a>
+    <a onclick="showModule('admin-monitor')" id="nav-admin-monitor" class="perm-admin">
+      <span class="ico">🏪</span> 업체모니터링
+    </a>
     <a onclick="showModule('m09')" id="nav-m09">
       <span class="ico">🎫</span> 스테이패스
+    </a>
+    <a onclick="showModule('biz-settings')" id="nav-biz-settings" style="display:none;">
+      <span class="ico">⚙️</span> 업체 설정
     </a>
   </nav>
   <div style="padding:14px 18px;border-top:1px solid rgba(255,255,255,.1);" id="sidebar-user-info">
@@ -1252,6 +1292,47 @@ body.role-viewer .perm-write { display: none !important; }
     </div>
 
     <!-- ===== 월별 리포트 ===== -->
+    <!-- ===== BIZ-SETTINGS 업체 설정 (업체 로그인 전용) ===== -->
+    <div id="module-biz-settings" class="module" style="display:none;">
+      <div class="settings-card">
+        <h4>⚙️ 업체 설정</h4>
+        <div class="settings-row">
+          <span class="settings-label">할인율</span>
+          <input type="range" class="discount-slider" id="biz-discount-slider" min="0" max="30" step="1" value="0" oninput="document.getElementById('biz-discount-val').value=this.value">
+          <input type="number" class="settings-input" id="biz-discount-val" min="0" max="30" value="0" oninput="document.getElementById('biz-discount-slider').value=this.value">
+          <span style="font-size:14px;font-weight:700;color:var(--primary);">%</span>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+          <button onclick="setBizDiscount(0)"  style="padding:6px 14px;border-radius:8px;border:1.5px solid var(--border);background:#f5f5f5;font-size:12px;cursor:pointer;font-weight:600;">0%</button>
+          <button onclick="setBizDiscount(5)"  style="padding:6px 14px;border-radius:8px;border:1.5px solid var(--border);background:#f5f5f5;font-size:12px;cursor:pointer;font-weight:600;">5%</button>
+          <button onclick="setBizDiscount(10)" style="padding:6px 14px;border-radius:8px;border:1.5px solid var(--border);background:#f5f5f5;font-size:12px;cursor:pointer;font-weight:600;">10%</button>
+          <button onclick="setBizDiscount(15)" style="padding:6px 14px;border-radius:8px;border:1.5px solid var(--border);background:#f5f5f5;font-size:12px;cursor:pointer;font-weight:600;">15%</button>
+          <button onclick="setBizDiscount(20)" style="padding:6px 14px;border-radius:8px;border:1.5px solid var(--border);background:#f5f5f5;font-size:12px;cursor:pointer;font-weight:600;">20%</button>
+          <button onclick="setBizDiscount(30)" style="padding:6px 14px;border-radius:8px;border:1.5px solid var(--border);background:#f5f5f5;font-size:12px;cursor:pointer;font-weight:600;">30%</button>
+        </div>
+        <button class="settings-save-btn" onclick="saveBizSettings()">💾 설정 저장</button>
+      </div>
+      <div class="settings-card">
+        <h4>🏪 업체 정보</h4>
+        <div id="biz-settings-info" style="font-size:13px;color:var(--text-muted);line-height:2;">불러오는 중...</div>
+      </div>
+    </div>
+
+    <!-- ===== ADMIN-MONITOR 관리자 업체 모니터링 ===== -->
+    <div id="module-admin-monitor" class="module perm-admin" style="display:none;">
+      <div class="card">
+        <div class="card-header">
+          <h3>🏪 업체 할인율 모니터링</h3>
+          <button class="btn btn-ghost btn-sm" onclick="renderAdminMonitor()">🔄 새로고침</button>
+        </div>
+        <div class="card-body">
+          <table class="table" style="width:100%;">
+            <thead><tr><th>업체명</th><th>대표자</th><th>업종</th><th>할인율</th><th>최근 방문</th><th>이달 방문</th></tr></thead>
+            <tbody id="monitor-tbody"><tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:20px;">불러오는 중...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
     <div id="module-report" class="module">
       <div class="card no-print">
         <div class="card-header">
@@ -1616,12 +1697,38 @@ body.role-viewer .perm-write { display: none !important; }
       </div>
     </div>
     <div class="modal-footer">
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;margin-right:auto;">
+        <input type="checkbox" id="m07-is-public" style="accent-color:var(--primary);width:16px;height:16px;">
+        <span>업체에 공개 <span style="font-size:11px;color:var(--text-muted);">(로그인 시 팝업)</span></span>
+      </label>
       <button class="btn btn-ghost" onclick="closeModal('m07-modal')">취소</button>
       <button class="btn btn-primary" onclick="saveM07()">저장</button>
     </div>
   </div>
 </div>
 
+
+<!-- 날짜 클릭 — 업무/일정 선택 바텀시트 -->
+<div id="day-action-overlay" class="day-action-overlay" style="display:none;" onclick="if(event.target===this)closeDayAction()">
+  <div class="day-action-sheet">
+    <div class="day-action-title" id="day-action-date"></div>
+    <button class="day-action-btn primary perm-admin" id="day-action-reg-btn" onclick="closeDayAction();openM03Add(_dayActionDate)">📋 업무 등록</button>
+    <button class="day-action-btn secondary" id="day-action-sch-btn" onclick="closeDayAction();openScheduleAdd();setTimeout(()=>{const el=document.getElementById('sch-date');if(el)el.value=_dayActionDate;},100)">🗓 일정 등록</button>
+    <button class="day-action-btn secondary" id="day-action-view-btn" style="display:none;" onclick="closeDayAction();_showDayDetail()">📅 이 날 일정 보기</button>
+    <button class="day-action-btn cancel" onclick="closeDayAction()">취소</button>
+  </div>
+</div>
+
+<!-- 업체 로그인 업무일지 공개 팝업 -->
+<div id="diary-notice-overlay" class="diary-notice-overlay" style="display:none;">
+  <div class="diary-notice-box">
+    <span class="diary-notice-badge">📣 관리자 공지</span>
+    <div class="diary-notice-title" id="diary-notice-title"></div>
+    <div class="diary-notice-date" id="diary-notice-date"></div>
+    <div class="diary-notice-body" id="diary-notice-body"></div>
+    <button class="diary-notice-close" onclick="closeDiaryNotice()">확인했습니다</button>
+  </div>
+</div>
 <!-- SMS 발송 Modal -->
 <div class="modal-overlay" id="sms-modal">
   <div class="modal" style="max-width:500px;">
@@ -2471,21 +2578,53 @@ function applySession() {
   el.className = 'role-tag role-tag-' + s.role;
   document.getElementById('sidebar-username').textContent = `${s.name} (${labels[s.role]})`;
 
+  // ── 업체 로그인 처리 ─────────────────────────────────────
+  if (s.isBizAccount) {
+    // 엑셀/CSV/인쇄/출력 관련 버튼 비활성화 (업체 로그인)
+    document.querySelectorAll([
+      '[onclick*="exportCSV"]',
+      '[onclick*="exportExcel"]',
+      '[onclick*="downloadExcel"]',
+      '[onclick*="exportXls"]',
+      '[data-excel]',
+      '[onclick*="window.print"]',
+      '[onclick*="printWorkStats"]'
+    ].join(','))
+      .forEach(el => {
+        el.style.display = 'none';
+        el.setAttribute('data-biz-hidden', '1');
+      });
+    // biz-mode body 클래스로 CSS에서도 제어
+    document.body.classList.add('biz-mode');
+    document.body.classList.add('biz-mode');
+    // 업체 전용 메뉴만 표시
+    const bizShowNav = ['nav-dashboard','nav-m03','nav-m07','nav-m09','nav-biz-settings'];
+    const bizHideNav = ['nav-m01','nav-m02','nav-m04','nav-m05','nav-m06','nav-users','nav-m08','nav-report','nav-admin-monitor'];
+    bizShowNav.forEach(id => { const n=document.getElementById(id); if(n) n.style.display=''; });
+    bizHideNav.forEach(id => { const n=document.getElementById(id); if(n) n.style.display='none'; });
+    // 설정 메뉴 로드
+    loadBizSettings();
+    // 업무일지 공개 공지 확인
+    setTimeout(checkDiaryNotice, 800);
+    return;
+  }
+
   // ── staff 개별 권한 적용 ──────────────────────────────────
   if (s.role === 'staff') {
     const perms = s.permissions || [];
-    // admin이 부여할 수 있는 staff 모듈 목록
     const staffMods = ['m01','m03','m04','m05','m08'];
     staffMods.forEach(mod => {
       const nav = document.getElementById('nav-' + mod);
       if (!nav) return;
-      // 권한 있으면 표시, 없으면 완전히 숨김
       nav.style.display = perms.includes(mod) ? '' : 'none';
     });
-    // m07(업무일지)는 staff 기본 접근 허용
     const nav7 = document.getElementById('nav-m07');
     if (nav7) nav7.style.display = '';
   }
+
+  // 관리자 모니터링 메뉴 표시
+  const navMon = document.getElementById('nav-admin-monitor');
+  if (navMon && s.role === 'admin') navMon.style.display = '';
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -2614,7 +2753,7 @@ function showModule(mod) {
   const titles={dashboard:'대시보드',m01:'01. 고객관리',m02:'02. 직원관리',
     m03:'03. 업무관리',m04:'04. 조합연계',m05:'05. 정산관리',m06:'06. 항목관리',
     users:'사용자 관리', m07:'업무일지', m08:'이벤트발송', report:'월별 리포트',
-    m09:'🎫 온마을 스테이패스'};
+    m09:'🎫 온마을 스테이패스', 'biz-settings':'⚙️ 업체 설정', 'admin-monitor':'🏪 업체 모니터링'};
   document.getElementById('page-title').textContent = titles[mod]||'';
   closeSidebar();
   if(mod==='dashboard') renderDashboard();
@@ -2634,6 +2773,8 @@ function showModule(mod) {
   if(mod==='m08') renderM08();
   if(mod==='report') initReport();
   if(mod==='m09') initM09();
+  if(mod==='biz-settings') loadBizSettings();
+  if(mod==='admin-monitor') renderAdminMonitor();
 }
 function toggleSidebar(){ document.getElementById('sidebar').classList.toggle('open'); document.getElementById('overlay').classList.toggle('open'); }
 function closeSidebar(){ document.getElementById('sidebar').classList.remove('open'); document.getElementById('overlay').classList.remove('open'); }
@@ -4078,12 +4219,17 @@ async function calDayClick(ds) {
       getAll('tasks').then(a=>a.filter(t=>t.date===ds)),
       getAll('schedules').then(a=>a.filter(s=>s.date===ds))
     ]);
-    // 일정이 없으면 바로 등록 모달 열기
-    if(ts.length===0&&ss.length===0){
-      hideLoading();
-      await openM03Add(ds);
-      return;
-    }
+    hideLoading();
+    // 항상 바텀시트 먼저 — 일정 있으면 '이 날 일정 보기' 버튼도 표시
+    _dayActionTasks = ts;
+    _dayActionSched = ss;
+    const viewBtn = document.getElementById('day-action-view-btn');
+    if (viewBtn) viewBtn.style.display = (ts.length+ss.length) > 0 ? 'block' : 'none';
+    openDayAction(ds);
+    return;
+    // ── 상세 표시는 _showDayDetail()로 이동 ──
+    if(false){
+
     const _sess=getSession();
     const taskPart=ts.map(t=>{
       const isAdmin=_sess&&_sess.role==='admin';
@@ -4126,6 +4272,63 @@ async function calDayClick(ds) {
         </div>`:''
     document.getElementById('detail-body').innerHTML=addBtnHtml+body;
     openModal('detail-modal');
+  }finally{hideLoading();}
+  }
+}
+
+// 날짜 상세 표시 (바텀시트에서 호출)
+async function _showDayDetail() {
+  const ds = _dayActionDate;
+  const ts = _dayActionTasks;
+  const ss = _dayActionSched;
+  showLoading();
+  try {
+
+    const _sess=getSession();
+    // (기존 상세 팝업 로직)
+
+    const taskPart=ts.map(t=>{
+      const isAdmin=_sess&&_sess.role==='admin';
+      const staffNames=t.staffNames&&t.staffNames.length?t.staffNames:(t.staff?[t.staff]:[]);
+      const isMyTask=_sess&&_sess.role==='staff'&&staffNames.includes(_sess.name);
+      const confirmBtn=isMyTask&&t.confirmStatus==='pending'
+        ?`<button onclick="confirmTask(${t.id});closeModal('detail-modal')" style="margin-top:8px;padding:5px 14px;background:#E8F5E9;color:#2E7D32;border:1px solid #A5D6A7;border-radius:6px;font-size:12px;cursor:pointer;">✅ 업무 확인</button>`
+        : isMyTask&&t.confirmStatus==='confirmed'
+        ?`<span style="display:inline-block;margin-top:6px;font-size:11px;color:#2E7D32;">✅ 확인 완료</span>`:'';
+      const adminBtns=isAdmin?`<div style="margin-top:6px;display:flex;gap:6px;">
+        <button onclick="closeModal('detail-modal');openM03Edit(${t.id})" style="padding:4px 10px;background:#e0e0e0;border:none;border-radius:5px;cursor:pointer;font-size:11px;">✏️ 수정</button>
+        <button onclick="if(confirm('삭제하시겠습니까?')){deleteM03(${t.id});closeModal('detail-modal');}" style="padding:4px 10px;background:#ffebee;border:none;border-radius:5px;cursor:pointer;font-size:11px;">🗑️ 삭제</button>
+      </div>`:'';
+      return `<div style="padding:12px;border-radius:10px;background:#F0F9F4;margin-bottom:10px;border-left:4px solid var(--primary);">
+        <b>${t.program||'-'}</b> <span style="font-size:10px;color:#888;">#업무</span><br>
+        <span style="font-size:12px;color:var(--text-muted);">🕐 ${t.startTime||'-'} ~ ${t.endTime||'-'} | 👥 ${t.people||0}명 | ${statusBadge(t.status)}</span>
+        ${staffNames.length?`<br><span style="font-size:11px;color:var(--text-muted);">👤 담당: ${staffNames.join(', ')}</span>`:''}
+        ${confirmBtn}${adminBtns}
+      </div>`;
+    }).join('');
+    const schPart=ss.map(s=>{
+      const isMine=_sess&&(_sess.role==='admin'||s.author===_sess.name);
+      return `<div style="padding:12px;border-radius:10px;background:#F5F5F5;margin-bottom:10px;border-left:4px solid #757575;">
+        <b style="color:#424242;">${s.type||'-'}</b> <span style="font-size:10px;color:#888;">#일정</span>
+        <span style="font-size:11px;color:#888;"> · ${s.author||''}</span><br>
+        <span style="font-size:12px;color:#757575;">🕐 ${s.startTime||'-'} ~ ${s.endTime||'-'}</span>
+        ${s.content?`<br><span style="font-size:12px;color:#555;">${s.content}</span>`:''}
+        ${isMine?`<div style="margin-top:6px;display:flex;gap:6px;">
+          <button onclick="openScheduleEdit(${s.id});closeModal('detail-modal')" style="padding:4px 10px;background:#e0e0e0;border:none;border-radius:5px;cursor:pointer;font-size:11px;">✏️ 수정</button>
+          <button onclick="deleteSchedule(${s.id});closeModal('detail-modal')" style="padding:4px 10px;background:#ffebee;border:none;border-radius:5px;cursor:pointer;font-size:11px;">🗑️ 삭제</button>
+        </div>`:''}
+      </div>`;
+    }).join('');
+    const body = taskPart + schPart;
+    document.getElementById('detail-title').textContent=`${ds} 일정 (${ts.length+ss.length}건)`;
+    const _sessForBtn=getSession();
+    const addBtnHtml=(_sessForBtn&&_sessForBtn.role==='admin')
+      ?`<div style="margin-bottom:12px;">
+          <button onclick="closeModal('detail-modal');openM03Add('${ds}')" style="width:100%;padding:9px;background:var(--primary);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;">+ 이 날 업무 등록 (${ds})</button>
+        </div>`:''
+    document.getElementById('detail-body').innerHTML=addBtnHtml+body;
+    openModal('detail-modal');
+  }finally{hideLoading();}
   }finally{hideLoading();}
 }
 
@@ -4798,12 +5001,24 @@ async function saveM07() {
   showLoading('저장 중...');
   try {
     const id = editId ? Number(editId) : await genId('diary');
+    const isPublic = document.getElementById('m07-is-public')?.checked || false;
     const data = { id, date, staffId, staffName,
       todo: document.getElementById('m07-todo').value,
       done: document.getElementById('m07-done').value,
       memo: document.getElementById('m07-memo').value,
+      isPublic,
       updatedAt: new Date().toLocaleString('ko-KR') };
     if (!editId) data.createdAt = new Date().toLocaleString('ko-KR');
+    // 공개 설정 시 공지 컬렉션에 저장
+    if (isPublic) {
+      const noticeId = 'diary_notice_' + id;
+      await db.collection('diary_notices').doc(noticeId).set({
+        id: noticeId, diaryId: id, date, staffName,
+        todo: data.todo, memo: data.memo,
+        createdAt: new Date().toLocaleString('ko-KR'),
+        isPublic: true
+      });
+    }
     if (editId) {
       await db.collection('diary').doc(String(id)).update(data);
     } else {
@@ -4823,6 +5038,143 @@ async function deleteM07(id) {
     await renderM07();
     document.getElementById('m07-detail-card').style.display = 'none';
   } finally { hideLoading(); }
+}
+
+
+
+// ══════════════════════════════════════════════════════════
+// 날짜 클릭 바텀시트 (업무 등록 / 일정 등록 선택)
+// ══════════════════════════════════════════════════════════
+let _dayActionDate = '';
+let _dayActionTasks = [], _dayActionSched = [];
+function openDayAction(ds) {
+  _dayActionDate = ds;
+  const overlay = document.getElementById('day-action-overlay');
+  const title   = document.getElementById('day-action-date');
+  if (!overlay) return;
+  title.textContent = ds + ' — 무엇을 등록할까요?';
+  overlay.style.display = 'flex';
+}
+function closeDayAction() {
+  const overlay = document.getElementById('day-action-overlay');
+  if (overlay) overlay.style.display = 'none';
+}
+
+// ══════════════════════════════════════════════════════════
+// 업체 설정 — 할인율 저장/로드
+// ══════════════════════════════════════════════════════════
+function setBizDiscount(val) {
+  document.getElementById('biz-discount-val').value = val;
+  document.getElementById('biz-discount-slider').value = val;
+}
+
+async function loadBizSettings() {
+  const sess = getSession();
+  if (!sess || !sess.isBizAccount) return;
+  try {
+    // Firestore에서 현재 할인율 로드
+    const doc = await db.collection('coops').doc(String(sess.coopId)).get();
+    const data = doc.data() || {};
+    const rate = data.discountRate || sess.discountRate || 0;
+    setBizDiscount(rate);
+    // 업체 정보 표시
+    const infoEl = document.getElementById('biz-settings-info');
+    if (infoEl) {
+      infoEl.innerHTML = `
+        <div style="display:grid;grid-template-columns:80px 1fr;gap:6px;">
+          <span style="color:var(--text-muted);">업체명</span><span style="font-weight:600;">${data.name || sess.coopName || '-'}</span>
+          <span style="color:var(--text-muted);">대표자</span><span>${data.owner || '-'}</span>
+          <span style="color:var(--text-muted);">업종</span><span>${data.type || '-'}</span>
+          <span style="color:var(--text-muted);">현재 할인율</span><span style="font-weight:700;color:var(--primary);">${rate}%</span>
+        </div>`;
+    }
+  } catch(e) {
+    console.warn('업체 설정 로드 실패:', e.message);
+  }
+}
+
+async function saveBizSettings() {
+  const sess = getSession();
+  if (!sess || !sess.isBizAccount) return;
+  const rate = Number(document.getElementById('biz-discount-val').value) || 0;
+  if (rate < 0 || rate > 30) { showToast('할인율은 0~30% 사이로 입력하세요.', 'warning'); return; }
+  showLoading('설정 저장 중...');
+  try {
+    // coops 컬렉션 업데이트
+    await db.collection('coops').doc(String(sess.coopId)).update({ discountRate: rate, updatedAt: new Date().toLocaleString('ko-KR') });
+    // users 세션도 갱신
+    await db.collection('users').doc(sess.id).update({ discountRate: rate });
+    // 로컬 세션 갱신
+    const updated = { ...sess, discountRate: rate };
+    setSession(updated);
+    showToast('✅ 할인율이 ' + rate + '%로 저장되었습니다.', 'success');
+    loadBizSettings();
+  } catch(e) {
+    showToast('저장 실패: ' + e.message, 'error');
+  } finally { hideLoading(); }
+}
+
+// ══════════════════════════════════════════════════════════
+// 관리자 — 업체 할인율 모니터링
+// ══════════════════════════════════════════════════════════
+async function renderAdminMonitor() {
+  const tbody = document.getElementById('monitor-tbody');
+  if (!tbody) return;
+  showLoading('업체 정보 불러오는 중...');
+  try {
+    const [coops, visits] = await Promise.all([
+      getAll('coops'),
+      db.collection('visits').get().then(s => s.docs.map(d => d.data()))
+    ]);
+    const now = new Date();
+    const thisMonth = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+    tbody.innerHTML = coops.filter(c => c.active !== false).map(c => {
+      const coopVisits = visits.filter(v => String(v.coopId) === String(c.id));
+      const monthVisits = coopVisits.filter(v => (v.visitDate||'').startsWith(thisMonth));
+      const lastVisit = coopVisits.sort((a,b) => b.visitDate > a.visitDate ? 1 : -1)[0];
+      return `<tr>
+        <td><b>${c.name||'-'}</b></td>
+        <td>${c.owner||'-'}</td>
+        <td><span class="badge" style="background:#e8f5e9;color:#2e7d32;font-size:11px;">${c.type||'-'}</span></td>
+        <td style="text-align:center;"><b style="color:var(--primary);font-size:15px;">${c.discountRate||0}%</b></td>
+        <td style="font-size:12px;color:var(--text-muted);">${lastVisit ? lastVisit.visitDate : '-'}</td>
+        <td style="text-align:center;font-weight:700;">${monthVisits.length}건</td>
+      </tr>`;
+    }).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:20px;">등록된 업체가 없습니다.</td></tr>';
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#e53935;">오류: ${e.message}</td></tr>`;
+  } finally { hideLoading(); }
+}
+
+// ══════════════════════════════════════════════════════════
+// 업무일지 공개 공지 — 업체 로그인 시 팝업
+// ══════════════════════════════════════════════════════════
+async function checkDiaryNotice() {
+  const sess = getSession();
+  if (!sess || !sess.isBizAccount) return;
+  const seenKey = 'seen_diary_notices_' + sess.id;
+  const seen = JSON.parse(localStorage.getItem(seenKey) || '[]');
+  try {
+    const snap = await db.collection('diary_notices').where('isPublic', '==', true).get();
+    const notices = snap.docs.map(d => d.data())
+      .filter(n => !seen.includes(n.id))
+      .sort((a, b) => b.createdAt > a.createdAt ? 1 : -1);
+    if (notices.length === 0) return;
+    // 가장 최신 공지 하나 표시
+    const n = notices[0];
+    document.getElementById('diary-notice-title').textContent = `[${n.date}] ${n.staffName || '관리자'} 공지`;
+    document.getElementById('diary-notice-date').textContent  = n.createdAt || '';
+    document.getElementById('diary-notice-body').textContent  = (n.todo || '') + (n.memo ? '\n\n📝 ' + n.memo : '');
+    document.getElementById('diary-notice-overlay').style.display = 'flex';
+    // 현재 팝업 공지를 읽음 처리
+    seen.push(n.id);
+    localStorage.setItem(seenKey, JSON.stringify(seen));
+  } catch(e) { console.warn('공지 확인 실패:', e.message); }
+}
+
+function closeDiaryNotice() {
+  const ov = document.getElementById('diary-notice-overlay');
+  if (ov) ov.style.display = 'none';
 }
 
 // ═══════════════════════════════════════════════════════════
