@@ -9,11 +9,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>온마을 · ONMAEUL — 마을 전체가 당신의 호텔</title>
-<link rel="icon" type="image/x-icon" href="images/favicon.ico">
-<link rel="icon" type="image/png" sizes="32x32" href="images/favicon_32.png">
-<link rel="icon" type="image/png" sizes="64x64" href="images/favicon_64.png">
-<link rel="apple-touch-icon" sizes="180x180" href="images/favicon_180.png">
-<link rel="icon" type="image/png" sizes="192x192" href="images/favicon_192.png">
+<!-- [파비콘] 브라우저 탭 아이콘 · onmaeullogo2.svg 파일 교체로 변경 -->
+<link rel="icon" type="image/svg+xml" href="onmaeullogo2.svg">
+<link rel="apple-touch-icon" href="onmaeullogo2.svg">
 <style>
 
   /* 1단계: Google Fonts woff2 직접 내장 경로 */
@@ -1935,6 +1933,7 @@ async function saveToFirebase(payload) {
 </div>
 
 <nav class="topnav" id="topnav">
+  <!-- [로고 1] 상단 네비게이션 바 로고 (고정 헤더, height:36px / 모바일:28px) -->
   <a href="#" class="topnav-brand"><img src="onmaeullogo.svg" alt="온마을 ONMAEUL" class="topnav-logo-img"></a>
   <div class="topnav-links">
     <a href="#experiences" class="topnav-link">체험 <span style="font-size:9px;opacity:0.55;letter-spacing:1px;">EXP</span></a>
@@ -1967,6 +1966,7 @@ async function saveToFirebase(payload) {
       <span class="aura-spark" style="left:30%;top:40%;width:3px;height:3px;animation-duration:2.5s;animation-delay:1.8s;"></span>
       <span class="aura-spark" style="left:70%;top:75%;width:2px;height:2px;animation-duration:3.9s;animation-delay:0.5s;"></span>
       <span class="aura-spark" style="left:60%;top:25%;width:2px;height:2px;animation-duration:2.2s;animation-delay:2.1s;"></span>
+      <!-- [로고 2] 메인 히어로 섹션 로고 (중앙 대형, .hero-logo-img CSS로 크기 제어) -->
       <img src="onmaeullogo.svg" alt="온마을 ONMAEUL" class="hero-logo-img">
     </div>
     <div class="hero-cta-wrap">
@@ -1977,6 +1977,7 @@ async function saveToFirebase(payload) {
 
   <div class="hero-footer">
     <span class="hero-footer-left">운영 by 아침고요상생연대</span>
+    <!-- [탭배경 4] 히어로 하단 우측 링크 이미지 (아침고요상생연대) · src 및 href 함께 수정 -->
     <span class="hero-footer-right"><a href="https://mcc.kr" target="_blank" rel="noopener" style="display:inline-block;line-height:0;"><img src="images/img_01.png" alt="아침고요상생연대" style="height:52px;width:auto;opacity:0.85;vertical-align:middle;transition:opacity 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.85'"></a></span>
   </div>
 </section>
@@ -1995,6 +1996,7 @@ async function saveToFirebase(payload) {
     <!-- ── 카테고리 탭 (초기: 탭 카드만 표시, 콘텐츠 숨김) ── -->
     <div class="cat-tabs reveal" id="cat-tabs-wrap">
       <button class="cat-tab" id="tab-btn-exp" onclick="switchCat('exp')" style="background-image:url('images/img_cat_exp.png');">
+      <!-- [탭배경 1] 체험 프로그램 탭 배경 · url() 안 파일명 수정 -->
         <span class="cat-tab-num">01</span>
         <span class="cat-tab-label">체험 프로그램</span>
         <span class="cat-tab-en">EXPERIENCES</span>
@@ -2002,12 +2004,14 @@ async function saveToFirebase(payload) {
         <span class="cat-tab-arrow">›</span>
       </button>
       <button class="cat-tab" id="tab-btn-coop" onclick="switchCat('coop')" style="background-image:url('images/img_cat_coop.jpg');">
+      <!-- [탭배경 2] 온마을 가맹점 탭 배경 · url() 안 파일명 수정 -->
         <span class="cat-tab-num">02</span>
         <span class="cat-tab-label">온마을 가맹점</span>
         <span class="cat-tab-en">VILLAGE SHOPS</span>
         <span class="cat-tab-arrow">›</span>
       </button>
       <button class="cat-tab" id="tab-btn-suwon" onclick="switchCat('suwon')" style="background-image:url('images/img_cat_suwon.png');">
+      <!-- [탭배경 3] 아침고요 수목원 탭 배경 · url() 안 파일명 수정 -->
         <span class="cat-tab-num">03</span>
         <span class="cat-tab-label">아침고요<br>수목원 &amp; 동물원</span>
         <span class="cat-tab-en">MORNINGCALM</span>
@@ -2022,6 +2026,7 @@ async function saveToFirebase(payload) {
 
       <!-- 01 먹다 -->
       <div class="exp-card reveal reveal-d1">
+        <!-- [체험사진 1] 먹다·잣 체험 카드 사진 -->
         <img class="exp-card-img" src="images/img_02.jpg" alt="잣 체험프로그램">
         <div class="exp-card-inner exp-card-body">
           <span class="exp-num" style="font-family:'DM Sans',sans-serif;font-size:0.72rem;letter-spacing:0.18em;color:var(--gold);margin-bottom:6px;display:block;">01</span>
@@ -2130,6 +2135,7 @@ async function saveToFirebase(payload) {
 
       <!-- 02 만들다 -->
       <div class="exp-card reveal reveal-d2">
+        <!-- [체험사진 2] 만들다·공예 카드 사진 -->
         <img class="exp-card-img" src="images/img_03.jpg" alt="힐링숲 테마 공예">
         <div class="exp-card-inner exp-card-body">
           <span class="exp-num" style="font-family:'DM Sans',sans-serif;font-size:0.72rem;letter-spacing:0.18em;color:var(--gold);margin-bottom:6px;display:block;">02</span>
@@ -2238,6 +2244,7 @@ async function saveToFirebase(payload) {
 
       <!-- 03 느끼다 -->
       <div class="exp-card reveal reveal-d3">
+        <!-- [체험사진 3] 느끼다·힐링숲 카드 사진 -->
         <img class="exp-card-img" src="images/img_04.jpg" alt="힐링숲 자연 생태체험">
         <div class="exp-card-inner exp-card-body">
           <span class="exp-num" style="font-family:'DM Sans',sans-serif;font-size:0.72rem;letter-spacing:0.18em;color:var(--gold);margin-bottom:6px;display:block;">03</span>
@@ -2346,6 +2353,7 @@ async function saveToFirebase(payload) {
 
       <!-- 04 함께하다 -->
       <div class="exp-card reveal reveal-d4">
+        <!-- [체험사진 4] 함께하다·단체 카드 사진 -->
         <img class="exp-card-img" src="images/img_05.jpg" alt="단체 프로그램">
         <div class="exp-card-inner exp-card-body">
           <span class="exp-num" style="font-family:'DM Sans',sans-serif;font-size:0.72rem;letter-spacing:0.18em;color:var(--gold);margin-bottom:6px;display:block;">04</span>
@@ -2487,6 +2495,7 @@ async function saveToFirebase(payload) {
 
       <div class="coop-card-grid reveal" id="coop-card-grid">
         <div class="coop-card" data-cat="restaurant">
+          <!-- [업체사진 1] 마을 다이닝 카드 사진 -->
           <img class="coop-card-img" src="images/img_cat_coop.jpg" alt="마을 다이닝">
           <div class="coop-card-body">
             <span class="coop-card-en">DINING</span>
@@ -2498,6 +2507,7 @@ async function saveToFirebase(payload) {
           </div>
         </div>
         <div class="coop-card" data-cat="cafe">
+          <!-- [업체사진 2] 자카란다 카페 카드 사진 -->
           <img class="coop-card-img" src="images/img_02.jpg" alt="자카란다 카페">
           <div class="coop-card-body">
             <span class="coop-card-en">CAFE</span>
@@ -2509,6 +2519,7 @@ async function saveToFirebase(payload) {
           </div>
         </div>
         <div class="coop-card" data-cat="cafe">
+          <!-- [업체사진 3] 온더락 카페 카드 사진 -->
           <img class="coop-card-img" src="images/img_03.jpg" alt="온더락 카페">
           <div class="coop-card-body">
             <span class="coop-card-en">CAFE · BAR</span>
@@ -2520,6 +2531,7 @@ async function saveToFirebase(payload) {
           </div>
         </div>
         <div class="coop-card" data-cat="stay">
+          <!-- [업체사진 4] 힐링숲 스테이 카드 사진 -->
           <img class="coop-card-img" src="images/img_04.jpg" alt="힐링숲 스테이">
           <div class="coop-card-body">
             <span class="coop-card-en">STAY</span>
@@ -2531,6 +2543,7 @@ async function saveToFirebase(payload) {
           </div>
         </div>
         <div class="coop-card" data-cat="mart">
+          <!-- [업체사진 5] 마을 편의점 카드 사진 -->
           <img class="coop-card-img" src="images/img_05.jpg" alt="마을 편의점">
           <div class="coop-card-body">
             <span class="coop-card-en">MART</span>
@@ -2542,6 +2555,7 @@ async function saveToFirebase(payload) {
           </div>
         </div>
         <div class="coop-card" data-cat="craft">
+          <!-- [업체사진 6] 힐링숲 공방 카드 사진 -->
           <img class="coop-card-img" src="images/img_cat_exp.png" alt="힐링숲 공방">
           <div class="coop-card-body">
             <span class="coop-card-en">CRAFT</span>
@@ -2568,6 +2582,7 @@ async function saveToFirebase(payload) {
       </p>
       <div class="coop-card-grid reveal">
         <div class="coop-card">
+          <!-- [수목원사진 1] 아침고요수목원 카드 사진 -->
           <img class="coop-card-img" src="images/img_suwon_garden.jpg" alt="아침고요수목원" style="object-position:center top;">
           <div class="coop-card-body">
             <span class="coop-card-en">GARDEN</span>
@@ -2579,6 +2594,7 @@ async function saveToFirebase(payload) {
           </div>
         </div>
         <div class="coop-card">
+          <!-- [수목원사진 2] 아침고요 동물원 카드 사진 -->
           <img class="coop-card-img" src="images/img_suwon_zoo.png" alt="아침고요 동물원" style="object-position:center center;">
           <div class="coop-card-body">
             <span class="coop-card-en">ZOO</span>
@@ -2726,6 +2742,7 @@ async function saveToFirebase(payload) {
 <!-- ── FOOTER ── -->
 <footer>
   <div class="footer-brand">
+    <!-- [로고 3] 하단 푸터 로고 (.footer-brand-img CSS로 크기 제어) -->
     <img src="onmaeullogo.svg" alt="온마을 ONMAEUL" class="footer-brand-img">
   </div>
   <div class="footer-info">

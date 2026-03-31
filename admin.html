@@ -2,6 +2,9 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
+<!-- [파비콘] 브라우저 탭 아이콘 · onmaeullogo2.svg 파일 교체로 변경 -->
+<link rel="icon" type="image/svg+xml" href="onmaeullogo2.svg">
+<link rel="apple-touch-icon" href="onmaeullogo2.svg">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>온마을 관리시스템</title>
 <!-- QR Code -->
@@ -524,8 +527,7 @@ body.role-viewer .perm-write { display: none !important; }
 <div id="login-screen">
   <div class="login-box" style="max-width:420px;">
     <div class="logo-area">
-      <span class="icon">🌿</span>
-      <h2>온마을 관리시스템</h2>
+      <img src="onmaeullogo.svg" alt="온마을 ONMAEUL" style="height:52px;width:auto;display:block;margin:0 auto 10px;">
       <p>통합 운영 플랫폼</p>
     </div>
 
@@ -653,8 +655,8 @@ body.role-viewer .perm-write { display: none !important; }
 <!-- SIDEBAR -->
 <aside id="sidebar">
   <div class="logo" style="position:relative; display:flex; align-items:center; justify-content:space-between;">
-    <h2>🌿 온마을 관리시스템</h2>
-    <p>통합 운영 플랫폼</p>
+    <img src="onmaeullogo.svg" alt="온마을 ONMAEUL" style="height:34px;width:auto;display:block;filter:brightness(1.15);">
+    <p style="display:none;">통합 운영 플랫폼</p>
     <button id="notif-btn" onclick="openNotifPopup()" style="position:relative;background:none;border:none;cursor:pointer;padding:4px;margin-left:auto;display:none;">
     <span style="font-size:20px;">🔔</span>
     <span class="notif-badge" id="notif-badge" style="display:none;">0</span>
@@ -835,7 +837,7 @@ body.role-viewer .perm-write { display: none !important; }
         </div>
         <div class="card-body">
           <div class="search-bar">
-            <input type="text" id="m02-search" placeholder="이름, 직책, 담당업무 검색..." oninput="renderM02()">
+            <input type="text" id="m02-search" placeholder="이름, 직책, 담당업무 검색..." oninput="renderM02()"><button class="btn btn-ghost btn-sm" onclick="renderM02()" title="새로고침" style="margin-left:6px;">🔄</button>
           </div>
           <div class="tbl-wrap">
             <table>
@@ -2071,6 +2073,24 @@ function showLoading(msg = '데이터 불러오는 중...') {
   document.getElementById('loading-msg').textContent = msg;
   document.getElementById('loading-overlay').classList.add('show');
 }
+// ── #06 토스트 알림 시스템 ───────────────────────────────────
+function showToast(msg, type='info', duration=3000){
+  let t = document.getElementById('_toast_global');
+  if(!t){
+    t = document.createElement('div');
+    t.id = '_toast_global';
+    t.style.cssText = 'position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);padding:11px 22px;border-radius:24px;font-size:13px;font-weight:600;z-index:99999;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;';
+    document.body.appendChild(t);
+  }
+  const colors = {info:'#1b3a1b;color:#81c784;border:1px solid #2a5a2a', success:'#1b3a1b;color:#81c784;border:1px solid #2a5a2a', error:'#3a1b1b;color:#ef9a9a;border:1px solid #5a2a2a', warn:'#3a2a00;color:#ffca28;border:1px solid #5a4500'};
+  t.style.background = colors[type]||colors.info;
+  t.textContent = msg;
+  t.style.opacity='1'; t.style.transform='translateX(-50%) translateY(0)';
+  clearTimeout(t._tid);
+  t._tid = setTimeout(()=>{ t.style.opacity='0'; t.style.transform='translateX(-50%) translateY(20px)'; }, duration);
+}
+// ─────────────────────────────────────────────────────────────
+
 function hideLoading() {
   document.getElementById('loading-overlay').classList.remove('show');
 }
@@ -3320,7 +3340,7 @@ async function showQR(id) {
           </div>
         </div>
         <div style="font-size:11px;color:var(--text-muted);margin-top:8px;">발급일: ${c.passIssuedAt||'-'}</div>
-        <button class="btn btn-sm" onclick="openPassSMS(${c.id},'${c.name}','${c.phone||''}','${c.qrToken||''}')" style="margin-top:8px;width:100%;background:#1976D2;color:#fff;border:none;border-radius:8px;padding:8px;cursor:pointer;font-weight:600;">📱 SMS로 패스 발급 안내 전송</button>
+        ${(()=>{const _sq=getSession();return _sq&&_sq.role==='admin'?`<button class="btn btn-sm" onclick="openPassSMS(${c.id},'${c.name}','${c.phone||''}','${c.qrToken||''}')" style="margin-top:8px;width:100%;background:#1976D2;color:#fff;border:none;border-radius:8px;padding:8px;cursor:pointer;font-weight:600;">📱 SMS로 패스 발급 안내 전송</button>`:'';})()} 
       </div>`;
     openModal('m01-qr-modal');
   } finally{hideLoading();}
@@ -3457,18 +3477,41 @@ async function deleteM02(id){
   showLoading('삭제 중...');
   try{await remove('employees',id);await renderM02();}finally{hideLoading();}
 }
+// ── #01 체험프로그램 복수선택 헬퍼 ──────────────────────────
+function _toggleM03Program(e){
+  const tag = e.target.closest('.m03-prog-tag');
+  if(!tag) return;
+  const on = tag.dataset.checked === 'true';
+  tag.dataset.checked = on ? 'false' : 'true';
+  tag.style.background   = on ? '' : 'var(--primary)';
+  tag.style.color        = on ? '' : '#fff';
+  tag.style.borderColor  = on ? '' : 'var(--primary)';
+  _updateM03ProgramSelected();
+}
+function _updateM03ProgramSelected(){
+  const tags = document.querySelectorAll('#m03-prog-container .m03-prog-tag');
+  const selected = Array.from(tags).filter(t=>t.dataset.checked==='true').map(t=>t.dataset.value);
+  document.getElementById('m03-program').value = selected.join(',');
+  const ph = document.getElementById('m03-prog-placeholder');
+  if(ph) ph.style.display = selected.length ? 'none' : '';
+}
+// ─────────────────────────────────────────────────────────────
+
 async function renderM02() {
   showLoading();
+  const tbody=document.getElementById('m02-tbody');
+  const empty=document.getElementById('m02-empty');
   try {
-    const q=document.getElementById('m02-search').value.toLowerCase();
-    const data=(await getAll('employees')).filter(e=>(e.name+e.position+e.duty).toLowerCase().includes(q));
-    const tbody=document.getElementById('m02-tbody');
-    const empty=document.getElementById('m02-empty');
+    const q=(document.getElementById('m02-search').value||'').toLowerCase();
+    // #05 null 방어: 유효한 항목만 필터
+    const raw = await getAll('employees');
+    const data = raw.filter(e=>e && e.name != null)
+      .filter(e=>((e.name||'')+(e.position||'')+(e.duty||'')).toLowerCase().includes(q));
     if(data.length===0){tbody.innerHTML='';empty.style.display='block';}
     else{
       empty.style.display='none';
       tbody.innerHTML=data.map((e,i)=>`<tr>
-        <td>${i+1}</td><td><b>${e.name}</b></td>
+        <td>${i+1}</td><td><b>${e.name||'-'}</b></td>
         <td><span class="badge badge-purple">${e.position||'-'}</span></td>
         <td>${e.phone||'-'}</td><td>${e.duty||'-'}</td><td>${e.email||'-'}</td>
         <td>${worktypeBadge(e.worktype)}</td>
@@ -3477,7 +3520,11 @@ async function renderM02() {
           <button class="btn btn-danger btn-sm btn-icon perm-admin" onclick="deleteM02(${e.id})">🗑️</button>
         </td></tr>`).join('');
     }
-  }finally{hideLoading();}
+  } catch(err) {
+    // #05 에러를 테이블에 직접 표시
+    if(tbody) tbody.innerHTML=`<tr><td colspan="8" style="color:#c62828;padding:16px;text-align:center;">⚠️ 목록 로딩 오류: ${err.message}</td></tr>`;
+    if(empty) empty.style.display='none';
+  } finally{hideLoading();}
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -3486,7 +3533,24 @@ async function renderM02() {
 let m03EditId=null, currentCalYear2, currentCalMonth2;
 async function populateM03Selects() {
   const [items, employees, customers]=await Promise.all([getItems(),getAll('employees'),getAll('customers')]);
-  document.getElementById('m03-program').innerHTML='<option value="">선택</option>'+items.programs.map(p=>`<option value="${p.name}">${p.name}</option>`).join('');
+  // #01 체험프로그램 복수선택 태그 렌더링
+  const progContainer = document.getElementById('m03-prog-container');
+  if(progContainer){
+    const placeholder = document.getElementById('m03-prog-placeholder');
+    // 기존 태그 제거 (placeholder만 남김)
+    Array.from(progContainer.children).forEach(el=>{ if(el.id!=='m03-prog-placeholder') el.remove(); });
+    items.programs.forEach(p=>{
+      const tag = document.createElement('div');
+      tag.className = 'm03-prog-tag';
+      tag.dataset.value = p.name;
+      tag.dataset.checked = 'false';
+      tag.textContent = p.name;
+      tag.style.cssText = 'padding:4px 12px;border-radius:20px;border:1.5px solid var(--border);font-size:12px;cursor:pointer;user-select:none;transition:all .15s;';
+      progContainer.appendChild(tag);
+    });
+    if(placeholder) placeholder.style.display = items.programs.length ? 'none' : '';
+    _updateM03ProgramSelected();
+  }
   document.getElementById('m03-status').innerHTML='<option value="">선택</option>'+items.statuses.map(s=>`<option value="${s.name}">${s.name}</option>`).join('');
   document.getElementById('m03-filter-status').innerHTML='<option value="">전체 상태</option>'+items.statuses.map(s=>`<option value="${s.name}">${s.name}</option>`).join('');
   document.getElementById('m03-staff').innerHTML='<option value="">선택</option>'+employees.map(e=>`<option value="${e.name}">${e.name} (${e.position||''})</option>`).join('');
@@ -3494,11 +3558,16 @@ async function populateM03Selects() {
   if(custSel) custSel.innerHTML='<option value="">-- 고객 미연결 --</option>'+
     [...customers].sort((a,b)=>b.id-a.id).map(c=>`<option value="${c.id}">${c.name} (${c.phone||'-'})${c.program?' · '+c.program:''}</option>`).join('');
 }
-async function openM03Add() {
+async function openM03Add(preDate) {
   m03EditId=null;
   document.getElementById('m03-modal-title').textContent='업무 등록';
   ['m03-date','m03-date-end','m03-start','m03-end','m03-people','m03-amount'].forEach(id=>document.getElementById(id).value='');
-  ['m03-program','m03-status'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('m03-status').value='';
+  document.getElementById('m03-program').value='';
+  document.querySelectorAll('#m03-prog-container .m03-prog-tag').forEach(tag=>{
+    tag.dataset.checked='false'; tag.style.background=''; tag.style.color=''; tag.style.borderColor='';
+  });
+  _updateM03ProgramSelected();
   resetM03StaffRows();
   const nightsRow=document.getElementById('m03-nights-row');
   if(nightsRow) nightsRow.style.display='none';
@@ -3506,7 +3575,10 @@ async function openM03Add() {
   if(custSel) custSel.value='';
   const paySel=document.getElementById('m03-pay-status');
   if(paySel) paySel.value='미입금';
-  await populateM03Selects(); openModal('m03-modal');
+  await populateM03Selects();
+  // #07 preDate가 있으면 날짜 자동 입력
+  if(preDate){ document.getElementById('m03-date').value = preDate; }
+  openModal('m03-modal');
 }
 async function openM03Edit(id) {
   showLoading();
@@ -3522,7 +3594,17 @@ async function openM03Edit(id) {
     document.getElementById('m03-people').value=t.people||'';
     document.getElementById('m03-amount').value=t.amount||'';
     await populateM03Selects();
-    document.getElementById('m03-program').value=t.program||'';
+    // #01 체험프로그램 복수선택 복원
+    const _progs = (t.programs && Array.isArray(t.programs)) ? t.programs : (t.program ? [t.program] : []);
+    document.getElementById('m03-program').value = _progs.join(',');
+    document.querySelectorAll('#m03-prog-container .m03-prog-tag').forEach(tag=>{
+      const on = _progs.includes(tag.dataset.value);
+      tag.dataset.checked = on ? 'true' : 'false';
+      tag.style.background = on ? 'var(--primary)' : '';
+      tag.style.color = on ? '#fff' : '';
+      tag.style.borderColor = on ? 'var(--primary)' : '';
+    });
+    _updateM03ProgramSelected();
     document.getElementById('m03-status').value=t.status||'';
     // 다중 직원 복원
     resetM03StaffRows();
@@ -3918,7 +4000,9 @@ async function renderDayView() {
     ]);
     const el=document.getElementById('m03-day-content');
     const sess=getSession();
-    if(tasks.length===0&&scheds.length===0){el.innerHTML='<p style="color:var(--text-muted);font-size:13px;padding:20px 0;">해당 날짜 일정이 없습니다.</p>';return;}
+    const sess07d=getSession();
+    const dayAddBtn=sess07d&&sess07d.role==='admin'?`<button onclick="openM03Add('${d}')" style="margin-bottom:10px;padding:8px 16px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">+ 이 날 업무 등록</button>`:'';
+    if(tasks.length===0&&scheds.length===0){el.innerHTML=dayAddBtn+'<p style="color:var(--text-muted);font-size:13px;padding:12px 0;">해당 날짜 일정이 없습니다.</p>';return;}
     const taskHtml=tasks.map(t=>`<div style="padding:12px;border-radius:10px;background:#F0F9F4;margin-bottom:10px;border-left:4px solid var(--primary);">
       <div style="font-weight:700;font-size:14px;margin-bottom:4px;">${t.program||'-'} <span style="font-size:11px;color:#888;">#업무</span></div>
       <div style="font-size:12px;color:var(--text-muted);">🕐 ${t.startTime||'-'} ~ ${t.endTime||'-'} &nbsp;|&nbsp; 👥 ${t.people||0}명 &nbsp;|&nbsp; 💰 ${t.amount?formatMoney(t.amount):'-'}</div>
@@ -3940,7 +4024,7 @@ async function renderDayView() {
         </div>
       </div>`;
     }).join('');
-    el.innerHTML=taskHtml+schHtml;
+    el.innerHTML=dayAddBtn+taskHtml+schHtml;
   }finally{hideLoading();}
 }
 async function renderWeekView() {
@@ -3959,10 +4043,13 @@ async function renderWeekView() {
       const ts=allTasks.filter(t=>t.date===ds);
       const ss=allSch.filter(s=>s.date===ds);
       const isT=ds===today();
+      const _sessW=getSession();
+      const _wAddBtn=_sessW&&_sessW.role==='admin'?`<button onclick="openM03Add('${ds}')" style="width:100%;margin-top:4px;padding:2px;background:none;border:1.5px dashed var(--border);border-radius:6px;font-size:11px;color:var(--text-muted);cursor:pointer;" title="${ds} 업무 등록">＋</button>`:'';
       html+=`<div style="border:1px solid var(--border);border-radius:8px;padding:8px;min-height:100px;${isT?'background:#E8F5E9;border-color:var(--primary);':''}">
         <div style="font-weight:700;font-size:12px;margin-bottom:6px;color:${isT?'var(--primary)':'var(--text)'};">${days[i]} ${d.getDate()}일</div>
         ${ts.map(t=>`<div class="cal-event">${t.program||'-'}</div>`).join('')}
         ${ss.map(s=>`<div class="cal-event-sch">${s.type||'일정'}</div>`).join('')}
+        ${_wAddBtn}
       </div>`;
     }
     el.innerHTML=html+'</div>';
@@ -4016,7 +4103,13 @@ async function calDayClick(ds) {
       getAll('tasks').then(a=>a.filter(t=>t.date===ds)),
       getAll('schedules').then(a=>a.filter(s=>s.date===ds))
     ]);
-    if(ts.length===0&&ss.length===0)return;
+    // #07 빈 날짜 클릭 → 해당 날짜 자동 입력된 등록 모달 오픈
+    if(ts.length===0&&ss.length===0){
+      hideLoading();
+      const sess=getSession();
+      if(sess&&sess.role==='admin') openM03Add(ds);
+      return;
+    }
     const _sess=getSession();
     const taskPart=ts.map(t=>{
       const isMine=_sess&&_sess.role==='staff'&&t.staff===_sess.name;
@@ -4046,7 +4139,10 @@ async function calDayClick(ds) {
     }).join('');
     const body = taskPart + schPart;
     document.getElementById('detail-title').textContent=`${ds} 일정 (${ts.length+ss.length}건)`;
-    document.getElementById('detail-body').innerHTML=body;
+    const _sess07=getSession();
+    const addBtnHtml = _sess07&&_sess07.role==='admin'
+      ? `<button onclick="closeModal('detail-modal');openM03Add('${ds}')" style="width:100%;margin-bottom:10px;padding:9px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">+ 이 날 업무 등록</button>` : '';
+    document.getElementById('detail-body').innerHTML= addBtnHtml + body;
     openModal('detail-modal');
   }finally{hideLoading();}
 }
@@ -4514,8 +4610,13 @@ async function deleteUser(id){
 async function renderUsers(){
   showLoading();
   try{
-    const snap=await db.collection('users').get();
-    const users=snap.docs.map(d=>d.data());
+    let snap=await db.collection('users').get();
+    // #04 snap이 비어있으면 defaultUsers 자동 씨딩
+    if(snap.empty){
+      for(const u of defaultUsers) await db.collection('users').doc(u.id).set(u);
+      snap = await db.collection('users').get();
+    }
+    const users=snap.docs.map(d=>d.data()).filter(Boolean);
     const roleLabels={admin:'<span class="badge" style="background:var(--primary);color:#fff;">👑 관리자</span>',
       staff:'<span class="badge badge-orange">👤 직원</span>',
       viewer:'<span class="badge badge-purple">👁️ 읽기전용</span>'};
@@ -4827,7 +4928,7 @@ async function openM03StaffSMS() {
   try {
     const snap = await db.collection('employees').doc(String(staffVal)).get();
     const emp  = snap.exists ? snap.data() : { name: '직원', phone: '' };
-    const prog = document.getElementById('m03-program').options[document.getElementById('m03-program').selectedIndex]?.text || '-';
+    const prog = document.getElementById('m03-program').value || '-';
     const date = document.getElementById('m03-date').value || '-';
     const st   = document.getElementById('m03-start').value || '';
     const defaultMsg = `[온마을 업무알림]\n안녕하세요 ${emp.name}님!\n업무가 배정되었습니다.\n▪ 프로그램: ${prog}\n▪ 일시: ${date} ${st}\n확인 후 승인 부탁드립니다.`;
@@ -4861,6 +4962,8 @@ function updateSMSPreview() {
 }
 
 async function executeSMSSend() {
+  // #08 최후 방어선: admin만 실행 가능
+  const _se=getSession(); if(!_se||_se.role!=='admin'){ showToast('관리자만 SMS를 발송할 수 있습니다.','warn'); return; }
   const msg = document.getElementById('sms-body').value.trim();
   if (!msg) { alert('메시지 내용을 입력하세요.'); return; }
   const webhookUrl = localStorage.getItem('onmaeul_sms_webhook') || '';
@@ -5348,7 +5451,9 @@ async function loadLinkedUidSelect(selectedUid='') {
   const sel = document.getElementById('m02-linked-uid');
   if (!sel) return;
   try {
-    const snap = await db.collection('users').get();
+    let snap = await db.collection('users').get();
+    // #04 비어있으면 자동 씨딩
+    if(snap.empty){ for(const u of defaultUsers) await db.collection('users').doc(u.id).set(u); snap=await db.collection('users').get(); }
     const staffUsers = snap.docs.map(d=>d.data()).filter(u=>u.role==='staff'||u.role==='viewer');
     sel.innerHTML = '<option value="">-- 계정 미연결 --</option>' +
       staffUsers.map(u=>`<option value="${u.id}" ${u.id===selectedUid?'selected':''}>${u.name} (${u.id})</option>`).join('');
@@ -5463,25 +5568,36 @@ const IS_DEMO = (!db) || (firebaseConfig.projectId === "여기에_PROJECT_ID");
 
 if (IS_DEMO) {
   const _ls = {
-    get(col) { try { return JSON.parse(localStorage.getItem('om_'+col)||'{}'); } catch { return {}; } },
+    get(col) {
+      try {
+        const raw = JSON.parse(localStorage.getItem('om_'+col)||'{}');
+        // #06 null 값 항목 자동 제거
+        if(raw && typeof raw === 'object') {
+          Object.keys(raw).forEach(k=>{ if(raw[k]==null) delete raw[k]; });
+        }
+        return raw;
+      } catch { return {}; }
+    },
     set(col,d) { localStorage.setItem('om_'+col, JSON.stringify(d)); }
   };
   function _snap(docs) {
-    return { docs: docs.map(d=>({data:()=>d, exists:true, id:String(d.id||'')})), empty:!docs.length, size:docs.length };
+    // #06 null 문서 필터링
+    const valid = (docs||[]).filter(d=>d!=null);
+    return { docs: valid.map(d=>({data:()=>d, exists:true, id:String(d.id||'')})), empty:!valid.length, size:valid.length };
   }
   function _docSnap(data) { return { data:()=>data, exists:!!data }; }
 
   class QueryRef {
     constructor(col,docs){ this.col=col; this._d=docs; }
     where(f,op,v){ return new QueryRef(this.col, this._d.filter(x=>op==='=='?x[f]===v:true)); }
-    orderBy(f,dir){ const d=[...this._d].sort((a,b)=>{const c=a[f]>b[f]?1:a[f]<b[f]?-1:0;return dir==='desc'?-c:c;}); return new QueryRef(this.col,d); }
+    orderBy(f,dir){ const d=[...this._d].filter(x=>x!=null).sort((a,b)=>{if(!a||!b)return 0;const c=a[f]>b[f]?1:a[f]<b[f]?-1:0;return dir==='desc'?-c:c;}); return new QueryRef(this.col,d); } // #06 null 안전처리
     limit(n){ return new QueryRef(this.col,this._d.slice(0,n)); }
     async get(){ return _snap(this._d); }
   }
   class DocRef {
     constructor(col,id){ this.col=col; this.id=id; }
     async get(){ const s=_ls.get(this.col); return _docSnap(s[this.id]||null); }
-    async set(data){ const s=_ls.get(this.col); s[this.id]=data; _ls.set(this.col,s); }
+    async set(data){ if(data==null){ console.warn('#06 DocRef.set: null 데이터 저장 거부',this.col,this.id); return; } const s=_ls.get(this.col); s[this.id]=data; _ls.set(this.col,s); }
     async update(data){ const s=_ls.get(this.col); s[this.id]={...(s[this.id]||{}), ...data}; _ls.set(this.col,s); }
     async delete(){ const s=_ls.get(this.col); delete s[this.id]; _ls.set(this.col,s); }
   }
@@ -5678,7 +5794,7 @@ async function showPassDetail(custId){
         </div>
         <div style="margin-top:4px;font-size:12px;color:var(--text-muted);">패스: <code>${c.qrToken}</code></div>
         <div style="margin-top:4px;font-size:12px;color:var(--text-muted);">발급일: ${c.passIssuedAt||'-'}</div>
-        <button class="btn btn-ghost btn-sm" style="margin-top:8px;" onclick="openPassSMS(${c.id},'${c.name}','${c.phone||''}','${c.qrToken}')">📱 SMS 발송</button>
+        ${(()=>{const _s=getSession();return _s&&_s.role==='admin'?`<button class="btn btn-ghost btn-sm" style="margin-top:8px;" onclick="openPassSMS(${c.id},'${c.name}','${c.phone||''}','${c.qrToken}')">📱 SMS 발송</button>`:'';})()}
       </div>
     </div>
     <hr style="margin:12px 0;">
@@ -5960,6 +6076,8 @@ ${data.discountRate}% 할인 적용`);
 }
 
 function openPassSMS(custId, name, phone, token){
+  // #08 admin 전용 권한 가드
+  const _sg=getSession(); if(!_sg||_sg.role!=='admin'){ showToast('관리자만 SMS를 발송할 수 있습니다.','warn'); return; }
   // SNS 발송 모달로 통합
   if(typeof openSNSSend === "function") {
     openSNSSend(String(custId), name, "sms");
