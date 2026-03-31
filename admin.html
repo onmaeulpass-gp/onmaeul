@@ -4219,118 +4219,66 @@ async function calDayClick(ds) {
       getAll('tasks').then(a=>a.filter(t=>t.date===ds)),
       getAll('schedules').then(a=>a.filter(s=>s.date===ds))
     ]);
-    hideLoading();
     // 항상 바텀시트 먼저 — 일정 있으면 '이 날 일정 보기' 버튼도 표시
     _dayActionTasks = ts;
     _dayActionSched = ss;
     const viewBtn = document.getElementById('day-action-view-btn');
     if (viewBtn) viewBtn.style.display = (ts.length+ss.length) > 0 ? 'block' : 'none';
     openDayAction(ds);
-    return;
-    // ── 상세 표시는 _showDayDetail()로 이동 ──
-    if(false){
-
-    const _sess=getSession();
-    const taskPart=ts.map(t=>{
-      const isAdmin=_sess&&_sess.role==='admin';
-      const staffNames=t.staffNames&&t.staffNames.length?t.staffNames:(t.staff?[t.staff]:[]);
-      const isMyTask=_sess&&_sess.role==='staff'&&staffNames.includes(_sess.name);
-      const confirmBtn=isMyTask&&t.confirmStatus==='pending'
-        ?`<button onclick="confirmTask(${t.id});closeModal('detail-modal')" style="margin-top:8px;padding:5px 14px;background:#E8F5E9;color:#2E7D32;border:1px solid #A5D6A7;border-radius:6px;font-size:12px;cursor:pointer;">✅ 업무 확인</button>`
-        : isMyTask&&t.confirmStatus==='confirmed'
-        ?`<span style="display:inline-block;margin-top:6px;font-size:11px;color:#2E7D32;">✅ 확인 완료</span>`:'';
-      const adminBtns=isAdmin?`<div style="margin-top:6px;display:flex;gap:6px;">
-        <button onclick="closeModal('detail-modal');openM03Edit(${t.id})" style="padding:4px 10px;background:#e0e0e0;border:none;border-radius:5px;cursor:pointer;font-size:11px;">✏️ 수정</button>
-        <button onclick="if(confirm('삭제하시겠습니까?')){deleteM03(${t.id});closeModal('detail-modal');}" style="padding:4px 10px;background:#ffebee;border:none;border-radius:5px;cursor:pointer;font-size:11px;">🗑️ 삭제</button>
-      </div>`:'';
-      return `<div style="padding:12px;border-radius:10px;background:#F0F9F4;margin-bottom:10px;border-left:4px solid var(--primary);">
-        <b>${t.program||'-'}</b> <span style="font-size:10px;color:#888;">#업무</span><br>
-        <span style="font-size:12px;color:var(--text-muted);">🕐 ${t.startTime||'-'} ~ ${t.endTime||'-'} | 👥 ${t.people||0}명 | ${statusBadge(t.status)}</span>
-        ${staffNames.length?`<br><span style="font-size:11px;color:var(--text-muted);">👤 담당: ${staffNames.join(', ')}</span>`:''}
-        ${confirmBtn}${adminBtns}
-      </div>`;
-    }).join('');
-    const schPart=ss.map(s=>{
-      const isMine=_sess&&(_sess.role==='admin'||s.author===_sess.name);
-      return `<div style="padding:12px;border-radius:10px;background:#F5F5F5;margin-bottom:10px;border-left:4px solid #757575;">
-        <b style="color:#424242;">${s.type||'-'}</b> <span style="font-size:10px;color:#888;">#일정</span>
-        <span style="font-size:11px;color:#888;"> · ${s.author||''}</span><br>
-        <span style="font-size:12px;color:#757575;">🕐 ${s.startTime||'-'} ~ ${s.endTime||'-'}</span>
-        ${s.content?`<br><span style="font-size:12px;color:#555;">${s.content}</span>`:''}
-        ${isMine?`<div style="margin-top:6px;display:flex;gap:6px;">
-          <button onclick="openScheduleEdit(${s.id});closeModal('detail-modal')" style="padding:4px 10px;background:#e0e0e0;border:none;border-radius:5px;cursor:pointer;font-size:11px;">✏️ 수정</button>
-          <button onclick="deleteSchedule(${s.id});closeModal('detail-modal')" style="padding:4px 10px;background:#ffebee;border:none;border-radius:5px;cursor:pointer;font-size:11px;">🗑️ 삭제</button>
-        </div>`:''}
-      </div>`;
-    }).join('');
-    const body = taskPart + schPart;
-    document.getElementById('detail-title').textContent=`${ds} 일정 (${ts.length+ss.length}건)`;
-    const _sessForBtn=getSession();
-    const addBtnHtml=(_sessForBtn&&_sessForBtn.role==='admin')
-      ?`<div style="margin-bottom:12px;">
-          <button onclick="closeModal('detail-modal');openM03Add('${ds}')" style="width:100%;padding:9px;background:var(--primary);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;">+ 이 날 업무 등록 (${ds})</button>
-        </div>`:''
-    document.getElementById('detail-body').innerHTML=addBtnHtml+body;
-    openModal('detail-modal');
-  }finally{hideLoading();}
-  }
+  } finally { hideLoading(); }
 }
 
-// 날짜 상세 표시 (바텀시트에서 호출)
+// 날짜 상세 표시 (바텀시트 "이 날 일정 보기" 클릭 시 호출)
 async function _showDayDetail() {
   const ds = _dayActionDate;
   const ts = _dayActionTasks;
   const ss = _dayActionSched;
   showLoading();
   try {
-
-    const _sess=getSession();
-    // (기존 상세 팝업 로직)
-
-    const taskPart=ts.map(t=>{
-      const isAdmin=_sess&&_sess.role==='admin';
-      const staffNames=t.staffNames&&t.staffNames.length?t.staffNames:(t.staff?[t.staff]:[]);
-      const isMyTask=_sess&&_sess.role==='staff'&&staffNames.includes(_sess.name);
-      const confirmBtn=isMyTask&&t.confirmStatus==='pending'
-        ?`<button onclick="confirmTask(${t.id});closeModal('detail-modal')" style="margin-top:8px;padding:5px 14px;background:#E8F5E9;color:#2E7D32;border:1px solid #A5D6A7;border-radius:6px;font-size:12px;cursor:pointer;">✅ 업무 확인</button>`
-        : isMyTask&&t.confirmStatus==='confirmed'
-        ?`<span style="display:inline-block;margin-top:6px;font-size:11px;color:#2E7D32;">✅ 확인 완료</span>`:'';
-      const adminBtns=isAdmin?`<div style="margin-top:6px;display:flex;gap:6px;">
+    const _sess = getSession();
+    const taskPart = ts.map(t => {
+      const isAdmin = _sess && _sess.role === 'admin';
+      const staffNames = t.staffNames && t.staffNames.length ? t.staffNames : (t.staff ? [t.staff] : []);
+      const isMyTask = _sess && _sess.role === 'staff' && staffNames.includes(_sess.name);
+      const confirmBtn = isMyTask && t.confirmStatus === 'pending'
+        ? `<button onclick="confirmTask(${t.id});closeModal('detail-modal')" style="margin-top:8px;padding:5px 14px;background:#E8F5E9;color:#2E7D32;border:1px solid #A5D6A7;border-radius:6px;font-size:12px;cursor:pointer;">✅ 업무 확인</button>`
+        : isMyTask && t.confirmStatus === 'confirmed'
+        ? `<span style="display:inline-block;margin-top:6px;font-size:11px;color:#2E7D32;">✅ 확인 완료</span>` : '';
+      const adminBtns = isAdmin ? `<div style="margin-top:6px;display:flex;gap:6px;">
         <button onclick="closeModal('detail-modal');openM03Edit(${t.id})" style="padding:4px 10px;background:#e0e0e0;border:none;border-radius:5px;cursor:pointer;font-size:11px;">✏️ 수정</button>
         <button onclick="if(confirm('삭제하시겠습니까?')){deleteM03(${t.id});closeModal('detail-modal');}" style="padding:4px 10px;background:#ffebee;border:none;border-radius:5px;cursor:pointer;font-size:11px;">🗑️ 삭제</button>
-      </div>`:'';
+      </div>` : '';
       return `<div style="padding:12px;border-radius:10px;background:#F0F9F4;margin-bottom:10px;border-left:4px solid var(--primary);">
         <b>${t.program||'-'}</b> <span style="font-size:10px;color:#888;">#업무</span><br>
         <span style="font-size:12px;color:var(--text-muted);">🕐 ${t.startTime||'-'} ~ ${t.endTime||'-'} | 👥 ${t.people||0}명 | ${statusBadge(t.status)}</span>
-        ${staffNames.length?`<br><span style="font-size:11px;color:var(--text-muted);">👤 담당: ${staffNames.join(', ')}</span>`:''}
+        ${staffNames.length ? `<br><span style="font-size:11px;color:var(--text-muted);">👤 담당: ${staffNames.join(', ')}</span>` : ''}
         ${confirmBtn}${adminBtns}
       </div>`;
     }).join('');
-    const schPart=ss.map(s=>{
-      const isMine=_sess&&(_sess.role==='admin'||s.author===_sess.name);
+    const schPart = ss.map(s => {
+      const isMine = _sess && (_sess.role === 'admin' || s.author === _sess.name);
       return `<div style="padding:12px;border-radius:10px;background:#F5F5F5;margin-bottom:10px;border-left:4px solid #757575;">
         <b style="color:#424242;">${s.type||'-'}</b> <span style="font-size:10px;color:#888;">#일정</span>
         <span style="font-size:11px;color:#888;"> · ${s.author||''}</span><br>
         <span style="font-size:12px;color:#757575;">🕐 ${s.startTime||'-'} ~ ${s.endTime||'-'}</span>
-        ${s.content?`<br><span style="font-size:12px;color:#555;">${s.content}</span>`:''}
-        ${isMine?`<div style="margin-top:6px;display:flex;gap:6px;">
+        ${s.content ? `<br><span style="font-size:12px;color:#555;">${s.content}</span>` : ''}
+        ${isMine ? `<div style="margin-top:6px;display:flex;gap:6px;">
           <button onclick="openScheduleEdit(${s.id});closeModal('detail-modal')" style="padding:4px 10px;background:#e0e0e0;border:none;border-radius:5px;cursor:pointer;font-size:11px;">✏️ 수정</button>
           <button onclick="deleteSchedule(${s.id});closeModal('detail-modal')" style="padding:4px 10px;background:#ffebee;border:none;border-radius:5px;cursor:pointer;font-size:11px;">🗑️ 삭제</button>
-        </div>`:''}
+        </div>` : ''}
       </div>`;
     }).join('');
     const body = taskPart + schPart;
-    document.getElementById('detail-title').textContent=`${ds} 일정 (${ts.length+ss.length}건)`;
-    const _sessForBtn=getSession();
-    const addBtnHtml=(_sessForBtn&&_sessForBtn.role==='admin')
-      ?`<div style="margin-bottom:12px;">
+    document.getElementById('detail-title').textContent = `${ds} 일정 (${ts.length+ss.length}건)`;
+    const addBtnHtml = (_sess && _sess.role === 'admin')
+      ? `<div style="margin-bottom:12px;">
           <button onclick="closeModal('detail-modal');openM03Add('${ds}')" style="width:100%;padding:9px;background:var(--primary);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;">+ 이 날 업무 등록 (${ds})</button>
-        </div>`:''
-    document.getElementById('detail-body').innerHTML=addBtnHtml+body;
+        </div>` : '';
+    document.getElementById('detail-body').innerHTML = addBtnHtml + body;
     openModal('detail-modal');
-  }finally{hideLoading();}
-  }finally{hideLoading();}
+  } finally { hideLoading(); }
 }
+
 
 // ═══════════════════════════════════════════════════════════
 // M04 조합연계
