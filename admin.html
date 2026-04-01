@@ -1858,6 +1858,10 @@ body.role-viewer .perm-write { display: none !important; }
 //  ██████╗  Firebase 설정
 //  이 4줄만 본인 Firebase 프로젝트 값으로 교체하면 됩니다.
 // ═══════════════════════════════════════════════════════════
+// 사이트 기본 URL — 변경 시 여기만 수정
+const SITE_BASE_URL = "https://onmaeulpass-gp.github.io/onmaeul";
+const PASS_URL = (token) => SITE_BASE_URL + "/pass.html?pass=" + token;
+
 const firebaseConfig = {
   apiKey:            "AIzaSyBFBX_W5Qk-XKL9K918e6NUwXwG8pLvETk",
   authDomain:        "onmaeul-2e7ea.firebaseapp.com",
@@ -5796,18 +5800,12 @@ function openPassSMS(custId, name, phone, token){
     const bodyEl=document.getElementById('sms-body');
     if(toEl) toEl.value=phone||'';
     if(bodyEl) bodyEl.value=
-      `[온마을 스테이패스 발급안내]
-`+
-      `고객님 안녕하세요! 온마을 스테이패스가 발급되었습니다.
-
-`+
-      `고객명: ${name}
-`+
-      `패스번호: ${token}
-
-`+
-      `가맹점 방문 시 패스 QR을 제시하시면 할인혜택을 받으실 수 있습니다.
-`+
+      `[온마을 스테이패스 발급안내]\n`+
+      `고객님 안녕하세요! 온마을 스테이패스가 발급되었습니다.\n\n`+
+      `고객명: ${name}\n`+
+      `패스번호: ${token}\n`+
+      `패스 링크: ${PASS_URL(token)}\n\n`+
+      `가맹점 방문 시 패스 QR을 제시하시면 할인혜택을 받으실 수 있습니다.\n`+
       `문의: 온마을`;
     openModal('sms-modal');
   } else {
