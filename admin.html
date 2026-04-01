@@ -1859,12 +1859,12 @@ body.role-viewer .perm-write { display: none !important; }
 //  이 4줄만 본인 Firebase 프로젝트 값으로 교체하면 됩니다.
 // ═══════════════════════════════════════════════════════════
 const firebaseConfig = {
-  apiKey:            "여기에_API_KEY_붙여넣기",
-  authDomain:        "여기에_PROJECT_ID.firebaseapp.com",
-  projectId:         "여기에_PROJECT_ID",
-  storageBucket:     "여기에_PROJECT_ID.appspot.com",
-  messagingSenderId: "여기에_SENDER_ID",
-  appId:             "여기에_APP_ID"
+  apiKey:            "AIzaSyBFBX_W5Qk-XKL9K918e6NUwXwG8pLvETk",
+  authDomain:        "onmaeul-2e7ea.firebaseapp.com",
+  projectId:         "onmaeul-2e7ea",
+  storageBucket:     "onmaeul-2e7ea.firebasestorage.app",
+  messagingSenderId: "448985054380",
+  appId:             "1:448985054380:web:e93f7e4d0b2fa92c95f309"
 };
 // ═══════════════════════════════════════════════════════════
 
@@ -4870,9 +4870,10 @@ async function showM07Day(ds) {
       html += `</div>`;
     }
     if(!entries.length && !scheds.length) {
-      html = `<div class="empty-state" style="padding:24px;">
-        <p>이날 등록된 일지/일정이 없습니다</p>
-      </div>`;
+      // 빈 날짜 클릭 → 바로 일지 작성 모달 오픈
+      hideLoading();
+      openM07AddDate(ds);
+      return;
     }
     // 일지 작성 버튼
     html += `<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px;">
