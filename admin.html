@@ -876,7 +876,7 @@ body.role-viewer .perm-write { display: none !important; }
           <button class="btn btn-sm" onclick="openScheduleAdd()" style="white-space:nowrap;background:#757575;color:#fff;border:none;border-radius:8px;padding:7px 14px;cursor:pointer;">+ 일정 등록</button>
         </div>
       </div>
-      <div id="m03-list-view" class="staff-hide">
+      <div id="m03-list-view" class="staff-hide" style="display:none;">
         <div class="card">
           <div class="card-header">
             <h3>📋 업무 목록</h3>
@@ -928,7 +928,7 @@ body.role-viewer .perm-write { display: none !important; }
           <div class="card-body" id="m03-week-content"></div>
         </div>
       </div>
-      <div id="m03-month-view">
+      <div id="m03-month-view" style="display:none;">
         <div class="card">
           <div class="card-header">
             <h3>📅 월간 캘린더</h3>
@@ -1966,6 +1966,32 @@ if (IS_DEMO) {
 }
 
 
+// ── 업체 자동로그인 (페이지 로드 시) ──────────────────────
+(function tryBizAutoLogin(){
+  const savedId = localStorage.getItem('biz_auto_id');
+  const savedPw = localStorage.getItem('biz_auto_pw');
+  if(!savedId || !savedPw) return;
+  setTimeout(async function(){
+    try{
+      if(!db || !db.collection) return;
+      const doc = await db.collection('users').doc(savedId).get();
+      if(!doc.exists) return;
+      const user = doc.data();
+      if(user.pw !== savedPw || !user.coopId) return;
+      setSession({ id:user.id, name:user.name, role:user.role,
+        permissions:user.permissions||[], coopId:user.coopId,
+        coopName:user.coopName, discountRate:user.discountRate||0,
+        isBizAccount:true, mustChangePw:user.mustChangePw||false });
+      applySession();
+      const ls=document.getElementById('login-screen');
+      if(ls){ ls.classList.add('hidden'); ls.style.display='none'; }
+      showModule('dashboard');
+      if(user.mustChangePw) setTimeout(()=>openChangePwModal(), 500);
+    }catch(e){ console.warn('자동로그인 실패:', e.message); }
+  }, 1200);
+})();
+// ─────────────────────────────────────────────────────────────
+
 // ─── 온/오프라인 상태 ────────────────────────────────────
 function setOnline(online) {
   const dot = document.getElementById('online-dot');
@@ -2509,9 +2535,15 @@ function doLogout() {
     if(el) el.classList.toggle('active', i===0);
   });
   document.getElementById('topbar-user').style.display = 'none';
-  document.getElementById('login-id').value = '';
-  document.getElementById('login-pw').value = '';
-  document.getElementById('login-error').textContent = '';
+  // 3탭 방식 — 각 탭 입력 초기화
+  ['biz-login-id','biz-login-pw','admin-login-id','admin-login-pw'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  ['biz-login-error','admin-login-error','reg-error1','reg-error2'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.textContent='';
+  });
+  // 로그아웃 후 관리자 탭으로 이동 (업체/관리자 재로그인 편의)
+  switchLoginTab('admin');
   closeSidebar();
 }
 
@@ -2764,10 +2796,10 @@ function showModule(mod) {
   if(mod==='m01') { populateM01Selects(); renderM01(); }
   if(mod==='m02') { populateM02Selects(); renderM02(); showWorkSection('list'); }
   if(mod==='m03') {
-    const _sr = (getSession()||{}).role;
-    // 기본 탭: staff/admin 모두 월간으로
+    // 기본 탭: 월간 (선택 후 달력 초기화)
+    populateM03Selects();
+    renderM03();
     switchM03Tab('month');
-    populateM03Selects(); renderM03();
   }
   if(mod==='m04') { populateM04Selects(); renderM04(); }
   if(mod==='m05') { initM05(); renderM05(); }
