@@ -2028,15 +2028,6 @@ function getSession() {
 function setSession(u)  { sessionStorage.setItem(SESSION_KEY, JSON.stringify(u)); }
 function clearSession() { sessionStorage.removeItem(SESSION_KEY); }
 
-async function getUsers() {
-  const snap = await db.collection('users').get();
-  if (snap.empty) {
-    for (const u of defaultUsers) await db.collection('users').doc(u.id).set(u);
-    return defaultUsers;
-  }
-  return snap.docs.map(d => d.data());
-}
-
 
 
 function switchLoginTab(tab){
@@ -2242,9 +2233,13 @@ function doLogout() {
   const ls = document.getElementById('login-screen');
   ls.classList.remove('hidden'); ls.style.display = 'flex';
   document.getElementById('topbar-user').style.display = 'none';
-  document.getElementById('login-id').value = '';
-  document.getElementById('login-pw').value = '';
-  document.getElementById('login-error').textContent = '';
+  ['biz-login-id','biz-login-pw','admin-login-id','admin-login-pw'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  ['biz-login-error','admin-login-error','reg-error1','reg-error2'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.textContent='';
+  });
+  switchLoginTab('admin');
   closeSidebar();
 }
 
