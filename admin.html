@@ -264,7 +264,6 @@ tr:last-child td { border-bottom: none; }
 .discount-slider { flex:1; min-width:120px; accent-color:var(--primary); cursor:pointer; }
 .settings-save-btn { width:100%; padding:12px; background:var(--primary); color:#fff; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; transition:background .2s; margin-top:8px; }
 .settings-save-btn:hover { background:var(--primary-dark); }
-
 /* ── 업무일지 공개 팝업 ── */
 .diary-notice-overlay { position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:10000; display:flex; align-items:center; justify-content:center; padding:20px; }
 .diary-notice-box { background:#fff; border-radius:18px; padding:28px 24px; max-width:420px; width:100%; box-shadow:0 20px 60px rgba(0,0,0,.25); }
@@ -273,12 +272,10 @@ tr:last-child td { border-bottom: none; }
 .diary-notice-date  { font-size:12px; color:var(--text-muted); margin-bottom:14px; }
 .diary-notice-body  { font-size:13px; line-height:1.8; color:var(--text); background:#f8fffe; border-radius:10px; padding:14px; margin-bottom:18px; white-space:pre-wrap; }
 .diary-notice-close { width:100%; padding:11px; background:var(--primary); color:#fff; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; }
-
 /* ── 업체 모드 — 인쇄/출력 숨기기 ── */
 body.biz-mode [onclick*="window.print"],
 body.biz-mode [onclick*="printWorkStats"],
 body.biz-mode .no-print-biz { display: none !important; }
-
 /* ── 일정·업무 선택 팝업 ── */
 .day-action-overlay { position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:9998; display:flex; align-items:flex-end; justify-content:center; }
 .day-action-sheet { background:#fff; border-radius:18px 18px 0 0; padding:24px 20px 32px; width:100%; max-width:480px; }
@@ -287,28 +284,15 @@ body.biz-mode .no-print-biz { display: none !important; }
 .day-action-btn.primary { background:var(--primary); color:#fff; }
 .day-action-btn.secondary { background:#f5f5f5; color:var(--text); }
 .day-action-btn.cancel { background:none; color:var(--text-muted); font-weight:400; font-size:13px; }
-
-
-.login-tabs {
-  display: flex; gap: 4px; margin-bottom: 16px;
-}
-.login-tab {
-  flex: 1; padding: 8px 4px; border: 1.5px solid var(--border);
-  border-radius: 8px; background: #f8f8f8; font-size: 12px;
-  font-weight: 600; cursor: pointer; color: var(--text-muted); transition: all .2s;
-}
-.login-tab.active {
-  background: var(--primary); color: #fff; border-color: var(--primary);
-}
+/* ── 3탭 로그인 ── */
+.login-tabs { display: flex; gap: 4px; margin-bottom: 16px; }
+.login-tab { flex: 1; padding: 8px 4px; border: 1.5px solid var(--border); border-radius: 8px; background: #f8f8f8; font-size: 12px; font-weight: 600; cursor: pointer; color: var(--text-muted); transition: all .2s; }
+.login-tab.active { background: var(--primary); color: #fff; border-color: var(--primary); }
 .login-panel { display: none; }
 .login-panel.active { display: block; }
 .reg-step { display:none; }
 .reg-step.active { display:block; }
-.pw-change-note {
-  background: #E8F5E9; border: 1px solid #A5D6A7; border-radius: 10px;
-  padding: 12px 14px; font-size: 13px; color: #2E7D32;
-  margin-bottom: 14px; line-height: 1.6;
-}
+.pw-change-note { background: #E8F5E9; border: 1px solid #A5D6A7; border-radius: 10px; padding: 12px 14px; font-size: 13px; color: #2E7D32; margin-bottom: 14px; line-height: 1.6; }
 .login-error { color: var(--danger); font-size: 12px; text-align: center; margin-top: 10px; min-height: 18px; }
 .login-hint { background: #F0F9F4; border-radius: 10px; padding: 12px 14px; margin-top: 18px; font-size: 11px; color: var(--text-muted); }
 .login-hint b { color: var(--primary); }
@@ -521,30 +505,18 @@ body.role-viewer .perm-write { display: none !important; }
       <img src="onmaeullogo.svg" alt="온마을 ONMAEUL" style="height:52px;width:auto;display:block;margin:0 auto 10px;">
       <p>통합 운영 플랫폼</p>
     </div>
-
     <!-- 3탭 -->
     <div class="login-tabs">
       <button class="login-tab active" onclick="switchLoginTab('register')">📝 업체 등록</button>
       <button class="login-tab"        onclick="switchLoginTab('biz')">🏪 업체 로그인</button>
       <button class="login-tab"        onclick="switchLoginTab('admin')">👑 관리자</button>
     </div>
-
     <!-- ── 탭1: 업체 등록 ── -->
     <div class="login-panel active" id="panel-register">
-      <!-- STEP 1: 업체 정보 -->
       <div class="reg-step active" id="reg-step1">
-        <div class="form-group">
-          <label>업체명 *</label>
-          <input id="reg-biz-name" placeholder="예: 온더락 카페">
-        </div>
-        <div class="form-group">
-          <label>대표자명 *</label>
-          <input id="reg-owner-name" placeholder="홍길동">
-        </div>
-        <div class="form-group">
-          <label>연락처 *</label>
-          <input id="reg-biz-phone" placeholder="010-0000-0000" oninput="formatPhone(this)">
-        </div>
+        <div class="form-group"><label>업체명 *</label><input id="reg-biz-name" placeholder="예: 상생카페"></div>
+        <div class="form-group"><label>대표자명 *</label><input id="reg-owner-name" placeholder="홍길동"></div>
+        <div class="form-group"><label>연락처 *</label><input id="reg-biz-phone" placeholder="010-0000-0000" oninput="formatPhone(this)"></div>
         <div class="form-group">
           <label>업종</label>
           <select id="reg-biz-type" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;">
@@ -556,26 +528,14 @@ body.role-viewer .perm-write { display: none !important; }
         <button class="login-btn" onclick="regStep1Next()">다음 →</button>
         <div class="login-error" id="reg-error1"></div>
       </div>
-
-      <!-- STEP 2: 로그인 계정 생성 -->
       <div class="reg-step" id="reg-step2">
-        <div class="pw-change-note">
-          ✅ 업체 정보 등록 완료!<br>
-          이제 로그인에 사용할 아이디와 비밀번호를 만들어주세요.
-        </div>
-        <div class="form-group">
-          <label>로그인 아이디 *</label>
-          <input id="reg-uid" placeholder="영문+숫자 4~20자">
-        </div>
-        <div class="form-group">
-          <label>비밀번호 * <span style="font-size:10px;color:var(--text-muted);">6자 이상</span></label>
-          <input id="reg-pw" type="password" placeholder="6자 이상" oninput="checkRegPwMatch()">
-        </div>
+        <div class="pw-change-note">✅ 업체 정보 등록 완료!<br>이제 로그인에 사용할 아이디와 비밀번호를 만들어주세요.</div>
+        <div class="form-group"><label>로그인 아이디 *</label><input id="reg-uid" placeholder="영문+숫자 4~20자"></div>
+        <div class="form-group"><label>비밀번호 * <span style="font-size:10px;color:var(--text-muted);">6자 이상</span></label><input id="reg-pw" type="password" placeholder="6자 이상" oninput="checkRegPwMatch()"></div>
         <div class="form-group">
           <label>비밀번호 재확인 *</label>
           <div style="position:relative;">
-            <input id="reg-pw2" type="password" placeholder="동일하게 입력" oninput="checkRegPwMatch()"
-              style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;box-sizing:border-box;padding-right:36px;">
+            <input id="reg-pw2" type="password" placeholder="동일하게 입력" oninput="checkRegPwMatch()" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;box-sizing:border-box;padding-right:36px;">
             <span id="reg-pw-icon" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:16px;"></span>
           </div>
           <div id="reg-pw-msg" style="font-size:11px;margin-top:4px;min-height:16px;"></div>
@@ -586,8 +546,6 @@ body.role-viewer .perm-write { display: none !important; }
         </div>
         <div class="login-error" id="reg-error2"></div>
       </div>
-
-      <!-- STEP 3: 등록 완료 -->
       <div class="reg-step" id="reg-step3">
         <div style="text-align:center;padding:20px 0;">
           <div style="font-size:48px;margin-bottom:12px;">🎉</div>
@@ -597,44 +555,25 @@ body.role-viewer .perm-write { display: none !important; }
         <button class="login-btn" onclick="switchLoginTab('biz')">업체 로그인으로 이동 →</button>
       </div>
     </div>
-
     <!-- ── 탭2: 업체 로그인 ── -->
     <div class="login-panel" id="panel-biz">
-      <div class="form-group">
-        <label>아이디</label>
-        <input type="text" id="biz-login-id" placeholder="업체 아이디 입력" onkeydown="if(event.key==='Enter')doBizLogin()">
-      </div>
-      <div class="form-group">
-        <label>비밀번호</label>
-        <input type="password" id="biz-login-pw" placeholder="비밀번호 입력" onkeydown="if(event.key==='Enter')doBizLogin()">
-      </div>
+      <div class="form-group"><label>아이디</label><input type="text" id="biz-login-id" placeholder="업체 아이디 입력" onkeydown="if(event.key==='Enter')doBizLogin()"></div>
+      <div class="form-group"><label>비밀번호</label><input type="password" id="biz-login-pw" placeholder="비밀번호 입력" onkeydown="if(event.key==='Enter')doBizLogin()"></div>
       <label style="display:flex;align-items:center;gap:6px;margin:10px 0 0;font-size:12px;color:var(--text-muted);cursor:pointer;">
-        <input type="checkbox" id="biz-auto-login" style="accent-color:var(--primary);width:14px;height:14px;">
-        이 기기에서 자동로그인
+        <input type="checkbox" id="biz-auto-login" style="accent-color:var(--primary);width:14px;height:14px;"> 이 기기에서 자동로그인
       </label>
       <button class="login-btn" onclick="doBizLogin()" style="margin-top:8px;">🏪 업체 로그인</button>
       <div class="login-error" id="biz-login-error"></div>
     </div>
-
     <!-- ── 탭3: 관리자 로그인 ── -->
     <div class="login-panel" id="panel-admin">
-      <div class="form-group">
-        <label>관리자 아이디</label>
-        <input type="text" id="admin-login-id" placeholder="관리자 아이디" onkeydown="if(event.key==='Enter')doAdminLogin()">
-      </div>
-      <div class="form-group">
-        <label>비밀번호</label>
-        <input type="password" id="admin-login-pw" placeholder="비밀번호 입력" onkeydown="if(event.key==='Enter')doAdminLogin()">
-      </div>
+      <div class="form-group"><label>관리자 아이디</label><input type="text" id="admin-login-id" placeholder="관리자 아이디" onkeydown="if(event.key==='Enter')doAdminLogin()"></div>
+      <div class="form-group"><label>비밀번호</label><input type="password" id="admin-login-pw" placeholder="비밀번호 입력" onkeydown="if(event.key==='Enter')doAdminLogin()"></div>
       <button class="login-btn" style="background:var(--primary-dark);" onclick="doAdminLogin()">👑 관리자 로그인</button>
       <div class="login-error" id="admin-login-error"></div>
       <div style="text-align:center;margin-top:8px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
-        <button onclick="resetDefaultAccounts()" style="background:none;border:none;color:#9E9E9E;font-size:11px;cursor:pointer;text-decoration:underline;padding:4px;">
-          🔑 관리자 계정 초기화
-        </button>
-        <button onclick="hardReset()" style="background:#FFEBEE;border:1px solid #FFCDD2;color:#C62828;font-size:11px;cursor:pointer;border-radius:6px;padding:4px 10px;font-weight:600;">
-          🔄 전체 초기화 (안될 때)
-        </button>
+        <button onclick="resetDefaultAccounts()" style="background:none;border:none;color:#9E9E9E;font-size:11px;cursor:pointer;text-decoration:underline;padding:4px;">🔑 관리자 계정 초기화</button>
+        <button onclick="hardReset()" style="background:#FFEBEE;border:1px solid #FFCDD2;color:#C62828;font-size:11px;cursor:pointer;border-radius:6px;padding:4px 10px;font-weight:600;">🔄 전체 초기화 (안될 때)</button>
       </div>
     </div>
   </div>
@@ -683,14 +622,14 @@ body.role-viewer .perm-write { display: none !important; }
     <a onclick="showModule('report')" id="nav-report" class="perm-admin">
       <span class="ico">📊</span> 월별리포트
     </a>
-    <a onclick="showModule('admin-monitor')" id="nav-admin-monitor" class="perm-admin">
-      <span class="ico">🏪</span> 업체모니터링
-    </a>
     <a onclick="showModule('m09')" id="nav-m09">
       <span class="ico">🎫</span> 스테이패스
     </a>
     <a onclick="showModule('biz-settings')" id="nav-biz-settings" style="display:none;">
       <span class="ico">⚙️</span> 업체 설정
+    </a>
+    <a onclick="showModule('admin-monitor')" id="nav-admin-monitor" class="perm-admin">
+      <span class="ico">🏪</span> 업체 모니터링
     </a>
   </nav>
   <div style="padding:14px 18px;border-top:1px solid rgba(255,255,255,.1);" id="sidebar-user-info">
@@ -1292,7 +1231,6 @@ body.role-viewer .perm-write { display: none !important; }
     </div>
 
     <!-- ===== 월별 리포트 ===== -->
-    <!-- ===== BIZ-SETTINGS 업체 설정 (업체 로그인 전용) ===== -->
     <div id="module-biz-settings" class="module" style="display:none;">
       <div class="settings-card">
         <h4>⚙️ 업체 설정</h4>
@@ -1707,7 +1645,6 @@ body.role-viewer .perm-write { display: none !important; }
   </div>
 </div>
 
-
 <!-- 날짜 클릭 — 업무/일정 선택 바텀시트 -->
 <div id="day-action-overlay" class="day-action-overlay" style="display:none;" onclick="if(event.target===this)closeDayAction()">
   <div class="day-action-sheet">
@@ -1858,7 +1795,7 @@ body.role-viewer .perm-write { display: none !important; }
 //  ██████╗  Firebase 설정
 //  이 4줄만 본인 Firebase 프로젝트 값으로 교체하면 됩니다.
 // ═══════════════════════════════════════════════════════════
-// 사이트 기본 URL — 변경 시 여기만 수정
+// 사이트 기본 URL
 const SITE_BASE_URL = "https://onmaeulpass-gp.github.io/onmaeul";
 const PASS_URL = (token) => SITE_BASE_URL + "/pass.html?pass=" + token;
 
@@ -2041,11 +1978,7 @@ const defaultUsers = [
   { id: 'viewer',name: '읽기전용',pw: 'view1234', role: 'viewer', lastLogin: '' }
 ];
 
-function getSession() {
-  try { return JSON.parse(sessionStorage.getItem(SESSION_KEY)); } catch { return null; }
-}
-function setSession(u)  { sessionStorage.setItem(SESSION_KEY, JSON.stringify(u)); }
-function clearSession() { sessionStorage.removeItem(SESSION_KEY); }
+
 
 function readLocalUsers() {
   try {
@@ -2085,6 +2018,23 @@ async function getUsers() {
     writeLocalUsers(users);
     return users;
   }
+}
+
+
+
+function getSession() {
+  try { return JSON.parse(sessionStorage.getItem(SESSION_KEY)); } catch { return null; }
+}
+function setSession(u)  { sessionStorage.setItem(SESSION_KEY, JSON.stringify(u)); }
+function clearSession() { sessionStorage.removeItem(SESSION_KEY); }
+
+async function getUsers() {
+  const snap = await db.collection('users').get();
+  if (snap.empty) {
+    for (const u of defaultUsers) await db.collection('users').doc(u.id).set(u);
+    return defaultUsers;
+  }
+  return snap.docs.map(d => d.data());
 }
 
 
@@ -2283,298 +2233,20 @@ async function doAdminLogin(){
 }
 
 // ── 알림 시스템 ──────────────────────────────────
-async function checkAdminNotifs(){
-  const sess = getSession();
-  if(!sess || sess.role !== 'admin') return;
-  try{
-    const snap = await db.collection('notifications').where('read','==',false).get();
-    const count = snap.size;
-    const btn   = document.getElementById('notif-btn');
-    const badge = document.getElementById('notif-badge');
-    if(count > 0){
-      if(btn)   { btn.style.display='block'; }
-      if(badge) { badge.style.display='flex'; badge.textContent=count>9?'9+':String(count); }
-      // 팝업 자동 표시 (첫 로그인 시)
-      openNotifPopup();
-    } else {
-      if(btn)   btn.style.display='none';
-      if(badge) badge.style.display='none';
-    }
-  }catch(e){ console.warn('알림 조회 실패:', e); }
-}
 
-async function openNotifPopup(){
-  const sess = getSession();
-  if(!sess || sess.role !== 'admin') return;
-  try{
-    const snap = await db.collection('notifications').orderBy('createdAt','desc').limit(20).get();
-    const notifs = snap.docs.map(d=>d.data());
-    const unreadCount = notifs.filter(n=>!n.read).length;
 
-    // 기존 팝업 제거
-    const old = document.getElementById('notif-popup-overlay');
-    if(old) old.remove();
-
-    const overlay = document.createElement('div');
-    overlay.className='notif-popup-overlay'; overlay.id='notif-popup-overlay';
-    overlay.innerHTML=`
-      <div class="notif-popup">
-        <div class="notif-popup-header">
-          <h3>🔔 업체 등록 알림 ${unreadCount>0?'<span style="background:rgba(255,255,255,.2);padding:2px 8px;border-radius:10px;font-size:12px;margin-left:8px;">'+unreadCount+'건 미읽음</span>':''}</h3>
-          <button onclick="document.getElementById('notif-popup-overlay').remove()" style="background:none;border:none;color:#fff;font-size:18px;cursor:pointer;padding:0 4px;">✕</button>
-        </div>
-        <div class="notif-list" id="notif-list">
-          ${notifs.length===0
-            ? '<div style="padding:32px;text-align:center;color:#aaa;font-size:14px;">새 알림이 없습니다.</div>'
-            : notifs.map(n=>`
-              <div class="notif-item ${n.read?'':'unread'}" id="ni-${n.id}">
-                <div class="notif-item-icon">${n.type==='new_biz'?'🏪':'📢'}</div>
-                <div class="notif-item-body">
-                  <div class="notif-item-title">${n.title}</div>
-                  <div class="notif-item-desc">${n.desc}</div>
-                  <div class="notif-item-time">${formatRelTime(n.createdAt)}</div>
-                </div>
-                ${!n.read?`<button onclick="markNotifRead('${n.id}')" style="flex-shrink:0;background:#e8f5e9;border:none;color:#2e7d32;border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;white-space:nowrap;">읽음</button>`:'<span style="font-size:11px;color:#ccc;flex-shrink:0;">✓</span>'}
-              </div>`).join('')
-          }
-        </div>
-        <div class="notif-popup-footer">
-          ${unreadCount>0?`<button onclick="markAllNotifsRead()" class="btn btn-ghost btn-sm">전체 읽음 처리</button>`:''}
-          <button onclick="document.getElementById('notif-popup-overlay').remove()" class="btn btn-primary btn-sm">닫기</button>
-        </div>
-      </div>`;
-    document.body.appendChild(overlay);
-    // 오버레이 클릭 시 닫기
-    overlay.addEventListener('click', function(e){ if(e.target===overlay) overlay.remove(); });
-  }catch(e){ console.warn('알림 팝업 오류:', e); }
-}
-
-async function markNotifRead(notifId){
-  try{
-    await db.collection('notifications').doc(notifId).update({ read: true });
-    const item = document.getElementById('ni-'+notifId);
-    if(item){
-      item.classList.remove('unread');
-      const btn = item.querySelector('button');
-      if(btn) btn.outerHTML='<span style="font-size:11px;color:#ccc;flex-shrink:0;">✓</span>';
-    }
-    checkAdminNotifs();
-  }catch(e){ console.warn('읽음 처리 실패:', e); }
-}
-
-async function markAllNotifsRead(){
-  try{
-    const snap = await db.collection('notifications').where('read','==',false).get();
-    const batch = db.batch ? db.batch() : null;
-    if(batch){
-      snap.docs.forEach(d=>batch.update(d.ref,{read:true}));
-      await batch.commit();
-    } else {
-      for(const d of snap.docs) await d.ref.update({read:true});
-    }
-    document.getElementById('notif-popup-overlay')?.remove();
-    checkAdminNotifs();
-  }catch(e){ console.warn('전체 읽음 실패:', e); }
-}
-
-function formatRelTime(iso){
-  if(!iso) return '';
-  const diff = Date.now() - new Date(iso).getTime();
-  const m = Math.floor(diff/60000);
-  if(m<1)   return '방금 전';
-  if(m<60)  return m+'분 전';
-  const h = Math.floor(m/60);
-  if(h<24)  return h+'시간 전';
-  const d = Math.floor(h/24);
-  if(d<7)   return d+'일 전';
-  return new Date(iso).toLocaleDateString('ko-KR');
-}
-
-// ── 비밀번호 변경 모달 (로그인 후 변경) ──
-function openChangePwModal(){
-  // 이미 모달 있으면 열기
-  const m = document.getElementById('change-pw-modal');
-  if(m){ openModal('change-pw-modal'); return; }
-  // 동적 생성
-  const div = document.createElement('div');
-  div.className='modal-overlay'; div.id='change-pw-modal';
-  div.innerHTML=`
-    <div class="modal" style="max-width:380px;">
-      <div class="modal-header">
-        <h3>🔑 비밀번호 변경</h3>
-        <button class="modal-close" onclick="closeModal('change-pw-modal')">✕</button>
-      </div>
-      <div class="modal-body">
-        <div class="pw-change-note">초기 비밀번호를 변경해주세요.</div>
-        <div class="form-group"><label>현재 비밀번호</label>
-          <input id="cpw-cur" type="password" placeholder="현재 비밀번호"></div>
-        <div class="form-group"><label>새 비밀번호</label>
-          <input id="cpw-new" type="password" placeholder="6자 이상" oninput="checkCpwMatch()"></div>
-        <div class="form-group"><label>새 비밀번호 재확인</label>
-          <div style="position:relative;">
-            <input id="cpw-new2" type="password" placeholder="동일하게 입력" oninput="checkCpwMatch()"
-              style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;box-sizing:border-box;padding-right:36px;">
-            <span id="cpw-icon" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:16px;"></span>
-          </div>
-          <div id="cpw-msg" style="font-size:11px;margin-top:4px;min-height:16px;"></div>
-        </div>
-        <div id="cpw-error" class="login-error"></div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-ghost" onclick="closeModal('change-pw-modal')">나중에</button>
-        <button class="btn btn-primary" onclick="submitChangePw()">변경 완료</button>
-      </div>
-    </div>`;
-  document.body.appendChild(div);
-  openModal('change-pw-modal');
-}
-function checkCpwMatch(){
-  const pw=document.getElementById('cpw-new')?.value;
-  const pw2=document.getElementById('cpw-new2')?.value;
-  const icon=document.getElementById('cpw-icon');
-  const msg=document.getElementById('cpw-msg');
-  if(!pw2){ if(icon) icon.textContent=''; if(msg) msg.textContent=''; return; }
-  if(pw===pw2){ if(icon) icon.textContent='✅'; if(msg){msg.textContent='일치합니다.';msg.style.color='#2e7d32';} }
-  else        { if(icon) icon.textContent='❌'; if(msg){msg.textContent='비밀번호가 다릅니다.';msg.style.color='#c62828';} }
-}
-async function submitChangePw(){
-  const cur  = document.getElementById('cpw-cur')?.value;
-  const nw   = document.getElementById('cpw-new')?.value;
-  const nw2  = document.getElementById('cpw-new2')?.value;
-  const err  = document.getElementById('cpw-error');
-  const sess = getSession();
-  if(!cur)           { err.textContent='현재 비밀번호를 입력하세요.'; return; }
-  if(!nw||nw.length<6){ err.textContent='새 비밀번호는 6자 이상이어야 합니다.'; return; }
-  if(nw!==nw2)       { err.textContent='새 비밀번호가 일치하지 않습니다.'; return; }
-  showLoading('변경 중...');
-  try{
-    const doc = await db.collection('users').doc(sess.id).get();
-    const user = doc.data();
-    if(user.pw!==cur){ err.textContent='현재 비밀번호가 올바르지 않습니다.'; hideLoading(); return; }
-    await db.collection('users').doc(sess.id).set({ pw:nw, mustChangePw:false }, { merge:true });
-    closeModal('change-pw-modal');
-    alert('✅ 비밀번호가 변경되었습니다.');
-  }catch(e){ err.textContent='변경 실패: '+(e.message||'다시 시도해주세요.'); }
-  finally { hideLoading(); }
-}
-
-async function doLogin() {
-  // 구형 로그인 → 관리자 탭으로 리다이렉트 (하위 호환)
-  switchLoginTab('admin');
-  return;
-  // --- 아래는 레거시 코드 (사용 안 함) ---
-  const id = document.getElementById('login-id').value.trim();
-  const pw = document.getElementById('login-pw').value;
-  if (!id || !pw) { document.getElementById('login-error').textContent = '아이디와 비밀번호를 입력하세요.'; return; }
-  showLoading('로그인 중...');
-  try {
-    const users = await getUsers();
-    let user = users.find(u => u.id === id);
-
-    if (!user && db && db.collection) {
-      try {
-        const snap = await db.collection('users').doc(id).get();
-        if (snap.exists) user = snap.data();
-      } catch (e) {
-        console.warn('개별 사용자 조회 실패:', e.message);
-      }
-    }
-
-    if (!user || user.pw !== pw) {
-      document.getElementById('login-error').textContent = '아이디 또는 비밀번호가 올바르지 않습니다.';
-      hideLoading();
-      return;
-    }
-
-    if (db && db.collection) {
-      try {
-        await db.collection('users').doc(id).set({ ...user, lastLogin: new Date().toLocaleString('ko-KR') }, { merge: true });
-      } catch (e) {
-        console.warn('lastLogin 저장 실패:', e.message);
-      }
-    }
-
-    setSession({
-      id: user.id, name: user.name, role: user.role,
-      permissions: user.permissions||[],
-      coopId:      user.coopId   || null,
-      coopName:    user.coopName || null,
-      discountRate: user.discountRate != null ? Number(user.discountRate) : null
-    });
-    applySession();
-    const ls = document.getElementById('login-screen');
-    ls.classList.add('hidden'); ls.style.display = 'none';
-    document.getElementById('login-error').textContent='';
-    document.getElementById('login-id').value='';
-    document.getElementById('login-pw').value='';
-    showModule('dashboard');
-  } catch(e) {
-    document.getElementById('login-error').textContent = '오류: ' + (e.message||'다시 시도해 주세요.');
-    console.error(e);
-  } finally { hideLoading(); }
-}
 
 function doLogout() {
-  // 업체 계정이면 자동로그인 해제 여부 확인
-  const sess = getSession();
-  if(sess && sess.isBizAccount && localStorage.getItem('biz_auto_id')){
-    if(!confirm('자동로그인을 유지하시겠습니까?\n\n취소를 누르면 자동로그인이 해제됩니다.')){
-      localStorage.removeItem('biz_auto_id');
-      localStorage.removeItem('biz_auto_pw');
-    }
-  }
   clearSession();
   document.body.className = '';
   const ls = document.getElementById('login-screen');
   ls.classList.remove('hidden'); ls.style.display = 'flex';
-  // 로그아웃 시 탭 초기화 (업체 등록 탭으로)
-  switchLoginTab('register');
-  // 업체등록 step 초기화
-  ['reg-step1','reg-step2','reg-step3'].forEach((id,i)=>{
-    const el=document.getElementById(id);
-    if(el) el.classList.toggle('active', i===0);
-  });
   document.getElementById('topbar-user').style.display = 'none';
-  // 3탭 방식 — 각 탭 입력 초기화
-  ['biz-login-id','biz-login-pw','admin-login-id','admin-login-pw'].forEach(id=>{
-    const el=document.getElementById(id); if(el) el.value='';
-  });
-  ['biz-login-error','admin-login-error','reg-error1','reg-error2'].forEach(id=>{
-    const el=document.getElementById(id); if(el) el.textContent='';
-  });
-  // 로그아웃 후 관리자 탭으로 이동 (업체/관리자 재로그인 편의)
-  switchLoginTab('admin');
+  document.getElementById('login-id').value = '';
+  document.getElementById('login-pw').value = '';
+  document.getElementById('login-error').textContent = '';
   closeSidebar();
 }
-
-async function resetDefaultAccounts() {
-  if (!confirm('기본 계정을 초기화합니다.\n\nadmin / admin1234\nstaff / staff1234\nviewer / view1234\n\n계속하시겠습니까?')) return;
-  showLoading('초기화 중...');
-  try {
-    writeLocalUsers(defaultUsers);
-    if (db && db.collection) {
-      for (const u of defaultUsers) {
-        try { await db.collection('users').doc(u.id).set(u); } catch (e) { console.warn('Firestore 기본 계정 저장 실패:', e.message); }
-      }
-    }
-    alert('✅ 기본 계정이 초기화되었습니다.\n\nadmin / admin1234 로 로그인하세요.');
-  } catch(e) {
-    alert('초기화 실패: ' + e.message);
-  } finally { hideLoading(); }
-}
-
-function hardReset() {
-  if (!confirm('⚠️ 전체 초기화\n\n로그인 세션과 로컬 캐시를 모두 지웁니다.\n데이터(Firebase)는 삭제되지 않습니다.\n\n계속하시겠습니까?')) return;
-  try {
-    localStorage.clear();
-    sessionStorage.clear();
-    alert('✅ 초기화 완료! 페이지를 다시 로드합니다.');
-  } catch(e) {
-    alert('초기화 중 오류: ' + e.message);
-  }
-  location.reload();
-}
-
 
 async function resetDefaultAccounts() {
   if (!confirm('기본 계정을 초기화합니다.\n\nadmin / admin1234\nstaff / staff1234\nviewer / view1234\n\n계속하시겠습니까?')) return;
@@ -2616,22 +2288,12 @@ function applySession() {
 
   // ── 업체 로그인 처리 ─────────────────────────────────────
   if (s.isBizAccount) {
-    // 엑셀/CSV/인쇄/출력 관련 버튼 비활성화 (업체 로그인)
+    // 엑셀/CSV/인쇄/출력 관련 버튼 비활성화
     document.querySelectorAll([
-      '[onclick*="exportCSV"]',
-      '[onclick*="exportExcel"]',
-      '[onclick*="downloadExcel"]',
-      '[onclick*="exportXls"]',
-      '[data-excel]',
-      '[onclick*="window.print"]',
-      '[onclick*="printWorkStats"]'
+      '[onclick*="exportCSV"]','[onclick*="exportExcel"]','[onclick*="downloadExcel"]',
+      '[onclick*="exportXls"]','[data-excel]','[onclick*="window.print"]','[onclick*="printWorkStats"]'
     ].join(','))
-      .forEach(el => {
-        el.style.display = 'none';
-        el.setAttribute('data-biz-hidden', '1');
-      });
-    // biz-mode body 클래스로 CSS에서도 제어
-    document.body.classList.add('biz-mode');
+      .forEach(el => { el.style.display='none'; el.setAttribute('data-biz-hidden','1'); });
     document.body.classList.add('biz-mode');
     // 업체 전용 메뉴만 표시
     const bizShowNav = ['nav-dashboard','nav-m03','nav-m07','nav-m09','nav-biz-settings'];
@@ -2645,22 +2307,32 @@ function applySession() {
     return;
   }
 
+  // ── admin — 모든 nav 복원 ────────────────────────────────
+  if (s.role === 'admin') {
+    // 이전 업체 로그인 등으로 숨겨진 메뉴 전체 복원
+    const allAdminNav = ['nav-dashboard','nav-m01','nav-m02','nav-m03','nav-m04',
+      'nav-m05','nav-m06','nav-users','nav-m07','nav-m08','nav-report','nav-admin-monitor'];
+    allAdminNav.forEach(id => { const n=document.getElementById(id); if(n) n.style.display=''; });
+    // 업체 설정 메뉴는 admin에게 숨김
+    const navBiz = document.getElementById('nav-biz-settings');
+    if(navBiz) navBiz.style.display = 'none';
+  }
+
   // ── staff 개별 권한 적용 ──────────────────────────────────
   if (s.role === 'staff') {
     const perms = s.permissions || [];
+    // admin이 부여할 수 있는 staff 모듈 목록
     const staffMods = ['m01','m03','m04','m05','m08'];
     staffMods.forEach(mod => {
       const nav = document.getElementById('nav-' + mod);
       if (!nav) return;
+      // 권한 있으면 표시, 없으면 완전히 숨김
       nav.style.display = perms.includes(mod) ? '' : 'none';
     });
+    // m07(업무일지)는 staff 기본 접근 허용
     const nav7 = document.getElementById('nav-m07');
     if (nav7) nav7.style.display = '';
   }
-
-  // 관리자 모니터링 메뉴 표시
-  const navMon = document.getElementById('nav-admin-monitor');
-  if (navMon && s.role === 'admin') navMon.style.display = '';
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -2796,7 +2468,8 @@ function showModule(mod) {
   if(mod==='m01') { populateM01Selects(); renderM01(); }
   if(mod==='m02') { populateM02Selects(); renderM02(); showWorkSection('list'); }
   if(mod==='m03') {
-    // 기본 탭: 월간 (선택 후 달력 초기화)
+    const _sr = (getSession()||{}).role;
+    // 기본 탭: staff/admin 모두 월간으로
     populateM03Selects();
     renderM03();
     switchM03Tab('month');
@@ -4986,24 +4659,12 @@ async function saveM07() {
   showLoading('저장 중...');
   try {
     const id = editId ? Number(editId) : await genId('diary');
-    const isPublic = document.getElementById('m07-is-public')?.checked || false;
     const data = { id, date, staffId, staffName,
       todo: document.getElementById('m07-todo').value,
       done: document.getElementById('m07-done').value,
       memo: document.getElementById('m07-memo').value,
-      isPublic,
       updatedAt: new Date().toLocaleString('ko-KR') };
     if (!editId) data.createdAt = new Date().toLocaleString('ko-KR');
-    // 공개 설정 시 공지 컬렉션에 저장
-    if (isPublic) {
-      const noticeId = 'diary_notice_' + id;
-      await db.collection('diary_notices').doc(noticeId).set({
-        id: noticeId, diaryId: id, date, staffName,
-        todo: data.todo, memo: data.memo,
-        createdAt: new Date().toLocaleString('ko-KR'),
-        isPublic: true
-      });
-    }
     if (editId) {
       await db.collection('diary').doc(String(id)).update(data);
     } else {
@@ -5025,27 +4686,6 @@ async function deleteM07(id) {
   } finally { hideLoading(); }
 }
 
-
-
-// ══════════════════════════════════════════════════════════
-// 날짜 클릭 바텀시트 (업무 등록 / 일정 등록 선택)
-// ══════════════════════════════════════════════════════════
-let _dayActionDate = '';
-let _dayActionTasks = [], _dayActionSched = [];
-function openDayAction(ds) {
-  _dayActionDate = ds;
-  const overlay = document.getElementById('day-action-overlay');
-  const title   = document.getElementById('day-action-date');
-  if (!overlay) return;
-  title.textContent = ds + ' — 무엇을 등록할까요?';
-  overlay.style.display = 'flex';
-}
-function closeDayAction() {
-  const overlay = document.getElementById('day-action-overlay');
-  if (overlay) overlay.style.display = 'none';
-}
-
-// ══════════════════════════════════════════════════════════
 // 업체 설정 — 할인율 저장/로드
 // ══════════════════════════════════════════════════════════
 function setBizDiscount(val) {
@@ -5833,11 +5473,18 @@ function openPassSMS(custId, name, phone, token){
     if(toEl) toEl.value=phone||'';
     if(bodyEl) bodyEl.value=
       `[온마을 스테이패스 발급안내]\n`+
-      `고객님 안녕하세요! 온마을 스테이패스가 발급되었습니다.\n\n`+
-      `고객명: ${name}\n`+
-      `패스번호: ${token}\n`+
-      `패스 링크: ${PASS_URL(token)}\n\n`+
-      `가맹점 방문 시 패스 QR을 제시하시면 할인혜택을 받으실 수 있습니다.\n`+
+      `고객님 안녕하세요! 온마을 스테이패스가 발급되었습니다.
+
+`+
+      `고객명: ${name}
+`+
+      `패스번호: ${token}
+`+
+      `패스 링크: ${PASS_URL(token)}
+
+`+
+      `가맹점 방문 시 패스 QR을 제시하시면 할인혜택을 받으실 수 있습니다.
+`+
       `문의: 온마을`;
     openModal('sms-modal');
   } else {
@@ -5850,6 +5497,8 @@ function openPassSMS(custId, name, phone, token){
       `고객명: ${name}
 `+
       `패스번호: ${token}
+`+
+      `패스 링크: ${PASS_URL(token)}
 
 `+
       `가맹점 방문 시 패스 QR을 제시하시면 할인혜택을 받으실 수 있습니다.
