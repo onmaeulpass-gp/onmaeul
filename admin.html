@@ -1407,8 +1407,12 @@ body.role-viewer .perm-write { display: none !important; }
       <!-- ── 탭A: 직접입력 ── -->
       <div id="m01-panel-new">
       <div class="form-grid" style="grid-template-columns:1fr 1fr;gap:12px;">
-        <div class="form-group"><label>고객명 *</label><input id="m01-name" placeholder="홍길동"></div>
-        <div class="form-group"><label>전화번호 *</label><input id="m01-phone" placeholder="010-0000-0000" oninput="formatPhone(this)"></div>
+        <div class="form-group"><label>고객명 *</label><input id="m01-name" placeholder="홍길동" oninput="checkDupCustomer()"></div>
+        <div class="form-group">
+          <label>전화번호 *</label>
+          <input id="m01-phone" placeholder="010-0000-0000" oninput="formatPhone(this);checkDupCustomer()">
+          <div id="m01-dup-notice" style="display:none;margin-top:6px;padding:8px 12px;background:#FFF3E0;border:1px solid #FFB74D;border-radius:8px;font-size:12px;color:#E65100;line-height:1.6;"></div>
+        </div>
         <div class="form-group"><label>체험일자</label><input id="m01-date" type="date"></div>
         <div class="form-group"><label>체험인원</label><input id="m01-people" type="number" min="1" placeholder="인원수 입력"></div>
         <div class="form-group"><label>체험프로그램</label><select id="m01-program"><option value="">선택</option></select></div>
@@ -1990,39 +1994,6 @@ body.role-viewer .perm-write { display: none !important; }
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('m08-modal')">취소</button>
       <button class="btn btn-primary" onclick="saveM08Event()">저장 및 발송 준비</button>
-    </div>
-  </div>
-</div>
-
-<!-- M08 이벤트 열람 Modal -->
-<div class="modal-overlay" id="m08-view-modal">
-  <div class="modal" style="max-width:520px;">
-    <div class="modal-header">
-      <h3 id="m08-view-title">이벤트 상세</h3>
-      <button class="modal-close" onclick="closeModal('m08-view-modal')">✕</button>
-    </div>
-    <div class="modal-body">
-      <!-- 발송 정보 요약 -->
-      <div id="m08-view-meta" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;"></div>
-      <!-- 이미지 첨부 미리보기 -->
-      <div id="m08-view-img-wrap" style="display:none;margin-bottom:14px;text-align:center;">
-        <img id="m08-view-img" src="" alt="첨부 이미지" style="max-width:100%;max-height:200px;border-radius:8px;border:1px solid var(--border);">
-        <div style="font-size:11px;color:var(--text-muted);margin-top:4px;" id="m08-view-img-label"></div>
-      </div>
-      <!-- 메시지 내용 -->
-      <div class="form-group">
-        <label>메시지 내용</label>
-        <div id="m08-view-body" class="sms-preview" style="white-space:pre-wrap;"></div>
-      </div>
-      <!-- 수신자 목록 -->
-      <div class="form-group" style="margin-top:12px;">
-        <label>수신자 <span id="m08-view-cnt" style="font-size:11px;color:var(--text-muted);font-weight:400;"></span></label>
-        <div id="m08-view-recipients" style="max-height:140px;overflow-y:auto;background:var(--bg);border-radius:8px;padding:8px 12px;font-size:13px;"></div>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal('m08-view-modal')">닫기</button>
-      <button class="btn btn-accent" id="m08-view-resend-btn" onclick="resendEvent()">📤 다시 보내기</button>
     </div>
   </div>
 </div>
@@ -3351,6 +3322,9 @@ async function openM01Add() {
   ['m01-name','m01-phone','m01-email','m01-date','m01-people','m01-amount','m01-sns'].forEach(id=>document.getElementById(id).value='');
   ['m01-program','m01-source','m01-payment','m01-coupon'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('m01-memo').value='';
+  // 중복 알림 초기화 [중복감지 2026-04]
+  const dupEl = document.getElementById('m01-dup-notice');
+  if(dupEl){ dupEl.style.display='none'; dupEl.textContent=''; }
   // 탭 초기화 — 직접입력 탭으로
   switchM01Tab('new');
   _importSelected = null;
@@ -3359,6 +3333,38 @@ async function openM01Add() {
   document.getElementById('qr-preview').innerHTML='';
   await populateM01Selects();
   openModal('m01-modal');
+}
+
+// 전화번호 입력 시 실시간 중복 고객 감지 [중복감지 2026-04]
+let _dupCheckTimer = null;
+async function checkDupCustomer() {
+  if(m01EditId) return; // 수정 모드에서는 체크 안 함
+  clearTimeout(_dupCheckTimer);
+  const dupEl = document.getElementById('m01-dup-notice');
+  if(!dupEl) return;
+  const phone = document.getElementById('m01-phone').value.replace(/\D/g,'');
+  const name  = document.getElementById('m01-name').value.trim();
+  if(phone.length < 10) { dupEl.style.display='none'; return; }
+  _dupCheckTimer = setTimeout(async () => {
+    try {
+      const allCusts = await getAll('customers');
+      // 전화번호만으로 먼저 체크
+      const phoneMatch = allCusts.filter(c => c.phone.replace(/\D/g,'') === phone);
+      if(!phoneMatch.length) { dupEl.style.display='none'; return; }
+      const exactDup = phoneMatch.find(c => name && c.name.trim() === name);
+      if(exactDup) {
+        dupEl.style.display='block';
+        dupEl.innerHTML = `⚠️ <b>기존 등록 고객입니다!</b><br>`+
+          `${exactDup.name} · ${exactDup.phone} · 등록일 ${exactDup.date||'-'} · 패스 ${exactDup.qrToken||'미발급'}`;
+      } else if(phoneMatch.length > 0) {
+        // 전화번호만 동일
+        dupEl.style.display='block';
+        dupEl.innerHTML = `ℹ️ 동일 전화번호 등록 고객 있음: <b>${phoneMatch.map(c=>c.name).join(', ')}</b>`;
+      } else {
+        dupEl.style.display='none';
+      }
+    } catch(e) { /* 조용히 실패 */ }
+  }, 500);
 }
 async function openM01Edit(id) {
   showLoading();
@@ -3409,6 +3415,34 @@ async function saveM01() {
   }
   const email=document.getElementById('m01-email').value.trim();
   if(email&&!/^[^@]+@[^@]+\.[^@]+$/.test(email)){alert('이메일 형식이 올바르지 않습니다.');return;}
+
+  // ── 신규 등록 시 이름+전화번호 중복 고객 감지 [중복감지 2026-04] ──
+  if(!m01EditId && phone) {
+    showLoading('중복 확인 중...');
+    try {
+      const fmtedNow = document.getElementById('m01-phone').value.trim();
+      const allCusts = await getAll('customers');
+      const dup = allCusts.find(c =>
+        c.name.trim() === name &&
+        c.phone.replace(/\D/g,'') === fmtedNow.replace(/\D/g,'')
+      );
+      if (dup) {
+        hideLoading();
+        const go = confirm(
+          `⚠️ 기존 등록 고객입니다!\n\n` +
+          `고객명: ${dup.name}\n` +
+          `전화번호: ${dup.phone}\n` +
+          `등록일: ${dup.date||'-'}\n` +
+          `패스번호: ${dup.qrToken||'-'}\n\n` +
+          `동일한 고객이 이미 등록되어 있습니다.\n` +
+          `계속 진행하면 중복으로 등록됩니다.\n\n` +
+          `[확인] 중복 등록 계속   [취소] 등록 취소`
+        );
+        if (!go) return;
+      }
+    } catch(e) { console.warn('중복확인 오류:', e.message); hideLoading(); }
+  }
+
   showLoading('저장 중...');
   try {
     const fmtedPhone = document.getElementById('m01-phone').value.trim();
@@ -3548,25 +3582,58 @@ async function renderM01() {
 async function showCustomerHistory(custId, custName) {
   showLoading('이력 조회 중...');
   try {
-    const allTasks = await getAll('tasks');
-    const hist = allTasks.filter(t=>t.customerId===custId).sort((a,b)=>b.date>a.date?1:-1);
-    const totalAmt = hist.reduce((s,t)=>s+(Number(t.amount)||0),0);
-    const payColor=s=>s==='입금완료'?'#2E7D32':s==='부분입금'?'#E65100':s==='현장결제'?'#1565C0':'#B71C1C';
-    const payBg=s=>s==='입금완료'?'#E8F5E9':s==='부분입금'?'#FFF3E0':s==='현장결제'?'#E3F2FD':'#FFEBEE';
-    const body = hist.length===0
-      ? '<p style="color:var(--text-muted);padding:20px 0;">연결된 체험 이력이 없습니다.</p>'
-      : `<div style="margin-bottom:10px;padding:10px 12px;background:#F0F9F4;border-radius:8px;font-size:13px;">
+    // ── 타입 통일: custId가 문자열로 들어와도 양쪽 모두 String으로 비교 [이력수정 2026-04] ──
+    const [allTasks, allVisits] = await Promise.all([getAll('tasks'), getAll('visits')]);
+
+    // tasks: customerId 는 숫자로 저장 → String 변환 후 비교
+    const hist = allTasks
+      .filter(t => String(t.customerId) === String(custId))
+      .sort((a,b) => (b.date > a.date ? 1 : -1));
+
+    // visits: customerId 는 숫자로 저장 → String 변환 후 비교
+    const visitHist = allVisits
+      .filter(v => String(v.customerId) === String(custId))
+      .sort((a,b) => (b.visitDate > a.visitDate ? 1 : -1));
+
+    const totalAmt  = hist.reduce((s,t) => s + (Number(t.amount)||0), 0);
+    const payColor  = s => s==='입금완료'?'#2E7D32':s==='부분입금'?'#E65100':s==='현장결제'?'#1565C0':'#B71C1C';
+    const payBg     = s => s==='입금완료'?'#E8F5E9':s==='부분입금'?'#FFF3E0':s==='현장결제'?'#E3F2FD':'#FFEBEE';
+
+    // 업무(체험) 이력 섹션
+    const taskSection = hist.length === 0
+      ? '<p style="color:var(--text-muted);padding:12px 0 4px;">연결된 체험 이력이 없습니다.</p>'
+      : `<div style="margin-bottom:8px;padding:10px 12px;background:#F0F9F4;border-radius:8px;font-size:13px;">
           총 <b>${hist.length}회</b> 체험 · 누적 금액 <b>${formatMoney(totalAmt)}</b>
-         </div>`+
-        hist.map(t=>`<div style="padding:10px 0;border-bottom:1px solid var(--border);font-size:13px;">
+         </div>`
+        + hist.map(t=>`<div style="padding:10px 0;border-bottom:1px solid var(--border);font-size:13px;">
           <div style="display:flex;justify-content:space-between;align-items:center;">
             <span><span class="badge badge-green">${t.program||'-'}</span> ${formatDate(t.date)}</span>
             <span style="font-size:11px;font-weight:700;color:${payColor(t.payStatus)};background:${payBg(t.payStatus)};padding:2px 7px;border-radius:6px;">${t.payStatus||'미입금'}</span>
           </div>
           <div style="color:var(--text-muted);margin-top:2px;">🕐 ${t.startTime||'-'}~${t.endTime||'-'} | 👥 ${t.people||0}명 | 💰 ${t.amount?formatMoney(t.amount):'-'}</div>
         </div>`).join('');
-    document.getElementById('detail-title').textContent=`📋 ${custName} · 체험 이력`;
-    document.getElementById('detail-body').innerHTML=body;
+
+    // 가맹점 방문 이력 섹션
+    const visitSection = visitHist.length === 0
+      ? '<p style="color:var(--text-muted);padding:12px 0 4px;">가맹점 방문 기록이 없습니다.</p>'
+      : `<div style="margin-bottom:8px;padding:10px 12px;background:#E3F2FD;border-radius:8px;font-size:13px;">
+          총 <b>${visitHist.length}회</b> 가맹점 방문
+         </div>`
+        + visitHist.map(v=>`<div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;display:flex;justify-content:space-between;align-items:center;">
+          <span>🏪 <b>${v.coopName||'-'}</b></span>
+          <span style="font-size:11px;color:var(--text-muted);">${v.visitDate||'-'} ${v.visitTime||''}</span>
+          <span style="font-size:11px;color:#1565C0;font-weight:700;">${v.discountRate||0}% 할인</span>
+        </div>`).join('');
+
+    const body = `
+      <h4 style="font-size:13px;font-weight:700;color:var(--text-muted);margin-bottom:8px;">📋 체험 이력</h4>
+      ${taskSection}
+      <h4 style="font-size:13px;font-weight:700;color:var(--text-muted);margin:16px 0 8px;">🏪 가맹점 방문 이력</h4>
+      ${visitSection}
+    `;
+
+    document.getElementById('detail-title').textContent = `📋 ${custName} · 이용 이력`;
+    document.getElementById('detail-body').innerHTML = body;
     openModal('detail-modal');
   } finally { hideLoading(); }
 }
@@ -5653,8 +5720,7 @@ async function renderM08() {
       <td style="font-size:12px;color:var(--text-muted);">${ev.sentAt||'-'}</td>
       <td>${ev.recipientCount||0}명</td>
       <td><span class="badge badge-${ev.status==='발송완료'?'green':'orange'}">${ev.status||'준비중'}</span></td>
-      <td style="white-space:nowrap;">
-        <button class="btn btn-ghost btn-sm btn-icon" onclick="viewM08Event(${ev.id})" title="열람">🔍</button>
+      <td>
         <button class="btn btn-primary btn-sm" onclick="sendEventNow(${ev.id})" ${ev.status==='발송완료'?'disabled':''}>📤 발송</button>
         <button class="btn btn-danger btn-sm btn-icon" onclick="deleteM08(${ev.id})">🗑️</button>
       </td></tr>`).join('');
@@ -5722,63 +5788,18 @@ async function saveM08Event() {
 }
 
 async function sendEventNow(id) {
-  const doc = await db.collection('events').doc(String(id)).get();
-  if (!doc.exists) return;
-  const ev = doc.data();
-  const recipients = ev.recipients || [];
-  if (!recipients.length) { alert('수신자가 없습니다.'); return; }
-
-  const hasMMS = !!(ev.imageBase64);
-  const msgTypeLabel = hasMMS ? 'MMS(이미지 포함)' : 'SMS';
-  const names = recipients.slice(0,3).map(r=>r.name).join(', ') + (recipients.length>3 ? ` 외 ${recipients.length-3}명` : '');
-
-  if (!confirm(`"${ev.title}"\n수신: ${names}\n발송 방식: ${msgTypeLabel}\n\n지금 바로 발송하시겠습니까?`)) return;
-
-  const _stored = localStorage.getItem('onmaeul_sms_webhook') || '';
-  const webhookUrl = (_stored && _stored.startsWith('https://')) ? _stored : (R.makeWebhookSMS || '');
-
-  showLoading('발송 중...');
+  showLoading();
   try {
-    let successCount = 0, failCount = 0;
-    if (webhookUrl && webhookUrl.startsWith('https://')) {
-      for (const r of recipients) {
-        try {
-          const payload = {
-            to:          (r.phone||'').replace(/[^0-9]/g,''),
-            name:        r.name || '',
-            message:     ev.body || '',
-            from:        R.fullName || '온마을가평',
-            messageType: hasMMS ? 'MMS' : 'SMS'
-          };
-          if (hasMMS) {
-            payload.imageBase64   = ev.imageBase64;
-            payload.imageMimeType = ev.imageMimeType || 'image/jpeg';
-            payload.imageFileName = ev.imageFileName || 'image.jpg';
-          }
-          await fetch(webhookUrl, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(payload)
-          });
-          successCount++;
-        } catch(e) { failCount++; }
-      }
-    } else {
-      successCount = recipients.length;
-    }
-    await db.collection('events').doc(String(id)).update({
-      status:       '발송완료',
-      sentAt:       new Date().toLocaleString('ko-KR'),
-      successCount, failCount,
-      lastSentAt:   new Date().toISOString()
+    const doc = await db.collection('events').doc(String(id)).get();
+    if (!doc.exists) return;
+    const ev = doc.data();
+    openSMSModal(ev.recipients||[], ev.body, async ()=>{
+      await db.collection('events').doc(String(id)).update({
+        status:'발송완료', sentAt: new Date().toLocaleString('ko-KR')
+      });
+      await renderM08();
     });
-    await renderM08();
-    alert(`✅ ${msgTypeLabel} 발송 완료!\n성공 ${successCount}명${failCount > 0 ? ` / 실패 ${failCount}명` : ''}`);
-  } catch(e) {
-    alert('발송 오류: ' + e.message);
-  } finally {
-    hideLoading();
-  }
+  } finally { hideLoading(); }
 }
 
 async function deleteM08(id) {
@@ -5788,91 +5809,6 @@ async function deleteM08(id) {
     await db.collection('events').doc(String(id)).delete();
     await renderM08();
   } finally { hideLoading(); }
-}
-
-// ═══════════════════════════════════════════════════════════
-// M08 이벤트 열람 + 다시 보내기 [열람기능 2026-04]
-// ═══════════════════════════════════════════════════════════
-let _viewingEventId = null;
-
-async function viewM08Event(id) {
-  showLoading('불러오는 중...');
-  try {
-    const doc = await db.collection('events').doc(String(id)).get();
-    if (!doc.exists) { alert('이벤트를 찾을 수 없습니다.'); return; }
-    const ev = doc.data();
-    _viewingEventId = id;
-
-    // 제목
-    document.getElementById('m08-view-title').textContent = ev.title || '이벤트 상세';
-
-    // 요약 메타
-    const statusColor = ev.status === '발송완료' ? '#2E7D5B' : '#E65100';
-    document.getElementById('m08-view-meta').innerHTML = `
-      <div style="background:var(--bg);border-radius:8px;padding:10px 12px;">
-        <div style="font-size:11px;color:var(--text-muted);margin-bottom:3px;">상태</div>
-        <div style="font-size:14px;font-weight:700;color:${statusColor};">${ev.status||'준비중'}</div>
-      </div>
-      <div style="background:var(--bg);border-radius:8px;padding:10px 12px;">
-        <div style="font-size:11px;color:var(--text-muted);margin-bottom:3px;">수신 인원</div>
-        <div style="font-size:14px;font-weight:700;">${ev.recipientCount||0}명</div>
-      </div>
-      <div style="background:var(--bg);border-radius:8px;padding:10px 12px;">
-        <div style="font-size:11px;color:var(--text-muted);margin-bottom:3px;">작성일</div>
-        <div style="font-size:12px;">${ev.createdAt||'-'}</div>
-      </div>
-      <div style="background:var(--bg);border-radius:8px;padding:10px 12px;">
-        <div style="font-size:11px;color:var(--text-muted);margin-bottom:3px;">발송일</div>
-        <div style="font-size:12px;color:${ev.sentAt?'#2E7D5B':'var(--text-muted)'};">${ev.sentAt||'미발송'}</div>
-      </div>
-    `;
-
-    // 이미지 첨부 미리보기
-    const imgWrap = document.getElementById('m08-view-img-wrap');
-    const imgEl   = document.getElementById('m08-view-img');
-    const imgLbl  = document.getElementById('m08-view-img-label');
-    if (ev.imageBase64) {
-      imgEl.src = `data:${ev.imageMimeType||'image/jpeg'};base64,${ev.imageBase64}`;
-      imgLbl.textContent = `MMS 첨부 이미지 · ${ev.imageFileName||'image'} · ${ev.imageMimeType||''}`;
-      imgWrap.style.display = 'block';
-    } else {
-      imgWrap.style.display = 'none';
-    }
-
-    // 메시지 내용
-    document.getElementById('m08-view-body').textContent = ev.body || '(내용 없음)';
-
-    // 수신자 목록
-    const recipients = ev.recipients || [];
-    document.getElementById('m08-view-cnt').textContent = `(${recipients.length}명)`;
-    document.getElementById('m08-view-recipients').innerHTML = recipients.length
-      ? recipients.map(r => `
-          <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:0.5px solid var(--border);">
-            <span style="font-weight:600;">${r.name||'-'}</span>
-            <span style="color:var(--text-muted);">${r.phone||'-'}</span>
-          </div>`).join('')
-      : '<div style="color:var(--text-muted);font-size:12px;padding:6px 0;">수신자 없음</div>';
-
-    // 다시 보내기 버튼 레이블
-    const resendBtn = document.getElementById('m08-view-resend-btn');
-    if (resendBtn) {
-      resendBtn.textContent = ev.status === '발송완료'
-        ? '🔁 다시 보내기'
-        : '📤 지금 발송';
-    }
-
-    openModal('m08-view-modal');
-  } catch(e) {
-    alert('열람 오류: ' + e.message);
-  } finally {
-    hideLoading();
-  }
-}
-
-async function resendEvent() {
-  if (!_viewingEventId) return;
-  closeModal('m08-view-modal');
-  await sendEventNow(_viewingEventId);
 }
 
 // ═══════════════════════════════════════════════════════════
