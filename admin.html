@@ -637,13 +637,22 @@ body.role-viewer .perm-write { display: none !important; }
     </div>
     <!-- ── 탭2: 업체 로그인 ── -->
     <div class="login-panel" id="panel-biz">
-      <div class="form-group"><label>아이디</label><input type="text" id="biz-login-id" placeholder="업체 아이디 입력" onkeydown="if(event.key==='Enter')doBizLogin()"></div>
+      <div class="form-group">
+        <label style="display:flex;justify-content:space-between;align-items:center;">
+          <span>아이디 / 가맹점코드</span>
+          <span style="font-size:10px;color:var(--text-muted);font-weight:400;">예: CP-0001</span>
+        </label>
+        <input type="text" id="biz-login-id" placeholder="가맹점코드(CP-XXXX) 또는 아이디" onkeydown="if(event.key==='Enter')doBizLogin()">
+      </div>
       <div class="form-group"><label>비밀번호</label><input type="password" id="biz-login-pw" placeholder="비밀번호 입력" onkeydown="if(event.key==='Enter')doBizLogin()"></div>
       <label style="display:flex;align-items:center;gap:6px;margin:10px 0 0;font-size:12px;color:var(--text-muted);cursor:pointer;">
         <input type="checkbox" id="biz-auto-login" style="accent-color:var(--primary);width:14px;height:14px;"> 이 기기에서 자동로그인
       </label>
       <button class="login-btn" onclick="doBizLogin()" style="margin-top:8px;">🏪 업체 로그인</button>
       <div class="login-error" id="biz-login-error"></div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:10px;padding:8px 12px;background:#f8f9fa;border-radius:8px;line-height:1.7;">
+        💡 처음 로그인하시는 경우 가맹점코드를 입력하면<br>비밀번호를 직접 설정할 수 있습니다.
+      </div>
     </div>
     <!-- ── 탭3: 관리자 로그인 ── -->
     <div class="login-panel" id="panel-admin">
@@ -1000,15 +1009,16 @@ body.role-viewer .perm-write { display: none !important; }
       <div class="card">
         <div class="card-header">
           <h3>💰 정산 현황</h3>
-          <div style="display:flex;gap:8px;align-items:center;">
-            <select id="m05-year" onchange="renderM05()" style="padding:7px 12px;border:1.5px solid var(--border);border-radius:8px;background:#fff;font-size:13px;"></select>
-            <select id="m05-month" onchange="renderM05()" style="padding:7px 12px;border:1.5px solid var(--border);border-radius:8px;background:#fff;font-size:13px;">
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <select id="m05-year" onchange="renderM05CurrentTab()" style="padding:7px 12px;border:1.5px solid var(--border);border-radius:8px;background:#fff;font-size:13px;"></select>
+            <select id="m05-month" onchange="renderM05CurrentTab()" style="padding:7px 12px;border:1.5px solid var(--border);border-radius:8px;background:#fff;font-size:13px;">
               <option value="">전체</option>
               <option value="01">1월</option><option value="02">2월</option><option value="03">3월</option>
               <option value="04">4월</option><option value="05">5월</option><option value="06">6월</option>
               <option value="07">7월</option><option value="08">8월</option><option value="09">9월</option>
               <option value="10">10월</option><option value="11">11월</option><option value="12">12월</option>
             </select>
+            <button class="btn btn-ghost btn-sm" onclick="m05ShowAll()" style="white-space:nowrap;">📋 전체 표기</button>
           <button class="btn-excel" onclick="exportExcel('settle')">📥 엑셀</button>
           </div>
         </div>
@@ -1407,12 +1417,8 @@ body.role-viewer .perm-write { display: none !important; }
       <!-- ── 탭A: 직접입력 ── -->
       <div id="m01-panel-new">
       <div class="form-grid" style="grid-template-columns:1fr 1fr;gap:12px;">
-        <div class="form-group"><label>고객명 *</label><input id="m01-name" placeholder="홍길동" oninput="checkDupCustomer()"></div>
-        <div class="form-group">
-          <label>전화번호 *</label>
-          <input id="m01-phone" placeholder="010-0000-0000" oninput="formatPhone(this);checkDupCustomer()">
-          <div id="m01-dup-notice" style="display:none;margin-top:6px;padding:8px 12px;background:#FFF3E0;border:1px solid #FFB74D;border-radius:8px;font-size:12px;color:#E65100;line-height:1.6;"></div>
-        </div>
+        <div class="form-group"><label>고객명 *</label><input id="m01-name" placeholder="홍길동"></div>
+        <div class="form-group"><label>전화번호 *</label><input id="m01-phone" placeholder="010-0000-0000" oninput="formatPhone(this)"></div>
         <div class="form-group"><label>체험일자</label><input id="m01-date" type="date"></div>
         <div class="form-group"><label>체험인원</label><input id="m01-people" type="number" min="1" placeholder="인원수 입력"></div>
         <div class="form-group"><label>체험프로그램</label><select id="m01-program"><option value="">선택</option></select></div>
@@ -2380,43 +2386,158 @@ async function regStep2Submit(){
 
 // ── 업체 로그인 ──
 async function doBizLogin(){
-  const id  = document.getElementById('biz-login-id').value.trim();
-  const pw  = document.getElementById('biz-login-pw').value;
-  const err = document.getElementById('biz-login-error');
+  const rawId = document.getElementById('biz-login-id').value.trim();
+  const pw    = document.getElementById('biz-login-pw').value;
+  const err   = document.getElementById('biz-login-error');
   const autoLogin = document.getElementById('biz-auto-login')?.checked || false;
-  if(!id||!pw){ err.textContent='아이디와 비밀번호를 입력하세요.'; return; }
+
+  if(!rawId){ err.textContent='아이디(또는 가맹점코드)를 입력하세요.'; return; }
   showLoading('로그인 중...');
+  err.textContent='';
   try{
-    const doc = await db.collection('users').doc(id).get();
-    if(!doc.exists){ err.textContent='아이디 또는 비밀번호가 올바르지 않습니다.'; hideLoading(); return; }
+    // ── CP-XXXX 가맹점코드 → users 도큐먼트 ID 해석 [가맹점코드로그인 2026-04] ──
+    let userId = rawId;
+    const isCoopCode = /^CP-\d{4}$/i.test(rawId);
+    if(isCoopCode){
+      // 1순위: users/{CP-XXXX} 도큐먼트 직접 조회
+      const directDoc = await db.collection('users').doc(rawId.toUpperCase()).get();
+      if(directDoc.exists){
+        userId = rawId.toUpperCase();
+      } else {
+        // 2순위: coops 컬렉션에서 coopCode 매칭 후 userId 필드 참조
+        const coopsSnap = await db.collection('coops')
+          .where('coopCode','==', rawId.toUpperCase()).get();
+        if(!coopsSnap.empty){
+          const coopData = coopsSnap.docs[0].data();
+          userId = coopData.userId || rawId.toUpperCase();
+        }
+      }
+    }
+
+    const doc = await db.collection('users').doc(userId).get();
+    if(!doc.exists){
+      err.textContent = isCoopCode
+        ? `가맹점코드 ${rawId.toUpperCase()}로 등록된 계정이 없습니다.\n관리자에게 계정 생성을 요청하세요.`
+        : '아이디 또는 비밀번호가 올바르지 않습니다.';
+      hideLoading(); return;
+    }
     const user = doc.data();
-    if(user.pw !== pw){ err.textContent='아이디 또는 비밀번호가 올바르지 않습니다.'; hideLoading(); return; }
     if(user.role === 'admin'){ err.textContent='관리자는 관리자 탭에서 로그인하세요.'; hideLoading(); return; }
     if(!user.coopId){ err.textContent='업체 계정이 아닙니다.'; hideLoading(); return; }
 
-    await db.collection('users').doc(id).set({ lastLogin: new Date().toLocaleString('ko-KR') }, { merge: true });
-    // 자동로그인 설정 저장
-    if(autoLogin){
-      localStorage.setItem('biz_auto_id', id);
-      localStorage.setItem('biz_auto_pw', pw);
-    } else {
-      localStorage.removeItem('biz_auto_id');
-      localStorage.removeItem('biz_auto_pw');
+    // ── 첫 로그인 (비번 미설정) 감지 [가맹점코드로그인 2026-04] ──
+    if(user.needsFirstSetup || !user.pw){
+      hideLoading();
+      _showBizFirstSetup(userId, user.coopName||user.name||'업체');
+      return;
     }
-    setSession({ id: user.id, name: user.name, role: user.role, permissions: user.permissions||[],
-      coopId: user.coopId, coopName: user.coopName, discountRate: user.discountRate||0,
-      isBizAccount: true, mustChangePw: user.mustChangePw || false });
-    applySession();
-    document.getElementById('login-screen').classList.add('hidden');
-    document.getElementById('login-screen').style.display='none';
-    document.getElementById('biz-login-id').value='';
-    document.getElementById('biz-login-pw').value='';
-    err.textContent='';
-    showModule('dashboard');
-    // 비밀번호 변경 요구 플래그
-    if(user.mustChangePw) setTimeout(()=>openChangePwModal(), 500);
+
+    if(!pw){ err.textContent='비밀번호를 입력하세요.'; hideLoading(); return; }
+    if(user.pw !== pw){ err.textContent='아이디 또는 비밀번호가 올바르지 않습니다.'; hideLoading(); return; }
+
+    // ── 로그인 성공 처리 ──
+    await _finishBizLogin(userId, user, autoLogin);
   }catch(e){ err.textContent='오류: '+(e.message||'다시 시도해주세요.'); }
   finally { hideLoading(); }
+}
+
+// 첫 로그인 UI 표시 (비번 설정 화면)
+function _showBizFirstSetup(uid, coopName){
+  window._firstSetupUserId = uid;
+  // 기존 패널 없으면 동적 생성
+  let panel = document.getElementById('biz-first-setup');
+  if(!panel){
+    panel = document.createElement('div');
+    panel.id = 'biz-first-setup';
+    document.getElementById('panel-biz').appendChild(panel);
+  }
+  document.getElementById('biz-login-id').closest('.form-group').style.display='none';
+  document.querySelector('#panel-biz .form-group:nth-child(2)')?.style && (document.querySelector('#panel-biz .form-group:nth-child(2)').style.display='none');
+  document.querySelector('#panel-biz label')?.style && (document.querySelector('#panel-biz label').style.display='none');
+  // 로그인 폼 숨기기
+  [...document.querySelectorAll('#panel-biz > *:not(#biz-first-setup)')].forEach(el=>{ el.style.display='none'; });
+  panel.style.display='block';
+  panel.innerHTML=`
+    <div style="background:#E8F5E9;border-radius:8px;padding:12px 14px;margin-bottom:16px;font-size:13px;line-height:1.7;">
+      🎉 <b>${coopName}</b>님, 처음 로그인하셨습니다!<br>사용할 비밀번호를 직접 설정해주세요.
+    </div>
+    <div class="form-group"><label>새 비밀번호 <span style="font-size:10px;color:var(--text-muted);">6자 이상</span></label>
+      <input type="password" id="biz-new-pw" placeholder="6자 이상" oninput="checkBizFirstPw()"></div>
+    <div class="form-group"><label>비밀번호 재확인</label>
+      <div style="position:relative;">
+        <input type="password" id="biz-new-pw2" placeholder="동일하게 입력" oninput="checkBizFirstPw()"
+          style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;box-sizing:border-box;padding-right:36px;">
+        <span id="biz-first-pw-icon" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:16px;"></span>
+      </div>
+      <div id="biz-first-pw-msg" style="font-size:11px;margin-top:4px;min-height:16px;"></div>
+    </div>
+    <button class="login-btn" onclick="submitBizFirstSetup()">✅ 비밀번호 설정 후 로그인</button>
+    <div class="login-error" id="biz-first-error"></div>
+    <button onclick="_cancelBizFirstSetup()" style="background:none;border:none;color:var(--text-muted);font-size:12px;cursor:pointer;margin-top:8px;text-decoration:underline;">← 돌아가기</button>
+  `;
+}
+function _cancelBizFirstSetup(){
+  const panel = document.getElementById('biz-first-setup');
+  if(panel) panel.style.display='none';
+  [...document.querySelectorAll('#panel-biz > *:not(#biz-first-setup)')].forEach(el=>{ el.style.display=''; });
+}
+function checkBizFirstPw(){
+  const pw  = document.getElementById('biz-new-pw')?.value || '';
+  const pw2 = document.getElementById('biz-new-pw2')?.value || '';
+  const ico = document.getElementById('biz-first-pw-icon');
+  const msg = document.getElementById('biz-first-pw-msg');
+  if(!pw2 || !ico) return;
+  if(pw===pw2 && pw.length>=6){ ico.textContent='✅'; msg.textContent='비밀번호가 일치합니다.'; msg.style.color='#2E7D32'; }
+  else if(pw!==pw2)            { ico.textContent='❌'; msg.textContent='비밀번호가 일치하지 않습니다.'; msg.style.color='#C62828'; }
+  else                         { ico.textContent=''; msg.textContent=''; }
+}
+async function submitBizFirstSetup(){
+  const pw  = document.getElementById('biz-new-pw')?.value || '';
+  const pw2 = document.getElementById('biz-new-pw2')?.value || '';
+  const err = document.getElementById('biz-first-error');
+  const uid = window._firstSetupUserId;
+  if(!uid){ if(err) err.textContent='세션 오류. 다시 시도해주세요.'; return; }
+  if(pw.length<6){ if(err) err.textContent='비밀번호는 6자 이상이어야 합니다.'; return; }
+  if(pw!==pw2)  { if(err) err.textContent='비밀번호가 일치하지 않습니다.'; return; }
+  showLoading('비밀번호 설정 중...');
+  try{
+    await db.collection('users').doc(uid).set({ pw, needsFirstSetup:false, mustChangePw:false }, {merge:true});
+    const snap = await db.collection('users').doc(uid).get();
+    _cancelBizFirstSetup();
+    await _finishBizLogin(uid, snap.data(), false);
+  }catch(e){ if(err) err.textContent='설정 실패: '+e.message; }
+  finally{ hideLoading(); }
+}
+
+// 로그인 성공 공통 처리
+async function _finishBizLogin(userId, user, autoLogin){
+  const nowStr = new Date().toLocaleString('ko-KR');
+  await db.collection('users').doc(userId).set({ lastLogin: nowStr }, {merge:true});
+  // 로그인 이력 기록
+  try{
+    await db.collection('loginHistory').add({
+      userId, coopId: user.coopId, coopName: user.coopName||'',
+      loginAt: new Date().toISOString(), loginAtStr: nowStr, type:'업체 로그인'
+    });
+  }catch(e){ console.warn('loginHistory 저장 오류:', e.message); }
+  if(autoLogin){
+    localStorage.setItem('biz_auto_id', userId);
+    localStorage.setItem('biz_auto_pw', user.pw);
+  } else {
+    localStorage.removeItem('biz_auto_id');
+    localStorage.removeItem('biz_auto_pw');
+  }
+  setSession({ id: user.id||userId, name: user.name, role: user.role, permissions: user.permissions||[],
+    coopId: user.coopId, coopName: user.coopName, discountRate: user.discountRate||0,
+    isBizAccount: true, mustChangePw: user.mustChangePw||false });
+  applySession();
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('biz-login-id').value='';
+  document.getElementById('biz-login-pw').value='';
+  document.getElementById('biz-login-error').textContent='';
+  showModule('dashboard');
+  if(user.mustChangePw) setTimeout(()=>openChangePwModal(), 500);
 }
 
 // ── 관리자 로그인 ──
@@ -3322,9 +3443,6 @@ async function openM01Add() {
   ['m01-name','m01-phone','m01-email','m01-date','m01-people','m01-amount','m01-sns'].forEach(id=>document.getElementById(id).value='');
   ['m01-program','m01-source','m01-payment','m01-coupon'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('m01-memo').value='';
-  // 중복 알림 초기화 [중복감지 2026-04]
-  const dupEl = document.getElementById('m01-dup-notice');
-  if(dupEl){ dupEl.style.display='none'; dupEl.textContent=''; }
   // 탭 초기화 — 직접입력 탭으로
   switchM01Tab('new');
   _importSelected = null;
@@ -3333,38 +3451,6 @@ async function openM01Add() {
   document.getElementById('qr-preview').innerHTML='';
   await populateM01Selects();
   openModal('m01-modal');
-}
-
-// 전화번호 입력 시 실시간 중복 고객 감지 [중복감지 2026-04]
-let _dupCheckTimer = null;
-async function checkDupCustomer() {
-  if(m01EditId) return; // 수정 모드에서는 체크 안 함
-  clearTimeout(_dupCheckTimer);
-  const dupEl = document.getElementById('m01-dup-notice');
-  if(!dupEl) return;
-  const phone = document.getElementById('m01-phone').value.replace(/\D/g,'');
-  const name  = document.getElementById('m01-name').value.trim();
-  if(phone.length < 10) { dupEl.style.display='none'; return; }
-  _dupCheckTimer = setTimeout(async () => {
-    try {
-      const allCusts = await getAll('customers');
-      // 전화번호만으로 먼저 체크
-      const phoneMatch = allCusts.filter(c => c.phone.replace(/\D/g,'') === phone);
-      if(!phoneMatch.length) { dupEl.style.display='none'; return; }
-      const exactDup = phoneMatch.find(c => name && c.name.trim() === name);
-      if(exactDup) {
-        dupEl.style.display='block';
-        dupEl.innerHTML = `⚠️ <b>기존 등록 고객입니다!</b><br>`+
-          `${exactDup.name} · ${exactDup.phone} · 등록일 ${exactDup.date||'-'} · 패스 ${exactDup.qrToken||'미발급'}`;
-      } else if(phoneMatch.length > 0) {
-        // 전화번호만 동일
-        dupEl.style.display='block';
-        dupEl.innerHTML = `ℹ️ 동일 전화번호 등록 고객 있음: <b>${phoneMatch.map(c=>c.name).join(', ')}</b>`;
-      } else {
-        dupEl.style.display='none';
-      }
-    } catch(e) { /* 조용히 실패 */ }
-  }, 500);
 }
 async function openM01Edit(id) {
   showLoading();
@@ -3415,34 +3501,6 @@ async function saveM01() {
   }
   const email=document.getElementById('m01-email').value.trim();
   if(email&&!/^[^@]+@[^@]+\.[^@]+$/.test(email)){alert('이메일 형식이 올바르지 않습니다.');return;}
-
-  // ── 신규 등록 시 이름+전화번호 중복 고객 감지 [중복감지 2026-04] ──
-  if(!m01EditId && phone) {
-    showLoading('중복 확인 중...');
-    try {
-      const fmtedNow = document.getElementById('m01-phone').value.trim();
-      const allCusts = await getAll('customers');
-      const dup = allCusts.find(c =>
-        c.name.trim() === name &&
-        c.phone.replace(/\D/g,'') === fmtedNow.replace(/\D/g,'')
-      );
-      if (dup) {
-        hideLoading();
-        const go = confirm(
-          `⚠️ 기존 등록 고객입니다!\n\n` +
-          `고객명: ${dup.name}\n` +
-          `전화번호: ${dup.phone}\n` +
-          `등록일: ${dup.date||'-'}\n` +
-          `패스번호: ${dup.qrToken||'-'}\n\n` +
-          `동일한 고객이 이미 등록되어 있습니다.\n` +
-          `계속 진행하면 중복으로 등록됩니다.\n\n` +
-          `[확인] 중복 등록 계속   [취소] 등록 취소`
-        );
-        if (!go) return;
-      }
-    } catch(e) { console.warn('중복확인 오류:', e.message); hideLoading(); }
-  }
-
   showLoading('저장 중...');
   try {
     const fmtedPhone = document.getElementById('m01-phone').value.trim();
@@ -3582,58 +3640,25 @@ async function renderM01() {
 async function showCustomerHistory(custId, custName) {
   showLoading('이력 조회 중...');
   try {
-    // ── 타입 통일: custId가 문자열로 들어와도 양쪽 모두 String으로 비교 [이력수정 2026-04] ──
-    const [allTasks, allVisits] = await Promise.all([getAll('tasks'), getAll('visits')]);
-
-    // tasks: customerId 는 숫자로 저장 → String 변환 후 비교
-    const hist = allTasks
-      .filter(t => String(t.customerId) === String(custId))
-      .sort((a,b) => (b.date > a.date ? 1 : -1));
-
-    // visits: customerId 는 숫자로 저장 → String 변환 후 비교
-    const visitHist = allVisits
-      .filter(v => String(v.customerId) === String(custId))
-      .sort((a,b) => (b.visitDate > a.visitDate ? 1 : -1));
-
-    const totalAmt  = hist.reduce((s,t) => s + (Number(t.amount)||0), 0);
-    const payColor  = s => s==='입금완료'?'#2E7D32':s==='부분입금'?'#E65100':s==='현장결제'?'#1565C0':'#B71C1C';
-    const payBg     = s => s==='입금완료'?'#E8F5E9':s==='부분입금'?'#FFF3E0':s==='현장결제'?'#E3F2FD':'#FFEBEE';
-
-    // 업무(체험) 이력 섹션
-    const taskSection = hist.length === 0
-      ? '<p style="color:var(--text-muted);padding:12px 0 4px;">연결된 체험 이력이 없습니다.</p>'
-      : `<div style="margin-bottom:8px;padding:10px 12px;background:#F0F9F4;border-radius:8px;font-size:13px;">
+    const allTasks = await getAll('tasks');
+    const hist = allTasks.filter(t=>t.customerId===custId).sort((a,b)=>b.date>a.date?1:-1);
+    const totalAmt = hist.reduce((s,t)=>s+(Number(t.amount)||0),0);
+    const payColor=s=>s==='입금완료'?'#2E7D32':s==='부분입금'?'#E65100':s==='현장결제'?'#1565C0':'#B71C1C';
+    const payBg=s=>s==='입금완료'?'#E8F5E9':s==='부분입금'?'#FFF3E0':s==='현장결제'?'#E3F2FD':'#FFEBEE';
+    const body = hist.length===0
+      ? '<p style="color:var(--text-muted);padding:20px 0;">연결된 체험 이력이 없습니다.</p>'
+      : `<div style="margin-bottom:10px;padding:10px 12px;background:#F0F9F4;border-radius:8px;font-size:13px;">
           총 <b>${hist.length}회</b> 체험 · 누적 금액 <b>${formatMoney(totalAmt)}</b>
-         </div>`
-        + hist.map(t=>`<div style="padding:10px 0;border-bottom:1px solid var(--border);font-size:13px;">
+         </div>`+
+        hist.map(t=>`<div style="padding:10px 0;border-bottom:1px solid var(--border);font-size:13px;">
           <div style="display:flex;justify-content:space-between;align-items:center;">
             <span><span class="badge badge-green">${t.program||'-'}</span> ${formatDate(t.date)}</span>
             <span style="font-size:11px;font-weight:700;color:${payColor(t.payStatus)};background:${payBg(t.payStatus)};padding:2px 7px;border-radius:6px;">${t.payStatus||'미입금'}</span>
           </div>
           <div style="color:var(--text-muted);margin-top:2px;">🕐 ${t.startTime||'-'}~${t.endTime||'-'} | 👥 ${t.people||0}명 | 💰 ${t.amount?formatMoney(t.amount):'-'}</div>
         </div>`).join('');
-
-    // 가맹점 방문 이력 섹션
-    const visitSection = visitHist.length === 0
-      ? '<p style="color:var(--text-muted);padding:12px 0 4px;">가맹점 방문 기록이 없습니다.</p>'
-      : `<div style="margin-bottom:8px;padding:10px 12px;background:#E3F2FD;border-radius:8px;font-size:13px;">
-          총 <b>${visitHist.length}회</b> 가맹점 방문
-         </div>`
-        + visitHist.map(v=>`<div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;display:flex;justify-content:space-between;align-items:center;">
-          <span>🏪 <b>${v.coopName||'-'}</b></span>
-          <span style="font-size:11px;color:var(--text-muted);">${v.visitDate||'-'} ${v.visitTime||''}</span>
-          <span style="font-size:11px;color:#1565C0;font-weight:700;">${v.discountRate||0}% 할인</span>
-        </div>`).join('');
-
-    const body = `
-      <h4 style="font-size:13px;font-weight:700;color:var(--text-muted);margin-bottom:8px;">📋 체험 이력</h4>
-      ${taskSection}
-      <h4 style="font-size:13px;font-weight:700;color:var(--text-muted);margin:16px 0 8px;">🏪 가맹점 방문 이력</h4>
-      ${visitSection}
-    `;
-
-    document.getElementById('detail-title').textContent = `📋 ${custName} · 이용 이력`;
-    document.getElementById('detail-body').innerHTML = body;
+    document.getElementById('detail-title').textContent=`📋 ${custName} · 체험 이력`;
+    document.getElementById('detail-body').innerHTML=body;
     openModal('detail-modal');
   } finally { hideLoading(); }
 }
@@ -4377,7 +4402,28 @@ async function saveM04(){
     } else {
       const id=await genId('coops');
       const coopCode='CP-'+String(id).padStart(4,'0');
-      await upsert('coops',{...data,id,coopCode});
+      // coops 저장 (userId 필드 포함)
+      await upsert('coops',{...data,id,coopCode,userId:coopCode});
+      // ── 가맹점코드를 아이디로 users 계정 자동 생성 [가맹점코드로그인 2026-04] ──
+      try{
+        await db.collection('users').doc(coopCode).set({
+          id: coopCode,
+          name: data.name,
+          pw: '',
+          role: 'staff',
+          permissions: [],
+          coopId: id,
+          coopName: data.name,
+          discountRate: data.discountRate || 0,
+          phone: data.phone || '',
+          lastLogin: '',
+          isBizAccount: true,
+          needsFirstSetup: true,
+          mustChangePw: false,
+          createdAt: new Date().toISOString()
+        });
+        console.log('✅ 업체 계정 자동생성:', coopCode);
+      }catch(e){ console.warn('⚠️ 업체 계정 자동생성 실패:', e.message); }
     }
     invalidateCache('coops'); closeModal('m04-modal'); _m04State.page=1; await renderM04();
   }catch(e){alert('저장 실패: '+e.message);}finally{hideLoading();}
@@ -4480,6 +4526,23 @@ function initM05(){
   document.getElementById('m05-year').innerHTML=[y-1,y,y+1].map(yr=>`<option value="${yr}" ${yr===y?'selected':''}>${yr}년</option>`).join('');
   document.getElementById('m05-month').value=String(new Date().getMonth()+1).padStart(2,'0');
   switchM05Tab('task');
+}
+
+// 현재 활성 탭 기준으로 렌더 (연/월 드롭다운 변경 시 호출)
+function renderM05CurrentTab(){
+  const activeTab = ['task','pass','total'].find(t=>{
+    const p = document.getElementById('m05-panel-'+t);
+    return p && p.style.display !== 'none';
+  }) || 'task';
+  if(activeTab==='task') renderM05();
+  else if(activeTab==='pass') renderM05Pass();
+  else renderM05Total();
+}
+
+// 전체 표기 — 월 선택 해제 후 현재 탭 리렌더
+function m05ShowAll(){
+  document.getElementById('m05-month').value = '';
+  renderM05CurrentTab();
 }
 
 function switchM05Tab(tab){
