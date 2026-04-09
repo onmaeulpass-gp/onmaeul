@@ -223,6 +223,22 @@ tr:last-child td { border-bottom: none; }
 .module { display: none; }
 .module.active { display: block; }
 
+/* ===== M04 페이지네이션 ===== */
+.m04-toolbar { display:flex; gap:10px; align-items:center; margin-bottom:14px; flex-wrap:wrap; }
+.m04-toolbar input { flex:1; min-width:180px; padding:9px 14px; border:1.5px solid var(--border); border-radius:8px; font-size:13px; outline:none; }
+.m04-toolbar input:focus { border-color:var(--primary); }
+.m04-toolbar select { padding:9px 12px; border:1.5px solid var(--border); border-radius:8px; font-size:13px; outline:none; background:#fff; }
+#m04-total-count { margin-left:auto; font-size:13px; color:var(--text-muted); white-space:nowrap; }
+.m04-pagination { display:flex; align-items:center; justify-content:center; gap:6px; margin-top:14px; flex-wrap:wrap; }
+.m04-pagination button { padding:6px 14px; font-size:13px; border:1.5px solid var(--border); border-radius:8px; background:#fff; color:var(--text); cursor:pointer; font-weight:600; transition:all .2s; }
+.m04-pagination button:disabled { opacity:.35; cursor:not-allowed; }
+.m04-pagination button:not(:disabled):hover { background:var(--bg); }
+.m04-page-num { width:32px; height:32px; display:inline-flex; align-items:center; justify-content:center; border:1.5px solid var(--border); border-radius:8px; background:#fff; font-size:13px; color:var(--text); cursor:pointer; font-weight:600; transition:all .2s; }
+.m04-page-num.active { background:var(--primary); color:#fff; border-color:var(--primary); }
+.m04-page-num:not(.active):hover { background:var(--bg); }
+.m04-page-ellipsis { color:var(--text-muted); font-size:13px; padding:0 2px; }
+#m04-page-info { font-size:12px; color:var(--text-muted); }
+
 /* ===== EMPTY STATE ===== */
 .empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); }
 .empty-state .ico { font-size: 40px; margin-bottom: 12px; }
@@ -947,8 +963,16 @@ body.role-viewer .perm-write { display: none !important; }
           <button class="btn-excel" onclick="exportExcel('coops')">📥 엑셀 다운로드</button>
         </div>
         <div class="card-body">
-          <div class="search-bar">
-            <input type="text" id="m04-search" placeholder="조합명, 연락처 검색..." oninput="renderM04()">
+          <div class="m04-toolbar">
+            <input type="text" id="m04-search" placeholder="조합명, 연락처 검색...">
+            <select id="m04-filter-type" title="구분 필터">
+              <option value="">전체 구분</option>
+              <option value="사회적협동조합">사회적협동조합</option>
+              <option value="협동조합">협동조합</option>
+              <option value="마을기업">마을기업</option>
+              <option value="기타">기타</option>
+            </select>
+            <span id="m04-total-count"></span>
           </div>
           <div class="tbl-wrap">
             <table>
@@ -960,6 +984,12 @@ body.role-viewer .perm-write { display: none !important; }
           </div>
           <div id="m04-empty" class="empty-state" style="display:none;">
             <div class="ico">🤝</div><p>등록된 조합이 없습니다.</p>
+          </div>
+          <div class="m04-pagination">
+            <button id="m04-prev" onclick="m04GoPage(_m04State.page-1)">이전</button>
+            <div id="m04-page-numbers" style="display:flex;gap:4px;align-items:center;"></div>
+            <button id="m04-next" onclick="m04GoPage(_m04State.page+1)">다음</button>
+            <span id="m04-page-info"></span>
           </div>
         </div>
       </div>
@@ -1212,7 +1242,7 @@ body.role-viewer .perm-write { display: none !important; }
           </div>
           <div class="tbl-wrap">
             <table>
-              <thead><tr><th>가맹점</th><th>총 방문</th><th>이달 방문</th><th>평균 할인율</th></tr></thead>
+              <thead><tr><th>가맹점</th><th>총 방문</th><th>이달 방문</th><th>평균 할인율</th><th>교차 고객</th></tr></thead>
               <tbody id="m09-report-tbody"></tbody>
             </table>
           </div>
@@ -2947,7 +2977,7 @@ function showModule(mod) {
     renderM03();
     switchM03Tab('month');
   }
-  if(mod==='m04') { populateM04Selects(); renderM04(); }
+  if(mod==='m04') { populateM04Selects(); _m04BindEvents(); renderM04(); }
   if(mod==='m05') { initM05(); renderM05(); }
   if(mod==='m06') renderM06();
   if(mod==='users') renderUsers();
@@ -4249,37 +4279,97 @@ async function saveM04(){
       const coopCode='CP-'+String(id).padStart(4,'0');
       await upsert('coops',{...data,id,coopCode});
     }
-    closeModal('m04-modal'); await renderM04();
+    invalidateCache('coops'); closeModal('m04-modal'); _m04State.page=1; await renderM04();
   }catch(e){alert('저장 실패: '+e.message);}finally{hideLoading();}
 }
 async function deleteM04(id){
   if(!confirm('삭제하시겠습니까?'))return;
   showLoading('삭제 중...');
-  try{await remove('coops',id);await renderM04();}finally{hideLoading();}
+  try{await remove('coops',id);invalidateCache('coops');_m04State.page=1;await renderM04();}finally{hideLoading();}
 }
+// ═══════════════════════════════════════════════════════════
+// M04 조합연계 — 페이지네이션
+// ═══════════════════════════════════════════════════════════
+const _m04State = { page:1, pageSize:10, filtered:[] };
+
+function _m04BindEvents(){
+  const si = document.getElementById('m04-search');
+  const sf = document.getElementById('m04-filter-type');
+  if(si){ let t; si.oninput=()=>{clearTimeout(t);t=setTimeout(()=>{_m04State.page=1;renderM04();},300);}; }
+  if(sf){ sf.onchange=()=>{_m04State.page=1;renderM04();}; }
+}
+
 async function renderM04(){
   showLoading();
   try{
-    const q=document.getElementById('m04-search').value.toLowerCase();
-    const data=(await getAll('coops')).filter(c=>(c.name+c.phone).toLowerCase().includes(q));
-    const tbody=document.getElementById('m04-tbody');
-    const empty=document.getElementById('m04-empty');
-    if(data.length===0){tbody.innerHTML='';empty.style.display='block';}
-    else{
+    const q   = (document.getElementById('m04-search')||{value:''}).value.toLowerCase();
+    const ft  = (document.getElementById('m04-filter-type')||{value:''}).value;
+    const all = await getAllCached('coops');
+
+    // 필터
+    _m04State.filtered = all.filter(c=>{
+      const matchQ  = !q  || (c.name+c.phone).toLowerCase().includes(q);
+      const matchFt = !ft || (c.type||'') === ft;
+      return matchQ && matchFt;
+    });
+
+    const total      = _m04State.filtered.length;
+    const totalPages = Math.max(1, Math.ceil(total / _m04State.pageSize));
+    if(_m04State.page > totalPages) _m04State.page = totalPages;
+
+    const start  = (_m04State.page-1) * _m04State.pageSize;
+    const paged  = _m04State.filtered.slice(start, start + _m04State.pageSize);
+
+    const tbody  = document.getElementById('m04-tbody');
+    const empty  = document.getElementById('m04-empty');
+    const count  = document.getElementById('m04-total-count');
+    if(count) count.textContent = `총 ${total}개`;
+
+    if(total===0){
+      tbody.innerHTML=''; empty.style.display='block';
+    } else {
       empty.style.display='none';
-      tbody.innerHTML=data.map((c,i)=>`<tr>
-        <td>${i+1}</td><td><b>${c.name}</b></td>
+      tbody.innerHTML=paged.map((c,i)=>`<tr>
+        <td>${start+i+1}</td>
+        <td><b>${c.name||'-'}</b></td>
         <td><span class="badge badge-purple">${c.type||'-'}</span></td>
         <td>${c.phone||'-'}</td>
-        <td>${c.address||'-'}</td>
-        <td>${c.discountRate?c.discountRate+'%':'-'}</td>
+        <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${c.address||'-'}</td>
+        <td>${c.discountRate!=null?c.discountRate+'%':'-'}</td>
         <td><code style="font-size:11px;color:var(--primary)">${c.coopCode||'-'}</code></td>
         <td>
           <button class="btn btn-ghost btn-sm btn-icon perm-write" onclick="openM04Edit(${c.id})">✏️</button>
           <button class="btn btn-danger btn-sm btn-icon perm-write" onclick="deleteM04(${c.id})">🗑️</button>
         </td></tr>`).join('');
     }
+
+    // 페이지네이션 UI
+    const prevBtn  = document.getElementById('m04-prev');
+    const nextBtn  = document.getElementById('m04-next');
+    const numsEl   = document.getElementById('m04-page-numbers');
+    const infoEl   = document.getElementById('m04-page-info');
+    if(prevBtn) prevBtn.disabled = _m04State.page<=1;
+    if(nextBtn) nextBtn.disabled = _m04State.page>=totalPages;
+    if(infoEl)  infoEl.textContent = `${_m04State.page} / ${totalPages} 페이지`;
+    if(numsEl){
+      const s = Math.max(1, _m04State.page-2);
+      const e = Math.min(totalPages, _m04State.page+2);
+      let h='';
+      if(s>1) h+=`<button class="m04-page-num" onclick="m04GoPage(1)">1</button>`;
+      if(s>2) h+=`<span class="m04-page-ellipsis">…</span>`;
+      for(let p=s;p<=e;p++) h+=`<button class="m04-page-num${p===_m04State.page?' active':''}" onclick="m04GoPage(${p})">${p}</button>`;
+      if(e<totalPages-1) h+=`<span class="m04-page-ellipsis">…</span>`;
+      if(e<totalPages) h+=`<button class="m04-page-num" onclick="m04GoPage(${totalPages})">${totalPages}</button>`;
+      numsEl.innerHTML=h;
+    }
   }finally{hideLoading();}
+}
+
+function m04GoPage(p){
+  const total      = _m04State.filtered.length;
+  const totalPages = Math.max(1, Math.ceil(total / _m04State.pageSize));
+  _m04State.page   = Math.min(Math.max(1,p), totalPages);
+  renderM04();
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -5152,7 +5242,9 @@ function updateSMSPreview() {
 async function executeSMSSend() {
   const msg = document.getElementById('sms-body').value.trim();
   if (!msg) { alert('메시지 내용을 입력하세요.'); return; }
-  const webhookUrl = localStorage.getItem('onmaeul_sms_webhook') || '';
+  // localStorage 미설정 시 R.makeWebhookSMS 자동 폴백 [수정 2026-04]
+  const _stored = localStorage.getItem('onmaeul_sms_webhook') || '';
+  const webhookUrl = (_stored && _stored.startsWith('https://')) ? _stored : (R.makeWebhookSMS || '');
 
   if (webhookUrl && webhookUrl.startsWith('https://')) {
     // Make → 솔라피 웹훅으로 실제 발송
@@ -5892,13 +5984,42 @@ async function renderM09Stats(){
   const todayVisits = visits.filter(v=>v.visitDate===today).length;
   const monthStr = today.substring(0,7);
   const monthVisits = visits.filter(v=>(v.visitDate||'').startsWith(monthStr)).length;
+
+  // ── 교차 소비율 집계 [수정 2026-04] ──────────────────────────
+  // 패스 보유 고객 중 2개 이상 가맹점을 방문한 고객 비율
+  const passCustomers = customers.filter(c=>c.qrToken);
+  const crossVisitors = passCustomers.filter(c=>{
+    const coopIds = visits
+      .filter(v=> String(v.customerId)===String(c.id) && v.coopId && v.coopId!==0)
+      .map(v=> String(v.coopId));
+    return new Set(coopIds).size >= 2;
+  }).length;
+  const crossRate = passHolders > 0 ? Math.round(crossVisitors / passHolders * 100) : 0;
+  // 목표 90% 대비 색상 강조
+  const crossColor = crossRate >= 90 ? '#2E7D5B' : crossRate >= 60 ? '#F5A623' : '#E53935';
+  // ─────────────────────────────────────────────────────────────
+
+  // 재방문 쿠폰 사용 고객 수 [수정 2026-04]
+  const couponUsed = customers.filter(c=>c.coupon && c.coupon.includes('재방문')).length;
+  const couponRate = passHolders > 0 ? Math.round(couponUsed / passHolders * 100) : 0;
+
   const el = document.getElementById('m09-stats');
   if(!el) return;
   el.innerHTML = `
-    <div class="stat-card"><div class="stat-value">${passHolders}</div><div class="stat-label">패스 발급 고객</div></div>
-    <div class="stat-card"><div class="stat-value">${todayVisits}</div><div class="stat-label">오늘 방문</div></div>
-    <div class="stat-card"><div class="stat-value">${monthVisits}</div><div class="stat-label">이달 방문</div></div>
-    <div class="stat-card"><div class="stat-value">${visits.length}</div><div class="stat-label">총 방문 기록</div></div>
+    <div class="stat-card"><h4>패스 발급 고객</h4><div class="num">${passHolders}</div><p>명</p></div>
+    <div class="stat-card accent"><h4>오늘 방문</h4><div class="num">${todayVisits}</div><p>건</p></div>
+    <div class="stat-card"><h4>이달 방문</h4><div class="num">${monthVisits}</div><p>건</p></div>
+    <div class="stat-card"><h4>총 방문 기록</h4><div class="num">${visits.length}</div><p>건</p></div>
+    <div class="stat-card" style="border-left-color:${crossColor};">
+      <h4>교차 소비율</h4>
+      <div class="num" style="color:${crossColor};font-size:22px;">${crossRate}%</div>
+      <p>${crossVisitors}명 / 목표 90%</p>
+    </div>
+    <div class="stat-card purple">
+      <h4>재방문 쿠폰</h4>
+      <div class="num">${couponRate}%</div>
+      <p>${couponUsed}명 사용 / 목표 20%</p>
+    </div>
   `;
 }
 
@@ -6557,20 +6678,33 @@ async function renderM09Report() {
       return d >= cutoff;
     });
 
-    // 가맹점별 집계
+    // 가맹점별 집계 + 교차 고객 수 [수정 2026-04]
     const coopMap = {};
     recent.forEach(v => {
       const k = String(v.coopId || 'unknown');
-      if (!coopMap[k]) coopMap[k] = { name: v.coopName || '-', total: 0, thisMon: 0, totalDisc: 0, custMap: {} };
+      if (!coopMap[k]) coopMap[k] = { name: v.coopName || '-', total: 0, thisMon: 0, totalDisc: 0, custMap: {}, custCoopMap: {} };
       coopMap[k].total++;
       coopMap[k].totalDisc += Number(v.discountRate) || 0;
       const tm = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
       if ((v.visitDate||'').startsWith(tm)) coopMap[k].thisMon++;
-      const ck = v.customerId;
+      const ck = String(v.customerId);
       coopMap[k].custMap[ck] = (coopMap[k].custMap[ck]||0) + 1;
     });
 
-    const coopArr = Object.values(coopMap).sort((a,b) => b.total - a.total);
+    // 교차 고객 수: 해당 가맹점을 방문한 고객 중 다른 가맹점도 방문한 고객
+    const custCoopVisits = {}; // 고객별 방문 가맹점 Set
+    recent.forEach(v => {
+      const ck = String(v.customerId);
+      if (!custCoopVisits[ck]) custCoopVisits[ck] = new Set();
+      if (v.coopId) custCoopVisits[ck].add(String(v.coopId));
+    });
+
+    const coopArr = Object.entries(coopMap).map(([coopKey, c]) => {
+      const crossCnt = Object.keys(c.custMap).filter(ck =>
+        custCoopVisits[ck] && custCoopVisits[ck].size >= 2
+      ).length;
+      return { ...c, coopKey, crossCnt };
+    }).sort((a,b) => b.total - a.total);
 
     const tbody = document.getElementById('m09-report-tbody');
     const empty = document.getElementById('m09-report-empty');
@@ -6580,13 +6714,15 @@ async function renderM09Report() {
     } else {
       if (empty) empty.style.display = 'none';
       if (tbody) tbody.innerHTML = coopArr.map(c => {
-        const topCustId = Object.keys(c.custMap).sort((a,b)=>c.custMap[b]-c.custMap[a])[0];
-        const topCustData = topCustId ? `${c.custMap[topCustId]}회` : '-';
+        const crossRate = Object.keys(c.custMap).length > 0
+          ? Math.round(c.crossCnt / Object.keys(c.custMap).length * 100) : 0;
+        const crossColor = crossRate >= 90 ? '#2E7D5B' : crossRate >= 60 ? '#F5A623' : '#E53935';
         return `<tr>
           <td><b>${c.name}</b></td>
           <td><b style="color:var(--primary);">${c.total}회</b></td>
           <td>${c.thisMon}회</td>
           <td>${c.total ? Math.round(c.totalDisc / c.total) : 0}%</td>
+          <td><b style="color:${crossColor};">${c.crossCnt}명</b> <span style="font-size:11px;color:var(--text-muted);">(${crossRate}%)</span></td>
         </tr>`;
       }).join('');
     }
