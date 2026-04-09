@@ -483,16 +483,6 @@ body.role-viewer .perm-write { display: none !important; }
 .sms-preview { background: #E8F5E9; border-radius: 12px; padding: 14px; font-size: 13px; line-height: 1.7; white-space: pre-wrap; min-height: 80px; border: 1px solid #A5D6A7; }
 .char-count { font-size: 11px; color: var(--text-muted); text-align: right; margin-top: 4px; }
 .sms-sent-ok { background: #E3F2FD; border-radius: 8px; padding: 18px; font-size: 14px; color: #1565C0; text-align: center; display: none; }
-/* ===== 이미지 첨부 MMS ===== */
-.img-upload-zone { border: 2px dashed var(--border); border-radius: 8px; padding: 12px; text-align: center; cursor: pointer; transition: all .2s; background: #fafafa; position: relative; }
-.img-upload-zone:hover, .img-upload-zone.drag-over { border-color: var(--primary); background: #F0F9F4; }
-.img-upload-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
-.img-upload-zone .upload-hint { font-size: 12px; color: var(--text-muted); pointer-events: none; }
-.img-preview-wrap { display: none; position: relative; margin-top: 8px; text-align: center; }
-.img-preview-wrap img { max-width: 100%; max-height: 160px; border-radius: 8px; border: 1px solid var(--border); }
-.img-remove-btn { position: absolute; top: 4px; right: 4px; background: rgba(0,0,0,.55); color: #fff; border: none; border-radius: 50%; width: 22px; height: 22px; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-.mms-badge { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 10px; background: #FFF3E0; color: #E65100; margin-left: 6px; }
-.img-size-warn { font-size: 11px; color: var(--danger); margin-top: 4px; display: none; }
 /* ===== 이벤트 ===== */
 .cust-check-list { max-height: 200px; overflow-y: auto; border: 1.5px solid var(--border); border-radius: 8px; padding: 6px; }
 .cust-check-item { display: flex; align-items: center; gap: 8px; padding: 5px 8px; border-radius: 6px; cursor: pointer; }
@@ -1953,22 +1943,6 @@ body.role-viewer .perm-write { display: none !important; }
           <div class="char-count"><span id="sms-char-cnt">0</span>/90자 (초과 시 LMS)</div>
         </div>
         <div class="form-group">
-          <label>이미지 첨부 <span class="mms-badge" id="sms-mms-badge" style="display:none;">MMS 전환</span> <span style="font-size:11px;color:var(--text-muted);">(선택 · JPG/PNG · 300KB 이하 권장)</span></label>
-          <div class="img-upload-zone" id="sms-img-zone"
-            ondragover="event.preventDefault();this.classList.add('drag-over')"
-            ondragleave="this.classList.remove('drag-over')"
-            ondrop="handleImgDrop(event,'sms')">
-            <input type="file" id="sms-img-input" accept="image/jpeg,image/png,image/gif"
-              onchange="handleImgSelect(event,'sms')">
-            <div class="upload-hint">📎 클릭하거나 이미지를 끌어다 놓으세요<br><b>JPG · PNG · GIF</b> | 권장 300KB 이하</div>
-          </div>
-          <div class="img-preview-wrap" id="sms-img-preview">
-            <img id="sms-img-thumb" src="" alt="첨부 이미지 미리보기">
-            <button class="img-remove-btn" onclick="removeImg('sms')" title="이미지 제거">✕</button>
-          </div>
-          <div class="img-size-warn" id="sms-img-warn">⚠️ 파일이 커서 발송이 느릴 수 있어요. 300KB 이하를 권장합니다.</div>
-        </div>
-        <div class="form-group">
           <label>미리보기</label>
           <div class="sms-preview" id="sms-preview-box">내용을 입력하면 미리보기가 표시됩니다.</div>
         </div>
@@ -2008,22 +1982,6 @@ body.role-viewer .perm-write { display: none !important; }
           <div class="char-count"><span id="m08-char-cnt">0</span>/90자</div>
         </div>
         <div class="form-group">
-          <label>이미지 첨부 <span class="mms-badge" id="m08-mms-badge" style="display:none;">MMS 전환</span> <span style="font-size:11px;color:var(--text-muted);">(선택 · JPG/PNG · 300KB 이하 권장)</span></label>
-          <div class="img-upload-zone" id="m08-img-zone"
-            ondragover="event.preventDefault();this.classList.add('drag-over')"
-            ondragleave="this.classList.remove('drag-over')"
-            ondrop="handleImgDrop(event,'m08')">
-            <input type="file" id="m08-img-input" accept="image/jpeg,image/png,image/gif"
-              onchange="handleImgSelect(event,'m08')">
-            <div class="upload-hint">📎 클릭하거나 이미지를 끌어다 놓으세요<br><b>JPG · PNG · GIF</b> | 홍보 포스터, 이벤트 배너 등</div>
-          </div>
-          <div class="img-preview-wrap" id="m08-img-preview">
-            <img id="m08-img-thumb" src="" alt="첨부 이미지 미리보기">
-            <button class="img-remove-btn" onclick="removeImg('m08')" title="이미지 제거">✕</button>
-          </div>
-          <div class="img-size-warn" id="m08-img-warn">⚠️ 파일이 커서 발송이 느릴 수 있어요. 300KB 이하를 권장합니다.</div>
-        </div>
-        <div class="form-group">
           <label>미리보기</label>
           <div class="sms-preview" id="m08-preview">내용 입력 시 미리보기가 표시됩니다.</div>
         </div>
@@ -2032,6 +1990,39 @@ body.role-viewer .perm-write { display: none !important; }
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('m08-modal')">취소</button>
       <button class="btn btn-primary" onclick="saveM08Event()">저장 및 발송 준비</button>
+    </div>
+  </div>
+</div>
+
+<!-- M08 이벤트 열람 Modal -->
+<div class="modal-overlay" id="m08-view-modal">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-header">
+      <h3 id="m08-view-title">이벤트 상세</h3>
+      <button class="modal-close" onclick="closeModal('m08-view-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <!-- 발송 정보 요약 -->
+      <div id="m08-view-meta" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;"></div>
+      <!-- 이미지 첨부 미리보기 -->
+      <div id="m08-view-img-wrap" style="display:none;margin-bottom:14px;text-align:center;">
+        <img id="m08-view-img" src="" alt="첨부 이미지" style="max-width:100%;max-height:200px;border-radius:8px;border:1px solid var(--border);">
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px;" id="m08-view-img-label"></div>
+      </div>
+      <!-- 메시지 내용 -->
+      <div class="form-group">
+        <label>메시지 내용</label>
+        <div id="m08-view-body" class="sms-preview" style="white-space:pre-wrap;"></div>
+      </div>
+      <!-- 수신자 목록 -->
+      <div class="form-group" style="margin-top:12px;">
+        <label>수신자 <span id="m08-view-cnt" style="font-size:11px;color:var(--text-muted);font-weight:400;"></span></label>
+        <div id="m08-view-recipients" style="max-height:140px;overflow-y:auto;background:var(--bg);border-radius:8px;padding:8px 12px;font-size:13px;"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('m08-view-modal')">닫기</button>
+      <button class="btn btn-accent" id="m08-view-resend-btn" onclick="resendEvent()">📤 다시 보내기</button>
     </div>
   </div>
 </div>
@@ -5275,56 +5266,6 @@ function openSMSModal(targets, defaultMsg='', callback=null) {
   openModal('sms-modal');
 }
 
-// ═══════════════════════════════════════════════════════════
-// 이미지 첨부 (MMS) 공통 유틸 [이미지첨부 2026-04]
-// ═══════════════════════════════════════════════════════════
-const _imgData = { sms: null, m08: null }; // { base64, mimeType, fileName, size }
-
-function handleImgSelect(e, prefix) {
-  const file = e.target.files[0];
-  if (file) _loadImgFile(file, prefix);
-}
-function handleImgDrop(e, prefix) {
-  e.preventDefault();
-  document.getElementById(prefix + '-img-zone').classList.remove('drag-over');
-  const file = e.dataTransfer.files[0];
-  if (file && file.type.startsWith('image/')) _loadImgFile(file, prefix);
-}
-function _loadImgFile(file, prefix) {
-  const reader = new FileReader();
-  reader.onload = (ev) => {
-    const dataUrl = ev.target.result;
-    const base64  = dataUrl.split(',')[1];
-    _imgData[prefix] = { base64, mimeType: file.type, fileName: file.name, size: file.size };
-
-    // 미리보기 표시
-    document.getElementById(prefix + '-img-thumb').src = dataUrl;
-    document.getElementById(prefix + '-img-preview').style.display = 'block';
-    document.getElementById(prefix + '-img-zone').style.display = 'none';
-    // MMS 배지 표시
-    const badge = document.getElementById(prefix + '-mms-badge');
-    if (badge) badge.style.display = 'inline-block';
-    // 사이즈 경고 (300KB 초과)
-    const warn = document.getElementById(prefix + '-img-warn');
-    if (warn) warn.style.display = file.size > 300 * 1024 ? 'block' : 'none';
-  };
-  reader.readAsDataURL(file);
-}
-function removeImg(prefix) {
-  _imgData[prefix] = null;
-  document.getElementById(prefix + '-img-thumb').src = '';
-  document.getElementById(prefix + '-img-preview').style.display = 'none';
-  document.getElementById(prefix + '-img-zone').style.display = 'block';
-  document.getElementById(prefix + '-img-input').value = '';
-  const badge = document.getElementById(prefix + '-mms-badge');
-  if (badge) badge.style.display = 'none';
-  const warn = document.getElementById(prefix + '-img-warn');
-  if (warn) warn.style.display = 'none';
-}
-function _resetImgUI(prefix) {
-  removeImg(prefix);
-}
-
 function updateSMSPreview() {
   const txt = document.getElementById('sms-body').value;
   document.getElementById('sms-preview-box').textContent = txt || '내용을 입력하면 미리보기가 표시됩니다.';
@@ -5334,38 +5275,24 @@ function updateSMSPreview() {
 async function executeSMSSend() {
   const msg = document.getElementById('sms-body').value.trim();
   if (!msg) { alert('메시지 내용을 입력하세요.'); return; }
-  // localStorage 미설정 시 R.makeWebhookSMS 자동 폴백
-  const _stored = localStorage.getItem('onmaeul_sms_webhook') || '';
-  const webhookUrl = (_stored && _stored.startsWith('https://')) ? _stored : (R.makeWebhookSMS || '');
-
-  // 이미지 첨부 데이터 [이미지첨부 2026-04]
-  const imgAttach = _imgData['sms'];
-  const hasMMS = !!(imgAttach && imgAttach.base64);
-  const msgType = hasMMS ? 'MMS' : (msg.length > 90 ? 'LMS' : 'SMS');
+  const webhookUrl = localStorage.getItem('onmaeul_sms_webhook') || '';
 
   if (webhookUrl && webhookUrl.startsWith('https://')) {
+    // Make → 솔라피 웹훅으로 실제 발송
     const execBtn = document.getElementById('sms-exec-btn');
-    execBtn.disabled = true;
-    execBtn.textContent = hasMMS ? '⏳ MMS 발송 중...' : '⏳ 발송 중...';
+    execBtn.disabled = true; execBtn.textContent = '⏳ 발송 중...';
     let successCount = 0, failCount = 0;
     for (const t of _smsTargets) {
       try {
-        const payload = {
-          to:      (t.phone||'').replace(/[^0-9]/g,''),
-          name:    t.name || '',
-          message: msg,
-          from:    '온마을관리시스템',
-          messageType: msgType
-        };
-        if (hasMMS) {
-          payload.imageBase64 = imgAttach.base64;
-          payload.imageMimeType = imgAttach.mimeType;
-          payload.imageFileName = imgAttach.fileName;
-        }
         await fetch(webhookUrl, {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify(payload)
+          body: JSON.stringify({
+            to: (t.phone||'').replace(/[^0-9]/g,''),
+            name: t.name || '',
+            message: msg,
+            from: '온마을관리시스템'
+          })
         });
         successCount++;
       } catch(e) { failCount++; }
@@ -5376,8 +5303,7 @@ async function executeSMSSend() {
     const ok = document.getElementById('sms-sent-ok');
     ok.style.display = 'block';
     document.getElementById('sms-sent-msg').textContent =
-      `✅ ${successCount}명 ${msgType} 발송 완료${failCount > 0 ? ` (실패 ${failCount}명)` : ''} — Make → 솔라피 전송됨`;
-    _resetImgUI('sms'); // 이미지 초기화
+      `✅ ${successCount}명 발송 완료${failCount > 0 ? ` (실패 ${failCount}명)` : ''} — Make → 솔라피 전송됨`;
   } else {
     // 웹훅 미설정 시 기존 방식 (클립보드/안내)
     document.getElementById('sms-form-area').style.display = 'none';
@@ -5722,12 +5648,13 @@ async function renderM08() {
     if (!events.length) { tbody.innerHTML=''; empty.style.display='block'; return; }
     empty.style.display='none';
     tbody.innerHTML = events.sort((a,b)=>b.id-a.id).map(ev=>`<tr>
-      <td><b>${ev.title}</b>${ev.imageBase64 ? ' <span class="badge badge-orange" style="font-size:10px;">MMS</span>' : ''}</td>
+      <td><b>${ev.title}</b></td>
       <td style="font-size:12px;color:var(--text-muted);">${ev.createdAt||'-'}</td>
       <td style="font-size:12px;color:var(--text-muted);">${ev.sentAt||'-'}</td>
       <td>${ev.recipientCount||0}명</td>
       <td><span class="badge badge-${ev.status==='발송완료'?'green':'orange'}">${ev.status||'준비중'}</span></td>
-      <td>
+      <td style="white-space:nowrap;">
+        <button class="btn btn-ghost btn-sm btn-icon" onclick="viewM08Event(${ev.id})" title="열람">🔍</button>
         <button class="btn btn-primary btn-sm" onclick="sendEventNow(${ev.id})" ${ev.status==='발송완료'?'disabled':''}>📤 발송</button>
         <button class="btn btn-danger btn-sm btn-icon" onclick="deleteM08(${ev.id})">🗑️</button>
       </td></tr>`).join('');
@@ -5744,7 +5671,6 @@ async function openM08Add() {
     document.getElementById('m08-char-cnt').textContent = '0';
     document.getElementById('m08-preview').textContent = '내용 입력 시 미리보기가 표시됩니다.';
     document.getElementById('m08-search').value = '';
-    _resetImgUI('m08'); // 이미지 초기화 [이미지첨부 2026-04]
     m08FilterCustomers();
     openModal('m08-modal');
   } finally { hideLoading(); }
@@ -5781,28 +5707,15 @@ async function saveM08Event() {
   if (!title || !body) { alert('이벤트명과 내용은 필수입니다.'); return; }
   const selected = [...document.querySelectorAll('.m08-cb:checked')];
   if (!selected.length) { alert('수신자를 1명 이상 선택하세요.'); return; }
-
-  // 이미지 첨부 [이미지첨부 2026-04]
-  const imgAttach = _imgData['m08'];
-  const hasMMS = !!(imgAttach && imgAttach.base64);
-
   showLoading('저장 중...');
   try {
     const id = await genId('events');
-    const eventData = {
+    await db.collection('events').doc(String(id)).set({
       id, title, body, status: '준비중',
       recipientCount: selected.length,
       recipients: selected.map(cb=>({ id:cb.value, name:cb.dataset.name, phone:cb.dataset.phone })),
-      createdAt: new Date().toLocaleString('ko-KR'), sentAt: '',
-      messageType: hasMMS ? 'MMS' : 'SMS'
-    };
-    if (hasMMS) {
-      eventData.imageBase64   = imgAttach.base64;
-      eventData.imageMimeType = imgAttach.mimeType;
-      eventData.imageFileName = imgAttach.fileName;
-    }
-    await db.collection('events').doc(String(id)).set(eventData);
-    _resetImgUI('m08');
+      createdAt: new Date().toLocaleString('ko-KR'), sentAt: ''
+    });
     closeModal('m08-modal');
     await renderM08();
   } finally { hideLoading(); }
@@ -5816,10 +5729,10 @@ async function sendEventNow(id) {
   if (!recipients.length) { alert('수신자가 없습니다.'); return; }
 
   const hasMMS = !!(ev.imageBase64);
-  const msgTypeLabel = hasMMS ? 'MMS(이미지)' : (ev.messageType || 'SMS');
-  const names = recipients.map(r=>r.name).join(', ');
+  const msgTypeLabel = hasMMS ? 'MMS(이미지 포함)' : 'SMS';
+  const names = recipients.slice(0,3).map(r=>r.name).join(', ') + (recipients.length>3 ? ` 외 ${recipients.length-3}명` : '');
 
-  if (!confirm(`"${ev.title}"\n수신: ${names} (${recipients.length}명)\n발송 방식: ${msgTypeLabel}\n\n지금 바로 발송하시겠습니까?`)) return;
+  if (!confirm(`"${ev.title}"\n수신: ${names}\n발송 방식: ${msgTypeLabel}\n\n지금 바로 발송하시겠습니까?`)) return;
 
   const _stored = localStorage.getItem('onmaeul_sms_webhook') || '';
   const webhookUrl = (_stored && _stored.startsWith('https://')) ? _stored : (R.makeWebhookSMS || '');
@@ -5835,9 +5748,8 @@ async function sendEventNow(id) {
             name:        r.name || '',
             message:     ev.body || '',
             from:        R.fullName || '온마을가평',
-            messageType: hasMMS ? 'MMS' : (ev.messageType || 'SMS')
+            messageType: hasMMS ? 'MMS' : 'SMS'
           };
-          // Firestore에 저장된 이미지 포함 [이미지첨부 2026-04]
           if (hasMMS) {
             payload.imageBase64   = ev.imageBase64;
             payload.imageMimeType = ev.imageMimeType || 'image/jpeg';
@@ -5854,11 +5766,11 @@ async function sendEventNow(id) {
     } else {
       successCount = recipients.length;
     }
-
     await db.collection('events').doc(String(id)).update({
-      status: '발송완료',
-      sentAt: new Date().toLocaleString('ko-KR'),
-      successCount, failCount
+      status:       '발송완료',
+      sentAt:       new Date().toLocaleString('ko-KR'),
+      successCount, failCount,
+      lastSentAt:   new Date().toISOString()
     });
     await renderM08();
     alert(`✅ ${msgTypeLabel} 발송 완료!\n성공 ${successCount}명${failCount > 0 ? ` / 실패 ${failCount}명` : ''}`);
@@ -5876,6 +5788,91 @@ async function deleteM08(id) {
     await db.collection('events').doc(String(id)).delete();
     await renderM08();
   } finally { hideLoading(); }
+}
+
+// ═══════════════════════════════════════════════════════════
+// M08 이벤트 열람 + 다시 보내기 [열람기능 2026-04]
+// ═══════════════════════════════════════════════════════════
+let _viewingEventId = null;
+
+async function viewM08Event(id) {
+  showLoading('불러오는 중...');
+  try {
+    const doc = await db.collection('events').doc(String(id)).get();
+    if (!doc.exists) { alert('이벤트를 찾을 수 없습니다.'); return; }
+    const ev = doc.data();
+    _viewingEventId = id;
+
+    // 제목
+    document.getElementById('m08-view-title').textContent = ev.title || '이벤트 상세';
+
+    // 요약 메타
+    const statusColor = ev.status === '발송완료' ? '#2E7D5B' : '#E65100';
+    document.getElementById('m08-view-meta').innerHTML = `
+      <div style="background:var(--bg);border-radius:8px;padding:10px 12px;">
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:3px;">상태</div>
+        <div style="font-size:14px;font-weight:700;color:${statusColor};">${ev.status||'준비중'}</div>
+      </div>
+      <div style="background:var(--bg);border-radius:8px;padding:10px 12px;">
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:3px;">수신 인원</div>
+        <div style="font-size:14px;font-weight:700;">${ev.recipientCount||0}명</div>
+      </div>
+      <div style="background:var(--bg);border-radius:8px;padding:10px 12px;">
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:3px;">작성일</div>
+        <div style="font-size:12px;">${ev.createdAt||'-'}</div>
+      </div>
+      <div style="background:var(--bg);border-radius:8px;padding:10px 12px;">
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:3px;">발송일</div>
+        <div style="font-size:12px;color:${ev.sentAt?'#2E7D5B':'var(--text-muted)'};">${ev.sentAt||'미발송'}</div>
+      </div>
+    `;
+
+    // 이미지 첨부 미리보기
+    const imgWrap = document.getElementById('m08-view-img-wrap');
+    const imgEl   = document.getElementById('m08-view-img');
+    const imgLbl  = document.getElementById('m08-view-img-label');
+    if (ev.imageBase64) {
+      imgEl.src = `data:${ev.imageMimeType||'image/jpeg'};base64,${ev.imageBase64}`;
+      imgLbl.textContent = `MMS 첨부 이미지 · ${ev.imageFileName||'image'} · ${ev.imageMimeType||''}`;
+      imgWrap.style.display = 'block';
+    } else {
+      imgWrap.style.display = 'none';
+    }
+
+    // 메시지 내용
+    document.getElementById('m08-view-body').textContent = ev.body || '(내용 없음)';
+
+    // 수신자 목록
+    const recipients = ev.recipients || [];
+    document.getElementById('m08-view-cnt').textContent = `(${recipients.length}명)`;
+    document.getElementById('m08-view-recipients').innerHTML = recipients.length
+      ? recipients.map(r => `
+          <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:0.5px solid var(--border);">
+            <span style="font-weight:600;">${r.name||'-'}</span>
+            <span style="color:var(--text-muted);">${r.phone||'-'}</span>
+          </div>`).join('')
+      : '<div style="color:var(--text-muted);font-size:12px;padding:6px 0;">수신자 없음</div>';
+
+    // 다시 보내기 버튼 레이블
+    const resendBtn = document.getElementById('m08-view-resend-btn');
+    if (resendBtn) {
+      resendBtn.textContent = ev.status === '발송완료'
+        ? '🔁 다시 보내기'
+        : '📤 지금 발송';
+    }
+
+    openModal('m08-view-modal');
+  } catch(e) {
+    alert('열람 오류: ' + e.message);
+  } finally {
+    hideLoading();
+  }
+}
+
+async function resendEvent() {
+  if (!_viewingEventId) return;
+  closeModal('m08-view-modal');
+  await sendEventNow(_viewingEventId);
 }
 
 // ═══════════════════════════════════════════════════════════
