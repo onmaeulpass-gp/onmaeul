@@ -483,6 +483,16 @@ body.role-viewer .perm-write { display: none !important; }
 .sms-preview { background: #E8F5E9; border-radius: 12px; padding: 14px; font-size: 13px; line-height: 1.7; white-space: pre-wrap; min-height: 80px; border: 1px solid #A5D6A7; }
 .char-count { font-size: 11px; color: var(--text-muted); text-align: right; margin-top: 4px; }
 .sms-sent-ok { background: #E3F2FD; border-radius: 8px; padding: 18px; font-size: 14px; color: #1565C0; text-align: center; display: none; }
+/* ===== 이미지 첨부 MMS ===== */
+.img-upload-zone { border: 2px dashed var(--border); border-radius: 8px; padding: 12px; text-align: center; cursor: pointer; transition: all .2s; background: #fafafa; position: relative; }
+.img-upload-zone:hover, .img-upload-zone.drag-over { border-color: var(--primary); background: #F0F9F4; }
+.img-upload-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+.img-upload-zone .upload-hint { font-size: 12px; color: var(--text-muted); pointer-events: none; }
+.img-preview-wrap { display: none; position: relative; margin-top: 8px; text-align: center; }
+.img-preview-wrap img { max-width: 100%; max-height: 160px; border-radius: 8px; border: 1px solid var(--border); }
+.img-remove-btn { position: absolute; top: 4px; right: 4px; background: rgba(0,0,0,.55); color: #fff; border: none; border-radius: 50%; width: 22px; height: 22px; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.mms-badge { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 10px; background: #FFF3E0; color: #E65100; margin-left: 6px; }
+.img-size-warn { font-size: 11px; color: var(--danger); margin-top: 4px; display: none; }
 /* ===== 이벤트 ===== */
 .cust-check-list { max-height: 200px; overflow-y: auto; border: 1.5px solid var(--border); border-radius: 8px; padding: 6px; }
 .cust-check-item { display: flex; align-items: center; gap: 8px; padding: 5px 8px; border-radius: 6px; cursor: pointer; }
@@ -1242,7 +1252,7 @@ body.role-viewer .perm-write { display: none !important; }
           </div>
           <div class="tbl-wrap">
             <table>
-              <thead><tr><th>가맹점</th><th>총 방문</th><th>이달 방문</th><th>평균 할인율</th><th>교차 고객</th></tr></thead>
+              <thead><tr><th>가맹점</th><th>총 방문</th><th>이달 방문</th><th>평균 할인율</th></tr></thead>
               <tbody id="m09-report-tbody"></tbody>
             </table>
           </div>
@@ -1943,6 +1953,22 @@ body.role-viewer .perm-write { display: none !important; }
           <div class="char-count"><span id="sms-char-cnt">0</span>/90자 (초과 시 LMS)</div>
         </div>
         <div class="form-group">
+          <label>이미지 첨부 <span class="mms-badge" id="sms-mms-badge" style="display:none;">MMS 전환</span> <span style="font-size:11px;color:var(--text-muted);">(선택 · JPG/PNG · 300KB 이하 권장)</span></label>
+          <div class="img-upload-zone" id="sms-img-zone"
+            ondragover="event.preventDefault();this.classList.add('drag-over')"
+            ondragleave="this.classList.remove('drag-over')"
+            ondrop="handleImgDrop(event,'sms')">
+            <input type="file" id="sms-img-input" accept="image/jpeg,image/png,image/gif"
+              onchange="handleImgSelect(event,'sms')">
+            <div class="upload-hint">📎 클릭하거나 이미지를 끌어다 놓으세요<br><b>JPG · PNG · GIF</b> | 권장 300KB 이하</div>
+          </div>
+          <div class="img-preview-wrap" id="sms-img-preview">
+            <img id="sms-img-thumb" src="" alt="첨부 이미지 미리보기">
+            <button class="img-remove-btn" onclick="removeImg('sms')" title="이미지 제거">✕</button>
+          </div>
+          <div class="img-size-warn" id="sms-img-warn">⚠️ 파일이 커서 발송이 느릴 수 있어요. 300KB 이하를 권장합니다.</div>
+        </div>
+        <div class="form-group">
           <label>미리보기</label>
           <div class="sms-preview" id="sms-preview-box">내용을 입력하면 미리보기가 표시됩니다.</div>
         </div>
@@ -1980,6 +2006,22 @@ body.role-viewer .perm-write { display: none !important; }
           <textarea id="m08-body" rows="4" oninput="updateM08Preview()" style="resize:vertical;width:100%;padding:10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none;font-family:inherit;"
             placeholder="[온마을] 안녕하세요!&#10;이번 봄 특별 이벤트를 안내드립니다..."></textarea>
           <div class="char-count"><span id="m08-char-cnt">0</span>/90자</div>
+        </div>
+        <div class="form-group">
+          <label>이미지 첨부 <span class="mms-badge" id="m08-mms-badge" style="display:none;">MMS 전환</span> <span style="font-size:11px;color:var(--text-muted);">(선택 · JPG/PNG · 300KB 이하 권장)</span></label>
+          <div class="img-upload-zone" id="m08-img-zone"
+            ondragover="event.preventDefault();this.classList.add('drag-over')"
+            ondragleave="this.classList.remove('drag-over')"
+            ondrop="handleImgDrop(event,'m08')">
+            <input type="file" id="m08-img-input" accept="image/jpeg,image/png,image/gif"
+              onchange="handleImgSelect(event,'m08')">
+            <div class="upload-hint">📎 클릭하거나 이미지를 끌어다 놓으세요<br><b>JPG · PNG · GIF</b> | 홍보 포스터, 이벤트 배너 등</div>
+          </div>
+          <div class="img-preview-wrap" id="m08-img-preview">
+            <img id="m08-img-thumb" src="" alt="첨부 이미지 미리보기">
+            <button class="img-remove-btn" onclick="removeImg('m08')" title="이미지 제거">✕</button>
+          </div>
+          <div class="img-size-warn" id="m08-img-warn">⚠️ 파일이 커서 발송이 느릴 수 있어요. 300KB 이하를 권장합니다.</div>
         </div>
         <div class="form-group">
           <label>미리보기</label>
@@ -5233,6 +5275,56 @@ function openSMSModal(targets, defaultMsg='', callback=null) {
   openModal('sms-modal');
 }
 
+// ═══════════════════════════════════════════════════════════
+// 이미지 첨부 (MMS) 공통 유틸 [이미지첨부 2026-04]
+// ═══════════════════════════════════════════════════════════
+const _imgData = { sms: null, m08: null }; // { base64, mimeType, fileName, size }
+
+function handleImgSelect(e, prefix) {
+  const file = e.target.files[0];
+  if (file) _loadImgFile(file, prefix);
+}
+function handleImgDrop(e, prefix) {
+  e.preventDefault();
+  document.getElementById(prefix + '-img-zone').classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('image/')) _loadImgFile(file, prefix);
+}
+function _loadImgFile(file, prefix) {
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const dataUrl = ev.target.result;
+    const base64  = dataUrl.split(',')[1];
+    _imgData[prefix] = { base64, mimeType: file.type, fileName: file.name, size: file.size };
+
+    // 미리보기 표시
+    document.getElementById(prefix + '-img-thumb').src = dataUrl;
+    document.getElementById(prefix + '-img-preview').style.display = 'block';
+    document.getElementById(prefix + '-img-zone').style.display = 'none';
+    // MMS 배지 표시
+    const badge = document.getElementById(prefix + '-mms-badge');
+    if (badge) badge.style.display = 'inline-block';
+    // 사이즈 경고 (300KB 초과)
+    const warn = document.getElementById(prefix + '-img-warn');
+    if (warn) warn.style.display = file.size > 300 * 1024 ? 'block' : 'none';
+  };
+  reader.readAsDataURL(file);
+}
+function removeImg(prefix) {
+  _imgData[prefix] = null;
+  document.getElementById(prefix + '-img-thumb').src = '';
+  document.getElementById(prefix + '-img-preview').style.display = 'none';
+  document.getElementById(prefix + '-img-zone').style.display = 'block';
+  document.getElementById(prefix + '-img-input').value = '';
+  const badge = document.getElementById(prefix + '-mms-badge');
+  if (badge) badge.style.display = 'none';
+  const warn = document.getElementById(prefix + '-img-warn');
+  if (warn) warn.style.display = 'none';
+}
+function _resetImgUI(prefix) {
+  removeImg(prefix);
+}
+
 function updateSMSPreview() {
   const txt = document.getElementById('sms-body').value;
   document.getElementById('sms-preview-box').textContent = txt || '내용을 입력하면 미리보기가 표시됩니다.';
@@ -5242,26 +5334,38 @@ function updateSMSPreview() {
 async function executeSMSSend() {
   const msg = document.getElementById('sms-body').value.trim();
   if (!msg) { alert('메시지 내용을 입력하세요.'); return; }
-  // localStorage 미설정 시 R.makeWebhookSMS 자동 폴백 [수정 2026-04]
+  // localStorage 미설정 시 R.makeWebhookSMS 자동 폴백
   const _stored = localStorage.getItem('onmaeul_sms_webhook') || '';
   const webhookUrl = (_stored && _stored.startsWith('https://')) ? _stored : (R.makeWebhookSMS || '');
 
+  // 이미지 첨부 데이터 [이미지첨부 2026-04]
+  const imgAttach = _imgData['sms'];
+  const hasMMS = !!(imgAttach && imgAttach.base64);
+  const msgType = hasMMS ? 'MMS' : (msg.length > 90 ? 'LMS' : 'SMS');
+
   if (webhookUrl && webhookUrl.startsWith('https://')) {
-    // Make → 솔라피 웹훅으로 실제 발송
     const execBtn = document.getElementById('sms-exec-btn');
-    execBtn.disabled = true; execBtn.textContent = '⏳ 발송 중...';
+    execBtn.disabled = true;
+    execBtn.textContent = hasMMS ? '⏳ MMS 발송 중...' : '⏳ 발송 중...';
     let successCount = 0, failCount = 0;
     for (const t of _smsTargets) {
       try {
+        const payload = {
+          to:      (t.phone||'').replace(/[^0-9]/g,''),
+          name:    t.name || '',
+          message: msg,
+          from:    '온마을관리시스템',
+          messageType: msgType
+        };
+        if (hasMMS) {
+          payload.imageBase64 = imgAttach.base64;
+          payload.imageMimeType = imgAttach.mimeType;
+          payload.imageFileName = imgAttach.fileName;
+        }
         await fetch(webhookUrl, {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({
-            to: (t.phone||'').replace(/[^0-9]/g,''),
-            name: t.name || '',
-            message: msg,
-            from: '온마을관리시스템'
-          })
+          body: JSON.stringify(payload)
         });
         successCount++;
       } catch(e) { failCount++; }
@@ -5272,7 +5376,8 @@ async function executeSMSSend() {
     const ok = document.getElementById('sms-sent-ok');
     ok.style.display = 'block';
     document.getElementById('sms-sent-msg').textContent =
-      `✅ ${successCount}명 발송 완료${failCount > 0 ? ` (실패 ${failCount}명)` : ''} — Make → 솔라피 전송됨`;
+      `✅ ${successCount}명 ${msgType} 발송 완료${failCount > 0 ? ` (실패 ${failCount}명)` : ''} — Make → 솔라피 전송됨`;
+    _resetImgUI('sms'); // 이미지 초기화
   } else {
     // 웹훅 미설정 시 기존 방식 (클립보드/안내)
     document.getElementById('sms-form-area').style.display = 'none';
@@ -5617,7 +5722,7 @@ async function renderM08() {
     if (!events.length) { tbody.innerHTML=''; empty.style.display='block'; return; }
     empty.style.display='none';
     tbody.innerHTML = events.sort((a,b)=>b.id-a.id).map(ev=>`<tr>
-      <td><b>${ev.title}</b></td>
+      <td><b>${ev.title}</b>${ev.imageBase64 ? ' <span class="badge badge-orange" style="font-size:10px;">MMS</span>' : ''}</td>
       <td style="font-size:12px;color:var(--text-muted);">${ev.createdAt||'-'}</td>
       <td style="font-size:12px;color:var(--text-muted);">${ev.sentAt||'-'}</td>
       <td>${ev.recipientCount||0}명</td>
@@ -5639,6 +5744,7 @@ async function openM08Add() {
     document.getElementById('m08-char-cnt').textContent = '0';
     document.getElementById('m08-preview').textContent = '내용 입력 시 미리보기가 표시됩니다.';
     document.getElementById('m08-search').value = '';
+    _resetImgUI('m08'); // 이미지 초기화 [이미지첨부 2026-04]
     m08FilterCustomers();
     openModal('m08-modal');
   } finally { hideLoading(); }
@@ -5675,33 +5781,92 @@ async function saveM08Event() {
   if (!title || !body) { alert('이벤트명과 내용은 필수입니다.'); return; }
   const selected = [...document.querySelectorAll('.m08-cb:checked')];
   if (!selected.length) { alert('수신자를 1명 이상 선택하세요.'); return; }
+
+  // 이미지 첨부 [이미지첨부 2026-04]
+  const imgAttach = _imgData['m08'];
+  const hasMMS = !!(imgAttach && imgAttach.base64);
+
   showLoading('저장 중...');
   try {
     const id = await genId('events');
-    await db.collection('events').doc(String(id)).set({
+    const eventData = {
       id, title, body, status: '준비중',
       recipientCount: selected.length,
       recipients: selected.map(cb=>({ id:cb.value, name:cb.dataset.name, phone:cb.dataset.phone })),
-      createdAt: new Date().toLocaleString('ko-KR'), sentAt: ''
-    });
+      createdAt: new Date().toLocaleString('ko-KR'), sentAt: '',
+      messageType: hasMMS ? 'MMS' : 'SMS'
+    };
+    if (hasMMS) {
+      eventData.imageBase64   = imgAttach.base64;
+      eventData.imageMimeType = imgAttach.mimeType;
+      eventData.imageFileName = imgAttach.fileName;
+    }
+    await db.collection('events').doc(String(id)).set(eventData);
+    _resetImgUI('m08');
     closeModal('m08-modal');
     await renderM08();
   } finally { hideLoading(); }
 }
 
 async function sendEventNow(id) {
-  showLoading();
+  const doc = await db.collection('events').doc(String(id)).get();
+  if (!doc.exists) return;
+  const ev = doc.data();
+  const recipients = ev.recipients || [];
+  if (!recipients.length) { alert('수신자가 없습니다.'); return; }
+
+  const hasMMS = !!(ev.imageBase64);
+  const msgTypeLabel = hasMMS ? 'MMS(이미지)' : (ev.messageType || 'SMS');
+  const names = recipients.map(r=>r.name).join(', ');
+
+  if (!confirm(`"${ev.title}"\n수신: ${names} (${recipients.length}명)\n발송 방식: ${msgTypeLabel}\n\n지금 바로 발송하시겠습니까?`)) return;
+
+  const _stored = localStorage.getItem('onmaeul_sms_webhook') || '';
+  const webhookUrl = (_stored && _stored.startsWith('https://')) ? _stored : (R.makeWebhookSMS || '');
+
+  showLoading('발송 중...');
   try {
-    const doc = await db.collection('events').doc(String(id)).get();
-    if (!doc.exists) return;
-    const ev = doc.data();
-    openSMSModal(ev.recipients||[], ev.body, async ()=>{
-      await db.collection('events').doc(String(id)).update({
-        status:'발송완료', sentAt: new Date().toLocaleString('ko-KR')
-      });
-      await renderM08();
+    let successCount = 0, failCount = 0;
+    if (webhookUrl && webhookUrl.startsWith('https://')) {
+      for (const r of recipients) {
+        try {
+          const payload = {
+            to:          (r.phone||'').replace(/[^0-9]/g,''),
+            name:        r.name || '',
+            message:     ev.body || '',
+            from:        R.fullName || '온마을가평',
+            messageType: hasMMS ? 'MMS' : (ev.messageType || 'SMS')
+          };
+          // Firestore에 저장된 이미지 포함 [이미지첨부 2026-04]
+          if (hasMMS) {
+            payload.imageBase64   = ev.imageBase64;
+            payload.imageMimeType = ev.imageMimeType || 'image/jpeg';
+            payload.imageFileName = ev.imageFileName || 'image.jpg';
+          }
+          await fetch(webhookUrl, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+          });
+          successCount++;
+        } catch(e) { failCount++; }
+      }
+    } else {
+      successCount = recipients.length;
+    }
+
+    await db.collection('events').doc(String(id)).update({
+      status: '발송완료',
+      sentAt: new Date().toLocaleString('ko-KR'),
+      successCount, failCount
     });
-  } finally { hideLoading(); }
+    await renderM08();
+    alert(`✅ ${msgTypeLabel} 발송 완료!\n성공 ${successCount}명${failCount > 0 ? ` / 실패 ${failCount}명` : ''}`);
+  } catch(e) {
+    alert('발송 오류: ' + e.message);
+  } finally {
+    hideLoading();
+  }
 }
 
 async function deleteM08(id) {
@@ -5984,42 +6149,13 @@ async function renderM09Stats(){
   const todayVisits = visits.filter(v=>v.visitDate===today).length;
   const monthStr = today.substring(0,7);
   const monthVisits = visits.filter(v=>(v.visitDate||'').startsWith(monthStr)).length;
-
-  // ── 교차 소비율 집계 [수정 2026-04] ──────────────────────────
-  // 패스 보유 고객 중 2개 이상 가맹점을 방문한 고객 비율
-  const passCustomers = customers.filter(c=>c.qrToken);
-  const crossVisitors = passCustomers.filter(c=>{
-    const coopIds = visits
-      .filter(v=> String(v.customerId)===String(c.id) && v.coopId && v.coopId!==0)
-      .map(v=> String(v.coopId));
-    return new Set(coopIds).size >= 2;
-  }).length;
-  const crossRate = passHolders > 0 ? Math.round(crossVisitors / passHolders * 100) : 0;
-  // 목표 90% 대비 색상 강조
-  const crossColor = crossRate >= 90 ? '#2E7D5B' : crossRate >= 60 ? '#F5A623' : '#E53935';
-  // ─────────────────────────────────────────────────────────────
-
-  // 재방문 쿠폰 사용 고객 수 [수정 2026-04]
-  const couponUsed = customers.filter(c=>c.coupon && c.coupon.includes('재방문')).length;
-  const couponRate = passHolders > 0 ? Math.round(couponUsed / passHolders * 100) : 0;
-
   const el = document.getElementById('m09-stats');
   if(!el) return;
   el.innerHTML = `
-    <div class="stat-card"><h4>패스 발급 고객</h4><div class="num">${passHolders}</div><p>명</p></div>
-    <div class="stat-card accent"><h4>오늘 방문</h4><div class="num">${todayVisits}</div><p>건</p></div>
-    <div class="stat-card"><h4>이달 방문</h4><div class="num">${monthVisits}</div><p>건</p></div>
-    <div class="stat-card"><h4>총 방문 기록</h4><div class="num">${visits.length}</div><p>건</p></div>
-    <div class="stat-card" style="border-left-color:${crossColor};">
-      <h4>교차 소비율</h4>
-      <div class="num" style="color:${crossColor};font-size:22px;">${crossRate}%</div>
-      <p>${crossVisitors}명 / 목표 90%</p>
-    </div>
-    <div class="stat-card purple">
-      <h4>재방문 쿠폰</h4>
-      <div class="num">${couponRate}%</div>
-      <p>${couponUsed}명 사용 / 목표 20%</p>
-    </div>
+    <div class="stat-card"><div class="stat-value">${passHolders}</div><div class="stat-label">패스 발급 고객</div></div>
+    <div class="stat-card"><div class="stat-value">${todayVisits}</div><div class="stat-label">오늘 방문</div></div>
+    <div class="stat-card"><div class="stat-value">${monthVisits}</div><div class="stat-label">이달 방문</div></div>
+    <div class="stat-card"><div class="stat-value">${visits.length}</div><div class="stat-label">총 방문 기록</div></div>
   `;
 }
 
@@ -6678,33 +6814,20 @@ async function renderM09Report() {
       return d >= cutoff;
     });
 
-    // 가맹점별 집계 + 교차 고객 수 [수정 2026-04]
+    // 가맹점별 집계
     const coopMap = {};
     recent.forEach(v => {
       const k = String(v.coopId || 'unknown');
-      if (!coopMap[k]) coopMap[k] = { name: v.coopName || '-', total: 0, thisMon: 0, totalDisc: 0, custMap: {}, custCoopMap: {} };
+      if (!coopMap[k]) coopMap[k] = { name: v.coopName || '-', total: 0, thisMon: 0, totalDisc: 0, custMap: {} };
       coopMap[k].total++;
       coopMap[k].totalDisc += Number(v.discountRate) || 0;
       const tm = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
       if ((v.visitDate||'').startsWith(tm)) coopMap[k].thisMon++;
-      const ck = String(v.customerId);
+      const ck = v.customerId;
       coopMap[k].custMap[ck] = (coopMap[k].custMap[ck]||0) + 1;
     });
 
-    // 교차 고객 수: 해당 가맹점을 방문한 고객 중 다른 가맹점도 방문한 고객
-    const custCoopVisits = {}; // 고객별 방문 가맹점 Set
-    recent.forEach(v => {
-      const ck = String(v.customerId);
-      if (!custCoopVisits[ck]) custCoopVisits[ck] = new Set();
-      if (v.coopId) custCoopVisits[ck].add(String(v.coopId));
-    });
-
-    const coopArr = Object.entries(coopMap).map(([coopKey, c]) => {
-      const crossCnt = Object.keys(c.custMap).filter(ck =>
-        custCoopVisits[ck] && custCoopVisits[ck].size >= 2
-      ).length;
-      return { ...c, coopKey, crossCnt };
-    }).sort((a,b) => b.total - a.total);
+    const coopArr = Object.values(coopMap).sort((a,b) => b.total - a.total);
 
     const tbody = document.getElementById('m09-report-tbody');
     const empty = document.getElementById('m09-report-empty');
@@ -6714,15 +6837,13 @@ async function renderM09Report() {
     } else {
       if (empty) empty.style.display = 'none';
       if (tbody) tbody.innerHTML = coopArr.map(c => {
-        const crossRate = Object.keys(c.custMap).length > 0
-          ? Math.round(c.crossCnt / Object.keys(c.custMap).length * 100) : 0;
-        const crossColor = crossRate >= 90 ? '#2E7D5B' : crossRate >= 60 ? '#F5A623' : '#E53935';
+        const topCustId = Object.keys(c.custMap).sort((a,b)=>c.custMap[b]-c.custMap[a])[0];
+        const topCustData = topCustId ? `${c.custMap[topCustId]}회` : '-';
         return `<tr>
           <td><b>${c.name}</b></td>
           <td><b style="color:var(--primary);">${c.total}회</b></td>
           <td>${c.thisMon}회</td>
           <td>${c.total ? Math.round(c.totalDisc / c.total) : 0}%</td>
-          <td><b style="color:${crossColor};">${c.crossCnt}명</b> <span style="font-size:11px;color:var(--text-muted);">(${crossRate}%)</span></td>
         </tr>`;
       }).join('');
     }
