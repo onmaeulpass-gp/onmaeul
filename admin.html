@@ -585,13 +585,13 @@ body.role-viewer .perm-write { display: none !important; }
       <img src="onmaeullogo.svg" alt="온마을 ONMAEUL" style="height:52px;width:auto;display:block;margin:0 auto 10px;">
       <p>통합 운영 플랫폼</p>
     </div>
-    <!-- 외부 2탭: 업체 로그인 / 관리자 -->
+    <!-- 2탭 -->
     <div class="login-tabs">
       <button class="login-tab active" id="tab-biz"   onclick="switchLoginTab('biz')">🏪 업체 로그인</button>
       <button class="login-tab"        id="tab-admin" onclick="switchLoginTab('admin')">👑 관리자</button>
     </div>
 
-    <!-- 업체 등록 패널: 숨김 유지 (내부 함수 호환) -->
+    <!-- 업체 등록 패널 (숨김 — 내부 호환용) -->
     <div class="login-panel" id="panel-register" style="display:none;">
       <div class="reg-step active" id="reg-step1">
         <div class="form-group"><label>업체명 *</label><input id="reg-biz-name" placeholder="예: 상생카페"></div>
@@ -600,20 +600,18 @@ body.role-viewer .perm-write { display: none !important; }
         <div class="form-group">
           <label>업종</label>
           <select id="reg-biz-type" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;">
-            <option value="">선택</option>
-            <option>카페</option><option>식당</option><option>숙박</option>
-            <option>공방·체험</option><option>판매·기타</option>
+            <option value="">선택</option><option>카페</option><option>식당</option>
+            <option>숙박</option><option>공방·체험</option><option>판매·기타</option>
           </select>
         </div>
         <button class="login-btn" onclick="regStep1Next()">다음 →</button>
         <div class="login-error" id="reg-error1"></div>
       </div>
       <div class="reg-step" id="reg-step2">
-        <div class="pw-change-note">✅ 업체 정보 등록 완료!<br>이제 로그인에 사용할 아이디와 비밀번호를 만들어주세요.</div>
+        <div class="pw-change-note">✅ 업체 정보 등록 완료!<br>아이디와 비밀번호를 만들어주세요.</div>
         <div class="form-group"><label>로그인 아이디 *</label><input id="reg-uid" placeholder="영문+숫자 4~20자"></div>
-        <div class="form-group"><label>비밀번호 * <span style="font-size:10px;color:var(--text-muted);">6자 이상</span></label><input id="reg-pw" type="password" placeholder="6자 이상" oninput="checkRegPwMatch()"></div>
-        <div class="form-group">
-          <label>비밀번호 재확인 *</label>
+        <div class="form-group"><label>비밀번호 *</label><input id="reg-pw" type="password" placeholder="6자 이상" oninput="checkRegPwMatch()"></div>
+        <div class="form-group"><label>비밀번호 재확인 *</label>
           <div style="position:relative;">
             <input id="reg-pw2" type="password" placeholder="동일하게 입력" oninput="checkRegPwMatch()" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;box-sizing:border-box;padding-right:36px;">
             <span id="reg-pw-icon" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:16px;"></span>
@@ -638,23 +636,32 @@ body.role-viewer .perm-write { display: none !important; }
 
     <!-- 탭1: 업체 로그인 -->
     <div class="login-panel active" id="panel-biz">
-      <!-- 내부 소탭: 로그인 / 초기 비번 설정 -->
-      <div style="display:flex;gap:4px;margin-bottom:16px;">
-        <button id="biz-subtab-login" onclick="switchBizSubtab('login')"
-          style="flex:1;padding:8px 4px;border:1.5px solid var(--primary);border-radius:8px;background:var(--primary);color:#fff;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s;">
-          🔑 로그인
+
+      <!-- STEP A: 가맹점코드 입력 -->
+      <div id="biz-step-code">
+        <div class="form-group">
+          <label style="display:flex;justify-content:space-between;align-items:center;">
+            <span>가맹점코드</span>
+            <span style="font-size:10px;color:var(--text-muted);">예: CP-0001</span>
+          </label>
+          <input type="text" id="biz-code-input"
+            placeholder="관리자에게 받은 코드 입력"
+            style="text-transform:uppercase;letter-spacing:.05em;"
+            oninput="onBizCodeInput(this.value)"
+            onkeydown="if(event.key==='Enter')checkBizCode()">
+          <div id="biz-code-msg" style="font-size:12px;margin-top:6px;min-height:16px;"></div>
+        </div>
+        <button class="login-btn" id="biz-code-btn" onclick="checkBizCode()" style="opacity:0.45;cursor:not-allowed;" disabled>
+          다음 →
         </button>
-        <button id="biz-subtab-setup" onclick="switchBizSubtab('setup')"
-          style="flex:1;padding:8px 4px;border:1.5px solid var(--border);border-radius:8px;background:#f8f8f8;color:var(--text-muted);font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;">
-          🔐 초기 비번 설정
-        </button>
+        <div class="login-error" id="biz-login-error"></div>
       </div>
 
-      <!-- [로그인] 패널 -->
-      <div id="biz-panel-login">
-        <div class="form-group">
-          <label>가맹점코드 / 아이디</label>
-          <input type="text" id="biz-login-id" placeholder="CP-0001 또는 아이디" onkeydown="if(event.key==='Enter')doBizLogin()">
+      <!-- STEP B-1: 기존 비밀번호 로그인 (비번 이미 설정된 경우) -->
+      <div id="biz-step-pw" style="display:none;">
+        <div style="background:#E8F5E9;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px;line-height:1.7;">
+          ✅ <b id="biz-pw-coopname"></b><br>
+          <span style="font-size:11px;color:#2E7D32;">코드: <b id="biz-pw-code"></b></span>
         </div>
         <div class="form-group">
           <label>비밀번호</label>
@@ -664,39 +671,36 @@ body.role-viewer .perm-write { display: none !important; }
           <input type="checkbox" id="biz-auto-login" style="accent-color:var(--primary);width:14px;height:14px;"> 이 기기에서 자동로그인
         </label>
         <button class="login-btn" onclick="doBizLogin()" style="margin-top:8px;">🏪 업체 로그인</button>
-        <div class="login-error" id="biz-login-error"></div>
+        <button onclick="bizResetStep()" style="background:none;border:none;color:var(--text-muted);font-size:12px;cursor:pointer;margin-top:6px;text-decoration:underline;display:block;">← 코드 다시 입력</button>
+        <div class="login-error" id="biz-pw-error"></div>
+        <!-- 숨김 필드 (기존 doBizLogin 호환용) -->
+        <input type="hidden" id="biz-login-id">
       </div>
 
-      <!-- [초기 비번 설정] 패널 -->
-      <div id="biz-panel-setup" style="display:none;">
-        <div style="font-size:12px;color:var(--text-muted);margin-bottom:14px;padding:9px 12px;background:#f0f9f4;border-radius:8px;line-height:1.7;">
-          💡 관리자에게 받은 <b>가맹점코드</b>를 입력하고<br>사용할 비밀번호를 설정하세요.
-        </div>
-        <div class="form-group">
-          <label>가맹점코드 <span style="font-size:10px;color:var(--text-muted);">예: CP-0001</span></label>
-          <input type="text" id="setup-code" placeholder="CP-XXXX" oninput="onSetupCodeInput(this.value)" style="text-transform:uppercase;">
-          <div id="setup-code-msg" style="font-size:12px;margin-top:5px;min-height:16px;"></div>
+      <!-- STEP B-2: 초기 비밀번호 설정 (비번 미설정인 경우) -->
+      <div id="biz-step-setup" style="display:none;">
+        <div style="background:#FFF8E1;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px;line-height:1.7;">
+          🔐 <b id="biz-setup-coopname"></b>님, 처음 로그인하셨습니다.<br>
+          <span style="font-size:11px;color:#E65100;">코드: <b id="biz-setup-code"></b> &nbsp;|&nbsp; 사용할 비밀번호를 설정하세요.</span>
         </div>
         <div class="form-group">
           <label>새 비밀번호 <span style="font-size:10px;color:var(--text-muted);">6자 이상</span></label>
-          <input type="password" id="setup-pw" placeholder="6자 이상" oninput="onSetupPwInput()">
+          <input type="password" id="biz-setup-pw" placeholder="6자 이상" oninput="onBizSetupPwInput()">
         </div>
         <div class="form-group">
           <label>비밀번호 재확인</label>
           <div style="position:relative;">
-            <input type="password" id="setup-pw2" placeholder="동일하게 입력"
-              oninput="onSetupPwInput()"
-              onkeydown="if(event.key==='Enter')submitSetupPw()"
+            <input type="password" id="biz-setup-pw2" placeholder="동일하게 입력"
+              oninput="onBizSetupPwInput()" onkeydown="if(event.key==='Enter')doBizSetup()"
               style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;box-sizing:border-box;padding-right:40px;">
-            <span id="setup-pw2-icon" style="position:absolute;right:11px;top:50%;transform:translateY(-50%);font-size:18px;pointer-events:none;"></span>
+            <span id="biz-setup-pw2-icon" style="position:absolute;right:11px;top:50%;transform:translateY(-50%);font-size:18px;pointer-events:none;"></span>
           </div>
-          <div id="setup-pw2-msg" style="font-size:11px;margin-top:5px;min-height:16px;"></div>
+          <div id="biz-setup-pw2-msg" style="font-size:11px;margin-top:5px;min-height:16px;"></div>
         </div>
-        <button class="login-btn" id="setup-submit-btn" onclick="submitSetupPw()"
-          style="opacity:0.45;cursor:not-allowed;" disabled>
-          ✅ 비밀번호 설정 후 로그인
-        </button>
-        <div class="login-error" id="setup-error"></div>
+        <button class="login-btn" id="biz-setup-btn" onclick="doBizSetup()"
+          style="opacity:0.45;cursor:not-allowed;" disabled>✅ 비밀번호 설정 후 로그인</button>
+        <button onclick="bizResetStep()" style="background:none;border:none;color:var(--text-muted);font-size:12px;cursor:pointer;margin-top:6px;text-decoration:underline;display:block;">← 코드 다시 입력</button>
+        <div class="login-error" id="biz-setup-error"></div>
       </div>
     </div>
 
@@ -769,6 +773,9 @@ body.role-viewer .perm-write { display: none !important; }
     </a>
     <a onclick="showModule('admin-monitor')" id="nav-admin-monitor" class="perm-admin">
       <span class="ico">🏪</span> 업체 모니터링
+    </a>
+    <a onclick="showModule('backup')" id="nav-backup" class="perm-admin">
+      <span class="ico">💾</span> 백업 시점 관리
     </a>
   </nav>
   <div style="padding:14px 18px;border-top:1px solid rgba(255,255,255,.1);" id="sidebar-user-info">
@@ -1412,6 +1419,46 @@ body.role-viewer .perm-write { display: none !important; }
             <thead><tr><th>업체명</th><th>대표자</th><th>업종</th><th>할인율</th><th>최근 방문</th><th>이달 방문</th></tr></thead>
             <tbody id="monitor-tbody"><tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:20px;">불러오는 중...</td></tr></tbody>
           </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 💾 백업 시점 관리 모듈 -->
+    <div id="module-backup" class="module perm-admin" style="display:none;">
+      <div class="card">
+        <div class="card-header">
+          <h3>💾 백업 시점 관리</h3>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <button class="btn btn-primary btn-sm" onclick="createBackup()">📸 지금 백업</button>
+            <button class="btn btn-ghost btn-sm" onclick="renderBackupDashboard()">🔄 새로고침</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <!-- 요약 카드 -->
+          <div id="backup-summary" style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px;"></div>
+          <!-- 백업 목록 -->
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <b style="font-size:14px;">저장된 백업 목록</b>
+            <span id="backup-count" style="font-size:12px;color:var(--text-muted);"></span>
+          </div>
+          <div id="backup-list"></div>
+        </div>
+      </div>
+
+      <!-- 백업 복원 확인 모달 -->
+      <div class="modal-overlay" id="restore-confirm-modal">
+        <div class="modal" style="max-width:460px;">
+          <div class="modal-header">
+            <h3>⚠️ 백업 복원 확인</h3>
+            <button class="modal-close" onclick="closeModal('restore-confirm-modal')">✕</button>
+          </div>
+          <div class="modal-body">
+            <div id="restore-confirm-body"></div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeModal('restore-confirm-modal')">취소</button>
+            <button class="btn btn-danger" id="restore-confirm-btn">🔄 복원 실행</button>
+          </div>
         </div>
       </div>
     </div>
@@ -2310,6 +2357,7 @@ async function getUsers() {
 ════════════════════════════════════════ */
 
 // ── 외부 탭 전환 (biz / admin) ──
+// ── 탭 전환 (2탭: biz / admin) ──
 function switchLoginTab(tab){
   ['biz','admin'].forEach(t=>{
     const p=document.getElementById('panel-'+t);
@@ -2317,61 +2365,126 @@ function switchLoginTab(tab){
     const b=document.getElementById('tab-'+t);
     if(b) b.classList.toggle('active', t===tab);
   });
-  if(tab==='biz'){
-    const savedId=localStorage.getItem('biz_auto_id');
-    const idEl=document.getElementById('biz-login-id');
-    const chk=document.getElementById('biz-auto-login');
-    if(savedId && idEl && !idEl.value) idEl.value=savedId;
-    if(savedId && chk) chk.checked=true;
-    switchBizSubtab('login'); // 항상 로그인 소탭 먼저
-  }
-  ['reg-error1','reg-error2','biz-login-error','setup-error','admin-login-error']
+  if(tab==='biz') bizResetStep();
+  ['reg-error1','reg-error2','biz-login-error','biz-pw-error','biz-setup-error','admin-login-error']
     .forEach(id=>{ const e=document.getElementById(id); if(e) e.textContent=''; });
 }
 
-// ── 업체 로그인 내부 소탭 전환 ──
-function switchBizSubtab(sub){
-  const isLogin = sub==='login';
-  document.getElementById('biz-panel-login').style.display = isLogin ? 'block' : 'none';
-  document.getElementById('biz-panel-setup').style.display = isLogin ? 'none'  : 'block';
-  const btnL = document.getElementById('biz-subtab-login');
-  const btnS = document.getElementById('biz-subtab-setup');
-  if(btnL){ btnL.style.background=isLogin?'var(--primary)':'#f8f8f8'; btnL.style.color=isLogin?'#fff':'var(--text-muted)'; btnL.style.borderColor=isLogin?'var(--primary)':'var(--border)'; }
-  if(btnS){ btnS.style.background=isLogin?'#f8f8f8':'var(--primary)'; btnS.style.color=isLogin?'var(--text-muted)':'#fff'; btnS.style.borderColor=isLogin?'var(--border)':'var(--primary)'; }
-  if(!isLogin) setTimeout(()=>{ try{document.getElementById('setup-code').focus();}catch(e){} },100);
+// ── 업체 로그인 단계 관리 ──
+let _bizCurrentUserId = null; // 코드 확인 후 저장
+
+// 코드 입력창 실시간 — CP-XXXX 형식이면 버튼 활성화
+function onBizCodeInput(val){
+  document.getElementById('biz-code-input').value = val.toUpperCase();
+  const btn = document.getElementById('biz-code-btn');
+  const isValid = /^CP-\d{4}$/i.test(val.trim());
+  btn.disabled = !isValid;
+  btn.style.opacity = isValid ? '1' : '0.45';
+  btn.style.cursor  = isValid ? 'pointer' : 'not-allowed';
+  document.getElementById('biz-code-msg').textContent = '';
 }
 
-// ── 초기 비번 설정 탭 로직 ──
-let _setupCodeTimer=null;
-function onSetupCodeInput(val){
-  clearTimeout(_setupCodeTimer);
-  document.getElementById('setup-code').value = val.toUpperCase();
-  const msg = document.getElementById('setup-code-msg');
-  msg.textContent=''; msg.style.color='';
-  if(/^CP-\d{4}$/.test(val.trim().toUpperCase())){
-    _setupCodeTimer = setTimeout(()=>_verifySetupCode(val.trim().toUpperCase()), 700);
+// "다음 →" 클릭 — 코드 Firestore 확인 후 단계 분기
+async function checkBizCode(){
+  const raw = document.getElementById('biz-code-input').value.trim().toUpperCase();
+  const msg = document.getElementById('biz-code-msg');
+  const err = document.getElementById('biz-login-error');
+  msg.textContent = '확인 중...'; msg.style.color = '#888';
+  err.textContent = '';
+  showLoading('코드 확인 중...');
+  try{
+    let userId = raw, coopName = '', isFirstLogin = false;
+
+    // 1) users/{coopCode} 직접 조회
+    const uDoc = await db.collection('users').doc(raw).get();
+    if(uDoc.exists){
+      const u = uDoc.data();
+      userId   = raw;
+      coopName = u.coopName || u.name || '업체';
+      isFirstLogin = !!(u.needsFirstSetup || !u.pw);
+    } else {
+      // 2) coops 컬렉션에서 coopCode 검색 (기존 업체 — users 미생성)
+      const cSnap = await db.collection('coops').where('coopCode','==',raw).get();
+      if(cSnap.empty){
+        msg.textContent = '❌ 등록된 가맹점코드가 없습니다. 관리자에게 문의하세요.';
+        msg.style.color = '#C62828';
+        hideLoading(); return;
+      }
+      const coop = cSnap.docs[0].data();
+      userId   = raw;
+      coopName = coop.name;
+      isFirstLogin = true; // users 없으니 무조건 첫 설정
+      // 즉석으로 users 도큐먼트 생성 (빈 비번)
+      await db.collection('users').doc(raw).set({
+        id:raw, name:coop.name, pw:'', role:'staff', permissions:[],
+        coopId:coop.id, coopName:coop.name, discountRate:coop.discountRate||0,
+        phone:coop.phone||'', lastLogin:'', isBizAccount:true,
+        needsFirstSetup:true, mustChangePw:false,
+        createdAt:new Date().toISOString()
+      });
+      try{ await db.collection('coops').doc(String(coop.id)).update({userId:raw}); }catch(e){}
+    }
+
+    _bizCurrentUserId = userId;
+    msg.textContent = '';
+    hideLoading();
+
+    if(isFirstLogin){
+      // 초기 비번 설정 단계
+      document.getElementById('biz-setup-coopname').textContent = coopName;
+      document.getElementById('biz-setup-code').textContent     = userId;
+      document.getElementById('biz-setup-pw').value  = '';
+      document.getElementById('biz-setup-pw2').value = '';
+      document.getElementById('biz-setup-pw2-icon').textContent = '';
+      document.getElementById('biz-setup-pw2-msg').textContent  = '';
+      const btn = document.getElementById('biz-setup-btn');
+      btn.disabled=true; btn.style.opacity='0.45'; btn.style.cursor='not-allowed';
+      document.getElementById('biz-step-code').style.display  = 'none';
+      document.getElementById('biz-step-pw').style.display    = 'none';
+      document.getElementById('biz-step-setup').style.display = 'block';
+      setTimeout(()=>{ try{document.getElementById('biz-setup-pw').focus();}catch(e){} },100);
+    } else {
+      // 기존 비번 로그인 단계
+      document.getElementById('biz-pw-coopname').textContent = coopName;
+      document.getElementById('biz-pw-code').textContent     = userId;
+      document.getElementById('biz-login-id').value          = userId; // 호환 필드
+      document.getElementById('biz-login-pw').value          = '';
+      document.getElementById('biz-step-code').style.display  = 'none';
+      document.getElementById('biz-step-setup').style.display = 'none';
+      document.getElementById('biz-step-pw').style.display    = 'block';
+      setTimeout(()=>{ try{document.getElementById('biz-login-pw').focus();}catch(e){} },100);
+    }
+  }catch(e){
+    const msg2=document.getElementById('biz-code-msg');
+    msg2.textContent='오류: '+e.message; msg2.style.color='#C62828';
+    hideLoading();
   }
 }
-async function _verifySetupCode(coopCode){
-  const msg = document.getElementById('setup-code-msg');
-  try{
-    const doc = await db.collection('users').doc(coopCode).get();
-    if(!doc.exists){
-      msg.textContent='❌ 등록된 가맹점코드가 없습니다. 관리자에게 문의하세요.'; msg.style.color='#C62828'; return;
-    }
-    const u = doc.data();
-    if(!u.needsFirstSetup && u.pw){
-      msg.textContent='ℹ️ 이미 비밀번호가 설정된 계정입니다. 로그인 탭을 이용하세요.'; msg.style.color='#888'; return;
-    }
-    msg.textContent=`✅ ${u.coopName||u.name||'업체'}님, 코드가 확인되었습니다. 비밀번호를 설정하세요.`; msg.style.color='#2E7D32';
-  }catch(e){ msg.textContent='오류: '+e.message; msg.style.color='#C62828'; }
+
+// 코드 입력 단계로 돌아가기
+function bizResetStep(){
+  _bizCurrentUserId = null;
+  ['biz-step-code','biz-step-pw','biz-step-setup'].forEach((id,i)=>{
+    const el=document.getElementById(id);
+    if(el) el.style.display = i===0?'block':'none';
+  });
+  const inp=document.getElementById('biz-code-input');
+  if(inp) inp.value='';
+  const btn=document.getElementById('biz-code-btn');
+  if(btn){ btn.disabled=true; btn.style.opacity='0.45'; btn.style.cursor='not-allowed'; }
+  document.getElementById('biz-code-msg').textContent='';
+  ['biz-login-error','biz-pw-error','biz-setup-error'].forEach(id=>{
+    const e=document.getElementById(id); if(e) e.textContent='';
+  });
 }
-function onSetupPwInput(){
-  const pw  = document.getElementById('setup-pw').value;
-  const pw2 = document.getElementById('setup-pw2').value;
-  const ico = document.getElementById('setup-pw2-icon');
-  const msg = document.getElementById('setup-pw2-msg');
-  const btn = document.getElementById('setup-submit-btn');
+
+// 비번 재확인 실시간 체크
+function onBizSetupPwInput(){
+  const pw  = document.getElementById('biz-setup-pw').value;
+  const pw2 = document.getElementById('biz-setup-pw2').value;
+  const ico = document.getElementById('biz-setup-pw2-icon');
+  const msg = document.getElementById('biz-setup-pw2-msg');
+  const btn = document.getElementById('biz-setup-btn');
   if(!pw2){ ico.textContent=''; msg.textContent=''; btn.disabled=true; btn.style.opacity='0.45'; btn.style.cursor='not-allowed'; return; }
   if(pw===pw2 && pw.length>=6){
     ico.textContent='✅'; msg.textContent='비밀번호가 일치합니다.'; msg.style.color='#2E7D32';
@@ -2384,69 +2497,44 @@ function onSetupPwInput(){
     btn.disabled=true; btn.style.opacity='0.45'; btn.style.cursor='not-allowed';
   }
 }
-async function submitSetupPw(){
-  const code = document.getElementById('setup-code').value.trim().toUpperCase();
-  const pw   = document.getElementById('setup-pw').value;
-  const pw2  = document.getElementById('setup-pw2').value;
-  const err  = document.getElementById('setup-error');
+
+// 초기 비밀번호 설정 후 로그인
+async function doBizSetup(){
+  const pw  = document.getElementById('biz-setup-pw').value;
+  const pw2 = document.getElementById('biz-setup-pw2').value;
+  const err = document.getElementById('biz-setup-error');
+  const uid = _bizCurrentUserId;
   err.textContent='';
-  if(!code){ err.textContent='가맹점코드를 입력하세요.'; return; }
+  if(!uid){ err.textContent='세션 오류. 다시 코드를 입력하세요.'; bizResetStep(); return; }
   if(pw.length<6){ err.textContent='비밀번호는 6자 이상이어야 합니다.'; return; }
   if(pw!==pw2)  { err.textContent='비밀번호가 일치하지 않습니다.'; return; }
   showLoading('비밀번호 설정 중...');
   try{
-    const doc = await db.collection('users').doc(code).get();
-    if(!doc.exists){ err.textContent='가맹점코드가 올바르지 않습니다.'; hideLoading(); return; }
-    await db.collection('users').doc(code).set({pw, needsFirstSetup:false, mustChangePw:false},{merge:true});
-    const snap = await db.collection('users').doc(code).get();
-    // 설정 완료 후 바로 로그인
-    switchBizSubtab('login');
-    await _finishBizLogin(code, snap.data(), false);
+    await db.collection('users').doc(uid).set({pw, needsFirstSetup:false, mustChangePw:false},{merge:true});
+    const snap = await db.collection('users').doc(uid).get();
+    await _finishBizLogin(uid, snap.data(), false);
   }catch(e){ err.textContent='설정 실패: '+e.message; }
   finally{ hideLoading(); }
 }
 
-// ── 업체 로그인 ──
+// 기존 비밀번호로 로그인
 async function doBizLogin(){
-  const rawId     = document.getElementById('biz-login-id').value.trim();
-  const pw        = document.getElementById('biz-login-pw').value;
-  const err       = document.getElementById('biz-login-error');
+  const uid = _bizCurrentUserId || document.getElementById('biz-login-id').value.trim();
+  const pw  = document.getElementById('biz-login-pw').value;
+  const err = document.getElementById('biz-pw-error');
   const autoLogin = document.getElementById('biz-auto-login')?.checked||false;
-  if(!rawId){ err.textContent='가맹점코드 또는 아이디를 입력하세요.'; return; }
+  if(!uid){ err.textContent='가맹점코드를 먼저 입력하세요.'; return; }
+  if(!pw) { err.textContent='비밀번호를 입력하세요.'; return; }
   err.textContent='';
   showLoading('로그인 중...');
   try{
-    let userId = rawId;
-    const isCoopCode = /^CP-\d{4}$/i.test(rawId);
-    if(isCoopCode){
-      const coopCode = rawId.toUpperCase();
-      const direct = await db.collection('users').doc(coopCode).get();
-      if(direct.exists){
-        userId = coopCode;
-        const u = direct.data();
-        if(u.needsFirstSetup || !u.pw){
-          hideLoading();
-          err.textContent='비밀번호가 설정되지 않았습니다. "초기 비번 설정" 탭을 이용하세요.';
-          switchBizSubtab('setup');
-          document.getElementById('setup-code').value = coopCode;
-          onSetupCodeInput(coopCode);
-          return;
-        }
-      } else {
-        const snap = await db.collection('coops').where('coopCode','==',coopCode).get();
-        if(!snap.empty){ userId = snap.docs[0].data().userId || coopCode; }
-        else { err.textContent=`가맹점코드 ${coopCode}가 없습니다. 관리자에게 문의하세요.`; hideLoading(); return; }
-      }
-    }
-    if(!pw){ err.textContent='비밀번호를 입력하세요.'; hideLoading(); return; }
-    const doc = await db.collection('users').doc(userId).get();
-    if(!doc.exists){ err.textContent='아이디 또는 비밀번호가 올바르지 않습니다.'; hideLoading(); return; }
+    const doc = await db.collection('users').doc(uid).get();
+    if(!doc.exists){ err.textContent='계정이 없습니다. 코드를 다시 확인하세요.'; hideLoading(); return; }
     const user = doc.data();
     if(user.role==='admin'){ err.textContent='관리자는 관리자 탭에서 로그인하세요.'; hideLoading(); return; }
-    if(!user.coopId){ err.textContent='업체 계정이 아닙니다. 관리자에게 문의하세요.'; hideLoading(); return; }
-    if(user.needsFirstSetup||!user.pw){ hideLoading(); err.textContent='비밀번호가 설정되지 않았습니다. "초기 비번 설정" 탭을 이용하세요.'; switchBizSubtab('setup'); return; }
+    if(!user.coopId){ err.textContent='업체 계정이 아닙니다.'; hideLoading(); return; }
     if(user.pw!==pw){ err.textContent='비밀번호가 올바르지 않습니다.'; hideLoading(); return; }
-    await _finishBizLogin(userId, user, autoLogin);
+    await _finishBizLogin(uid, user, autoLogin);
   }catch(e){ err.textContent='오류: '+(e.message||'다시 시도해주세요.'); }
   finally{ hideLoading(); }
 }
@@ -2463,10 +2551,7 @@ async function _finishBizLogin(userId, user, autoLogin){
   applySession();
   document.getElementById('login-screen').classList.add('hidden');
   document.getElementById('login-screen').style.display='none';
-  document.getElementById('biz-login-id').value='';
-  document.getElementById('biz-login-pw').value='';
-  document.getElementById('biz-login-error').textContent='';
-  switchBizSubtab('login');
+  bizResetStep();
   showModule('dashboard');
   if(user.mustChangePw) setTimeout(()=>openChangePwModal(),500);
 }
@@ -2567,47 +2652,6 @@ async function regStep2Submit(){
     document.getElementById('reg-biz-type').value='';
 
   }catch(e){ err.textContent='등록 실패: '+(e.message||'다시 시도해주세요.'); }
-  finally { hideLoading(); }
-}
-
-// ── 업체 로그인 ──
-async function doBizLogin(){
-  const id  = document.getElementById('biz-login-id').value.trim();
-  const pw  = document.getElementById('biz-login-pw').value;
-  const err = document.getElementById('biz-login-error');
-  const autoLogin = document.getElementById('biz-auto-login')?.checked || false;
-  if(!id||!pw){ err.textContent='아이디와 비밀번호를 입력하세요.'; return; }
-  showLoading('로그인 중...');
-  try{
-    const doc = await db.collection('users').doc(id).get();
-    if(!doc.exists){ err.textContent='아이디 또는 비밀번호가 올바르지 않습니다.'; hideLoading(); return; }
-    const user = doc.data();
-    if(user.pw !== pw){ err.textContent='아이디 또는 비밀번호가 올바르지 않습니다.'; hideLoading(); return; }
-    if(user.role === 'admin'){ err.textContent='관리자는 관리자 탭에서 로그인하세요.'; hideLoading(); return; }
-    if(!user.coopId){ err.textContent='업체 계정이 아닙니다.'; hideLoading(); return; }
-
-    await db.collection('users').doc(id).set({ lastLogin: new Date().toLocaleString('ko-KR') }, { merge: true });
-    // 자동로그인 설정 저장
-    if(autoLogin){
-      localStorage.setItem('biz_auto_id', id);
-      localStorage.setItem('biz_auto_pw', pw);
-    } else {
-      localStorage.removeItem('biz_auto_id');
-      localStorage.removeItem('biz_auto_pw');
-    }
-    setSession({ id: user.id, name: user.name, role: user.role, permissions: user.permissions||[],
-      coopId: user.coopId, coopName: user.coopName, discountRate: user.discountRate||0,
-      isBizAccount: true, mustChangePw: user.mustChangePw || false });
-    applySession();
-    document.getElementById('login-screen').classList.add('hidden');
-    document.getElementById('login-screen').style.display='none';
-    document.getElementById('biz-login-id').value='';
-    document.getElementById('biz-login-pw').value='';
-    err.textContent='';
-    showModule('dashboard');
-    // 비밀번호 변경 요구 플래그
-    if(user.mustChangePw) setTimeout(()=>openChangePwModal(), 500);
-  }catch(e){ err.textContent='오류: '+(e.message||'다시 시도해주세요.'); }
   finally { hideLoading(); }
 }
 
@@ -3160,7 +3204,8 @@ function showModule(mod) {
   const titles={dashboard:'대시보드',m01:'01. 고객관리',m02:'02. 직원관리',
     m03:'03. 업무관리',m04:'04. 조합연계',m05:'05. 정산관리',m06:'06. 항목관리',
     users:'사용자 관리', m07:'업무일지', m08:'이벤트발송', report:'월별 리포트',
-    m09:'🎫 온마을 스테이패스', 'biz-settings':'⚙️ 업체 설정', 'admin-monitor':'🏪 업체 모니터링'};
+    m09:'🎫 온마을 스테이패스', 'biz-settings':'⚙️ 업체 설정', 'admin-monitor':'🏪 업체 모니터링',
+    'backup':'💾 백업 시점 관리'};
   document.getElementById('page-title').textContent = titles[mod]||'';
   closeSidebar();
   if(mod==='dashboard') renderDashboard();
@@ -3183,6 +3228,7 @@ function showModule(mod) {
   if(mod==='m09') initM09();
   if(mod==='biz-settings') loadBizSettings();
   if(mod==='admin-monitor') renderAdminMonitor();
+  if(mod==='backup') renderBackupDashboard();
 }
 function toggleSidebar(){ document.getElementById('sidebar').classList.toggle('open'); document.getElementById('overlay').classList.toggle('open'); }
 function closeSidebar(){ document.getElementById('sidebar').classList.remove('open'); document.getElementById('overlay').classList.remove('open'); }
@@ -4474,9 +4520,9 @@ async function saveM04(){
       const id=await genId('coops');
       const coopCode='CP-'+String(id).padStart(4,'0');
       await upsert('coops',{...data,id,coopCode,userId:coopCode});
-      // coopCode = 로그인 아이디, 비번 미설정으로 users 계정 자동 생성
+      // coopCode = 로그인 아이디로 users 계정 자동 생성 (비번 미설정)
       try{
-        const ex = await db.collection('users').doc(coopCode).get();
+        const ex=await db.collection('users').doc(coopCode).get();
         if(!ex.exists){
           await db.collection('users').doc(coopCode).set({
             id:coopCode, name:data.name, pw:'', role:'staff', permissions:[],
@@ -4486,7 +4532,7 @@ async function saveM04(){
             createdAt:new Date().toISOString()
           });
         }
-        alert(`✅ 업체 등록 완료!\n\n가맹점코드: ${coopCode}\n\n점주에게 이 코드를 전달하세요.\n"초기 비번 설정" 탭에서 코드 입력 후 비밀번호를 설정하면 바로 로그인됩니다.`);
+        alert(`✅ 업체 등록 완료!\n\n가맹점코드: ${coopCode}\n\n점주에게 이 코드를 전달하세요.\n업체 로그인 탭 → 코드 입력 → 비밀번호 설정 후 로그인합니다.`);
       }catch(e){ console.warn('업체 계정 자동생성 실패:',e.message); }
     }
     invalidateCache('coops'); closeModal('m04-modal'); _m04State.page=1; await renderM04();
@@ -5328,6 +5374,185 @@ async function renderAdminMonitor() {
   } catch(e) {
     tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#e53935;">오류: ${e.message}</td></tr>`;
   } finally { hideLoading(); }
+}
+
+// ══════════════════════════════════════════════════════════
+// 💾 백업 시점 관리
+// 컬렉션: backups / 각 도큐먼트: {id, label, createdAt, createdBy, collections:{...}}
+// ══════════════════════════════════════════════════════════
+
+const BACKUP_COLLECTIONS = ['customers','coops','visits','tasks','users','events','diary','schedules','notifications'];
+
+async function createBackup(){
+  const label = prompt('백업 이름을 입력하세요 (예: 4월 정산 전)', `백업_${new Date().toLocaleDateString('ko-KR')}`);
+  if(label===null) return; // 취소
+  if(!label.trim()){ alert('백업 이름을 입력하세요.'); return; }
+  showLoading('백업 생성 중...');
+  try{
+    const backupData = {};
+    let totalDocs = 0;
+    for(const col of BACKUP_COLLECTIONS){
+      try{
+        const snap = await db.collection(col).get();
+        backupData[col] = snap.docs.map(d=>d.data());
+        totalDocs += snap.docs.length;
+      }catch(e){ backupData[col]=[]; }
+    }
+    const sess = getSession();
+    const id = 'backup_'+Date.now();
+    await db.collection('backups').doc(id).set({
+      id, label:label.trim(),
+      createdAt: new Date().toISOString(),
+      createdAtStr: new Date().toLocaleString('ko-KR'),
+      createdBy: sess?.name||'관리자',
+      totalDocs,
+      collections: backupData
+    });
+    await renderBackupDashboard();
+    alert(`✅ 백업 완료!\n\n이름: ${label.trim()}\n총 ${totalDocs}개 도큐먼트 저장됨`);
+  }catch(e){ alert('백업 실패: '+e.message); }
+  finally{ hideLoading(); }
+}
+
+async function renderBackupDashboard(){
+  const listEl    = document.getElementById('backup-list');
+  const summaryEl = document.getElementById('backup-summary');
+  const countEl   = document.getElementById('backup-count');
+  if(!listEl) return;
+  showLoading('백업 목록 불러오는 중...');
+  try{
+    const snap = await db.collection('backups').orderBy('createdAt','desc').get().catch(async()=>{
+      // orderBy 인덱스 없을 경우 fallback
+      return db.collection('backups').get();
+    });
+    const backups = snap.docs.map(d=>d.data()).sort((a,b)=>b.createdAt>a.createdAt?1:-1);
+    countEl.textContent = `총 ${backups.length}개 백업`;
+
+    // 요약 카드
+    const latest = backups[0];
+    summaryEl.innerHTML = `
+      <div style="flex:1;min-width:160px;background:#E8F5E9;border-radius:10px;padding:14px 16px;">
+        <div style="font-size:11px;color:#2E7D32;font-weight:600;margin-bottom:4px;">최근 백업</div>
+        <div style="font-size:13px;font-weight:700;color:#1B5E20;">${latest ? latest.label : '없음'}</div>
+        <div style="font-size:11px;color:#555;margin-top:2px;">${latest ? latest.createdAtStr : '-'}</div>
+      </div>
+      <div style="flex:1;min-width:160px;background:#E3F2FD;border-radius:10px;padding:14px 16px;">
+        <div style="font-size:11px;color:#1565C0;font-weight:600;margin-bottom:4px;">저장된 백업 수</div>
+        <div style="font-size:22px;font-weight:700;color:#0D47A1;">${backups.length}개</div>
+      </div>
+      <div style="flex:1;min-width:160px;background:#FFF8E1;border-radius:10px;padding:14px 16px;">
+        <div style="font-size:11px;color:#E65100;font-weight:600;margin-bottom:4px;">최대 백업 도큐먼트</div>
+        <div style="font-size:22px;font-weight:700;color:#BF360C;">${latest ? (latest.totalDocs||0).toLocaleString() : 0}개</div>
+      </div>`;
+
+    if(backups.length===0){
+      listEl.innerHTML=`<div style="text-align:center;padding:40px;color:var(--text-muted);">저장된 백업이 없습니다.<br>상단 [📸 지금 백업] 버튼으로 첫 백업을 만드세요.</div>`;
+      return;
+    }
+
+    listEl.innerHTML = backups.map((b,i)=>{
+      const colStats = BACKUP_COLLECTIONS.map(col=>{
+        const cnt = (b.collections&&b.collections[col]) ? b.collections[col].length : 0;
+        return cnt>0 ? `<span style="font-size:10px;background:#f0f4ff;color:#3b5bdb;padding:1px 6px;border-radius:4px;margin:1px;">${col}(${cnt})</span>` : '';
+      }).join('');
+      return `
+      <div style="border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px;background:#fff;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
+          <div style="flex:1;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+              <span style="font-size:13px;font-weight:700;color:var(--primary-dark);">${i===0?'<span style="font-size:10px;background:var(--primary);color:#fff;padding:1px 7px;border-radius:10px;margin-right:4px;">최신</span>':''}${b.label}</span>
+            </div>
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;">
+              📅 ${b.createdAtStr||b.createdAt?.slice(0,10)||'-'} &nbsp;|&nbsp; 👤 ${b.createdBy||'-'} &nbsp;|&nbsp; 📦 ${(b.totalDocs||0).toLocaleString()}개 도큐먼트
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:2px;">${colStats}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;min-width:80px;">
+            <button onclick="downloadBackup('${b.id}')"
+              style="padding:5px 10px;font-size:11px;font-weight:600;border:1px solid var(--primary);border-radius:6px;background:#fff;color:var(--primary);cursor:pointer;">
+              📥 다운로드
+            </button>
+            <button onclick="confirmRestore('${b.id}','${b.label.replace(/'/g,"&#39;")}')"
+              style="padding:5px 10px;font-size:11px;font-weight:600;border:1px solid #e65100;border-radius:6px;background:#fff;color:#e65100;cursor:pointer;">
+              🔄 복원
+            </button>
+            <button onclick="deleteBackup('${b.id}','${b.label.replace(/'/g,"&#39;")}')"
+              style="padding:5px 10px;font-size:11px;font-weight:600;border:1px solid #ccc;border-radius:6px;background:#fff;color:#888;cursor:pointer;">
+              🗑️ 삭제
+            </button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }catch(e){
+    listEl.innerHTML=`<div style="color:#e53935;padding:20px;">오류: ${e.message}</div>`;
+  }finally{ hideLoading(); }
+}
+
+async function downloadBackup(backupId){
+  showLoading('다운로드 준비 중...');
+  try{
+    const doc = await db.collection('backups').doc(backupId).get();
+    if(!doc.exists){ alert('백업을 찾을 수 없습니다.'); return; }
+    const data = doc.data();
+    const json = JSON.stringify(data, null, 2);
+    const blob = new Blob([json],{type:'application/json'});
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href=url; a.download=`온마을_백업_${data.label}_${(data.createdAt||'').slice(0,10)}.json`;
+    a.click(); URL.revokeObjectURL(url);
+  }catch(e){ alert('다운로드 실패: '+e.message); }
+  finally{ hideLoading(); }
+}
+
+function confirmRestore(backupId, label){
+  const body = document.getElementById('restore-confirm-body');
+  body.innerHTML=`
+    <div style="background:#FFF3E0;border-radius:8px;padding:12px 14px;margin-bottom:14px;font-size:13px;line-height:1.7;">
+      ⚠️ <b>복원하면 현재 데이터가 모두 덮어씌워집니다!</b><br>
+      이 작업은 되돌릴 수 없습니다. 복원 전 현재 상태를 먼저 백업하는 것을 권장합니다.
+    </div>
+    <div style="font-size:14px;"><b>복원할 백업:</b> ${label}</div>`;
+  const btn = document.getElementById('restore-confirm-btn');
+  btn.onclick = ()=>executeRestore(backupId, label);
+  openModal('restore-confirm-modal');
+}
+
+async function executeRestore(backupId, label){
+  closeModal('restore-confirm-modal');
+  showLoading('복원 중...');
+  try{
+    const doc = await db.collection('backups').doc(backupId).get();
+    if(!doc.exists){ alert('백업을 찾을 수 없습니다.'); hideLoading(); return; }
+    const data = doc.data();
+    let restoredDocs=0;
+    for(const col of BACKUP_COLLECTIONS){
+      const rows = data.collections?.[col]||[];
+      const batch = db.batch();
+      rows.forEach(row=>{
+        if(row.id){
+          batch.set(db.collection(col).doc(String(row.id)), row);
+          restoredDocs++;
+        }
+      });
+      if(rows.length>0) await batch.commit();
+    }
+    // 캐시 초기화
+    BACKUP_COLLECTIONS.forEach(c=>invalidateCache(c));
+    alert(`✅ 복원 완료!\n\n백업: ${label}\n복원된 도큐먼트: ${restoredDocs}개\n\n페이지를 새로고침합니다.`);
+    location.reload();
+  }catch(e){ alert('복원 실패: '+e.message); }
+  finally{ hideLoading(); }
+}
+
+async function deleteBackup(backupId, label){
+  if(!confirm(`백업 "${label}"을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`)) return;
+  showLoading('삭제 중...');
+  try{
+    await db.collection('backups').doc(backupId).delete();
+    await renderBackupDashboard();
+  }catch(e){ alert('삭제 실패: '+e.message); }
+  finally{ hideLoading(); }
 }
 
 // ══════════════════════════════════════════════════════════
