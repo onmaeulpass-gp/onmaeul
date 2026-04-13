@@ -642,13 +642,21 @@ body.role-viewer .perm-write { display: none !important; }
         <div class="form-group">
           <label style="display:flex;justify-content:space-between;align-items:center;">
             <span>가맹점코드</span>
-            <span style="font-size:10px;color:var(--text-muted);">예: CP-0001</span>
+            <span style="font-size:10px;color:var(--text-muted);">관리자에게 받은 코드</span>
           </label>
-          <input type="text" id="biz-code-input"
-            placeholder="관리자에게 받은 코드 입력"
-            style="text-transform:uppercase;letter-spacing:.05em;"
-            oninput="onBizCodeInput(this.value)"
-            onkeydown="if(event.key==='Enter')checkBizCode()">
+          <div style="display:flex;align-items:center;border:1.5px solid var(--border);border-radius:10px;overflow:hidden;background:#fff;transition:border-color .2s;"
+               id="biz-code-wrap"
+               onfocusin="this.style.borderColor='var(--primary)'"
+               onfocusout="this.style.borderColor='var(--border)'">
+            <span style="padding:11px 0 11px 14px;font-size:15px;font-weight:700;color:var(--primary);letter-spacing:.05em;user-select:none;white-space:nowrap;">CP-</span>
+            <input type="text" id="biz-code-input"
+              placeholder="0001"
+              maxlength="4"
+              inputmode="numeric"
+              style="flex:1;border:none;outline:none;padding:11px 14px 11px 2px;font-size:15px;font-weight:700;letter-spacing:.15em;color:var(--primary-dark);background:transparent;width:100%;"
+              oninput="onBizCodeInput(this.value)"
+              onkeydown="if(event.key==='Enter')checkBizCode()">
+          </div>
           <div id="biz-code-msg" style="font-size:12px;margin-top:6px;min-height:16px;"></div>
         </div>
         <button class="login-btn" id="biz-code-btn" onclick="checkBizCode()" style="opacity:0.45;cursor:not-allowed;" disabled>
@@ -1423,27 +1431,20 @@ body.role-viewer .perm-write { display: none !important; }
       </div>
     </div>
 
-    <!-- 💾 백업 시점 관리 모듈 (개선판) -->
+    <!-- 💾 백업 시점 관리 모듈 -->
     <div id="module-backup" class="module perm-admin" style="display:none;">
       <div class="card">
         <div class="card-header">
           <h3>💾 백업 시점 관리</h3>
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <div style="display:flex;gap:8px;align-items:center;">
             <button class="btn btn-primary btn-sm" onclick="createBackup()">📸 지금 백업</button>
-            <button class="btn btn-ghost btn-sm" onclick="triggerJsonRestore()" title="다운로드한 JSON 백업 파일로 복원">📂 JSON 파일 복원</button>
             <button class="btn btn-ghost btn-sm" onclick="renderBackupDashboard()">🔄 새로고침</button>
           </div>
         </div>
         <div class="card-body">
-          <!-- ⚠️ 오래된 백업 경고 배너 -->
-          <div id="backup-age-warning" style="display:none;background:#FFF3E0;border:1px solid #FFB74D;border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:13px;color:#E65100;align-items:center;gap:10px;flex-wrap:wrap;">
-            <span style="font-size:18px;flex-shrink:0;">⚠️</span>
-            <span id="backup-age-msg" style="flex:1;line-height:1.6;"></span>
-            <button onclick="createBackup()" style="padding:6px 14px;background:#E65100;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">지금 백업</button>
-          </div>
           <!-- 요약 카드 -->
           <div id="backup-summary" style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px;"></div>
-          <!-- 백업 목록 헤더 -->
+          <!-- 백업 목록 -->
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
             <b style="font-size:14px;">저장된 백업 목록</b>
             <span id="backup-count" style="font-size:12px;color:var(--text-muted);"></span>
@@ -1452,9 +1453,9 @@ body.role-viewer .perm-write { display: none !important; }
         </div>
       </div>
 
-      <!-- 백업 복원 확인 모달 (개선판) -->
+      <!-- 백업 복원 확인 모달 -->
       <div class="modal-overlay" id="restore-confirm-modal">
-        <div class="modal" style="max-width:480px;">
+        <div class="modal" style="max-width:460px;">
           <div class="modal-header">
             <h3>⚠️ 백업 복원 확인</h3>
             <button class="modal-close" onclick="closeModal('restore-confirm-modal')">✕</button>
@@ -2380,11 +2381,13 @@ function switchLoginTab(tab){
 // ── 업체 로그인 단계 관리 ──
 let _bizCurrentUserId = null; // 코드 확인 후 저장
 
-// 코드 입력창 실시간 — CP-XXXX 형식이면 버튼 활성화
+// 코드 입력창 실시간 — 숫자 4자리 입력 시 버튼 활성화
 function onBizCodeInput(val){
-  document.getElementById('biz-code-input').value = val.toUpperCase();
+  // 숫자만 허용, 4자리 초과 차단
+  const digits = val.replace(/\D/g,'').slice(0,4);
+  document.getElementById('biz-code-input').value = digits;
   const btn = document.getElementById('biz-code-btn');
-  const isValid = /^CP-\d{4}$/i.test(val.trim());
+  const isValid = digits.length === 4;
   btn.disabled = !isValid;
   btn.style.opacity = isValid ? '1' : '0.45';
   btn.style.cursor  = isValid ? 'pointer' : 'not-allowed';
@@ -2393,7 +2396,9 @@ function onBizCodeInput(val){
 
 // "다음 →" 클릭 — 코드 Firestore 확인 후 단계 분기
 async function checkBizCode(){
-  const raw = document.getElementById('biz-code-input').value.trim().toUpperCase();
+  const digits = document.getElementById('biz-code-input').value.replace(/\D/g,'');
+  if(digits.length !== 4){ return; }
+  const raw = 'CP-' + digits; // CP-XXXX 조합
   const msg = document.getElementById('biz-code-msg');
   const err = document.getElementById('biz-login-error');
   msg.textContent = '확인 중...'; msg.style.color = '#888';
@@ -5384,181 +5389,72 @@ async function renderAdminMonitor() {
 }
 
 // ══════════════════════════════════════════════════════════
-// ══════════════════════════════════════════════════════════
-// 💾 백업 시점 관리 (개선판 v2)
-// 저장 구조:
-//   backups/{id}                        → 메타데이터만 (label, createdAt 등)
-//   backups/{id}/colData/{col}_c{n}     → 컬렉션 청크 데이터 (1MB 한도 방지)
+// 💾 백업 시점 관리
+// 컬렉션: backups / 각 도큐먼트: {id, label, createdAt, createdBy, collections:{...}}
 // ══════════════════════════════════════════════════════════
 
 const BACKUP_COLLECTIONS = ['customers','coops','visits','tasks','users','events','diary','schedules','notifications'];
-const BACKUP_MAX_COUNT   = 15;   // 최대 보관 백업 수 (초과 시 오래된 것 자동 삭제)
-const BACKUP_CHUNK_SIZE  = 150;  // 청크당 최대 행 수 (Firestore 1MB 문서 한도 방지)
-const BATCH_LIMIT        = 400;  // Firestore batch 한도(500) 안전 마진
 
-// ── 유틸: 배열을 n개씩 청킹 ─────────────────────────────
-function _chunkArr(arr, size){
-  const r = [];
-  for(let i=0; i<arr.length; i+=size) r.push(arr.slice(i,i+size));
-  return r;
-}
-
-// ── 유틸: 대용량 batch set (400개씩 분할 커밋) ──────────
-async function _batchWrite(writes){
-  // writes = [{ref, data}, ...]
-  const chunks = _chunkArr(writes, BATCH_LIMIT);
-  for(const chunk of chunks){
-    const b = db.batch();
-    chunk.forEach(({ref, data}) => b.set(ref, data));
-    await b.commit();
-  }
-}
-
-// ── 유틸: 대용량 batch delete (400개씩 분할 커밋) ───────
-async function _batchDelete(refs){
-  const chunks = _chunkArr(refs, BATCH_LIMIT);
-  for(const chunk of chunks){
-    const b = db.batch();
-    chunk.forEach(ref => b.delete(ref));
-    await b.commit();
-  }
-}
-
-// ── 유틸: 서브컬렉션에서 백업 데이터 재조합 ─────────────
-async function _loadBackupColData(backupId){
-  const colData = {};
-  for(const col of BACKUP_COLLECTIONS){
-    try{
-      const snap = await db.collection('backups').doc(backupId)
-        .collection('colData').where('col','==',col).get();
-      const chunks = snap.docs.map(d=>d.data()).sort((a,b)=>a.chunk-b.chunk);
-      colData[col] = chunks.flatMap(c=>c.rows||[]);
-    }catch(e){ colData[col]=[]; }
-  }
-  return colData;
-}
-
-// ══════════════════════════════════════════════════════════
-// 📸 백업 생성
-// ══════════════════════════════════════════════════════════
-async function createBackup(autoLabel){
-  const label = autoLabel !== undefined
-    ? autoLabel
-    : prompt('백업 이름을 입력하세요 (예: 4월 정산 전)', `백업_${new Date().toLocaleDateString('ko-KR')}`);
-  if(label===null) return null; // 취소
-  if(!label.trim()){ alert('백업 이름을 입력하세요.'); return null; }
-
-  showLoading('백업 준비 중...');
+async function createBackup(){
+  const label = prompt('백업 이름을 입력하세요 (예: 4월 정산 전)', `백업_${new Date().toLocaleDateString('ko-KR')}`);
+  if(label===null) return; // 취소
+  if(!label.trim()){ alert('백업 이름을 입력하세요.'); return; }
+  showLoading('백업 생성 중...');
   try{
-    const id   = 'backup_'+Date.now();
-    const sess = getSession();
+    const backupData = {};
     let totalDocs = 0;
-    const collectionMeta = {};
-
     for(const col of BACKUP_COLLECTIONS){
-      showLoading(`백업 중: ${col}...`);
       try{
         const snap = await db.collection(col).get();
-        const rows = snap.docs.map(d=>d.data());
-        totalDocs += rows.length;
-        collectionMeta[col] = rows.length;
-
-        // 청크 단위로 서브컬렉션에 저장 (1MB 한도 방지)
-        if(rows.length > 0){
-          const chunks = _chunkArr(rows, BACKUP_CHUNK_SIZE);
-          const writes = chunks.map((chunk, ci) => ({
-            ref : db.collection('backups').doc(id).collection('colData').doc(`${col}_c${ci}`),
-            data: { col, chunk:ci, rows:chunk, count:chunk.length }
-          }));
-          await _batchWrite(writes);
-        }
-      }catch(e){ collectionMeta[col]=0; }
+        backupData[col] = snap.docs.map(d=>d.data());
+        totalDocs += snap.docs.length;
+      }catch(e){ backupData[col]=[]; }
     }
-
-    // 메타데이터만 부모 도큐먼트에 저장 (데이터는 서브컬렉션)
+    const sess = getSession();
+    const id = 'backup_'+Date.now();
     await db.collection('backups').doc(id).set({
-      id,
-      label          : label.trim(),
-      createdAt      : new Date().toISOString(),
-      createdAtStr   : new Date().toLocaleString('ko-KR'),
-      createdBy      : sess?.name||'관리자',
+      id, label:label.trim(),
+      createdAt: new Date().toISOString(),
+      createdAtStr: new Date().toLocaleString('ko-KR'),
+      createdBy: sess?.name||'관리자',
       totalDocs,
-      collectionMeta
+      collections: backupData
     });
-
-    // 최대 백업 수 초과 시 오래된 것 자동 정리
-    await _autoCleanOldBackups();
     await renderBackupDashboard();
-    if(autoLabel === undefined){
-      alert(`✅ 백업 완료!\n\n이름: ${label.trim()}\n총 ${totalDocs}개 도큐먼트 저장됨`);
-    }
-    return id;
-  }catch(e){ alert('백업 실패: '+e.message); return null; }
+    alert(`✅ 백업 완료!\n\n이름: ${label.trim()}\n총 ${totalDocs}개 도큐먼트 저장됨`);
+  }catch(e){ alert('백업 실패: '+e.message); }
   finally{ hideLoading(); }
 }
 
-// ── 오래된 백업 자동 정리 (BACKUP_MAX_COUNT 초과분 삭제) ─
-async function _autoCleanOldBackups(){
-  try{
-    const snap = await db.collection('backups').get();
-    const all  = snap.docs.map(d=>d.data()).sort((a,b)=>b.createdAt>a.createdAt?1:-1);
-    if(all.length <= BACKUP_MAX_COUNT) return;
-    const toDelete = all.slice(BACKUP_MAX_COUNT);
-    for(const b of toDelete) await deleteBackup(b.id, b.label, true/*silent*/);
-  }catch(e){}
-}
-
-// ══════════════════════════════════════════════════════════
-// 📋 백업 대시보드 렌더링
-// ══════════════════════════════════════════════════════════
 async function renderBackupDashboard(){
   const listEl    = document.getElementById('backup-list');
   const summaryEl = document.getElementById('backup-summary');
   const countEl   = document.getElementById('backup-count');
-  const warnEl    = document.getElementById('backup-age-warning');
-  const warnMsgEl = document.getElementById('backup-age-msg');
   if(!listEl) return;
   showLoading('백업 목록 불러오는 중...');
   try{
-    const snap = await db.collection('backups').orderBy('createdAt','desc').get()
-      .catch(async()=>db.collection('backups').get());
+    const snap = await db.collection('backups').orderBy('createdAt','desc').get().catch(async()=>{
+      // orderBy 인덱스 없을 경우 fallback
+      return db.collection('backups').get();
+    });
     const backups = snap.docs.map(d=>d.data()).sort((a,b)=>b.createdAt>a.createdAt?1:-1);
-    countEl.textContent = `총 ${backups.length}개 (최대 ${BACKUP_MAX_COUNT}개 자동 유지)`;
+    countEl.textContent = `총 ${backups.length}개 백업`;
 
-    // ── 오래된 백업 경고 배너 ──
-    if(warnEl && warnMsgEl){
-      if(backups.length===0){
-        warnEl.style.display='flex';
-        warnMsgEl.innerHTML='아직 백업이 없습니다. 지금 바로 첫 백업을 만드세요!';
-      } else {
-        const diffDays = Math.floor((Date.now()-new Date(backups[0].createdAt).getTime())/86400000);
-        if(diffDays>=7){
-          warnEl.style.display='flex';
-          warnMsgEl.innerHTML=`마지막 백업이 <b>${diffDays}일 전</b>입니다. 데이터 보호를 위해 지금 백업하세요!`;
-        } else {
-          warnEl.style.display='none';
-        }
-      }
-    }
-
-    // ── 요약 카드 ──
-    const latest  = backups[0];
-    const lastDiff= latest ? Math.floor((Date.now()-new Date(latest.createdAt).getTime())/86400000) : null;
+    // 요약 카드
+    const latest = backups[0];
     summaryEl.innerHTML = `
       <div style="flex:1;min-width:160px;background:#E8F5E9;border-radius:10px;padding:14px 16px;">
         <div style="font-size:11px;color:#2E7D32;font-weight:600;margin-bottom:4px;">최근 백업</div>
         <div style="font-size:13px;font-weight:700;color:#1B5E20;">${latest ? latest.label : '없음'}</div>
         <div style="font-size:11px;color:#555;margin-top:2px;">${latest ? latest.createdAtStr : '-'}</div>
-        ${lastDiff!==null?`<div style="font-size:10px;color:${lastDiff>=7?'#E65100':'#888'};margin-top:4px;">${lastDiff===0?'오늘':lastDiff+'일 전'}</div>`:''}
       </div>
       <div style="flex:1;min-width:160px;background:#E3F2FD;border-radius:10px;padding:14px 16px;">
         <div style="font-size:11px;color:#1565C0;font-weight:600;margin-bottom:4px;">저장된 백업 수</div>
-        <div style="font-size:22px;font-weight:700;color:#0D47A1;">${backups.length}<span style="font-size:12px;color:#888;"> / ${BACKUP_MAX_COUNT}</span></div>
-        <div style="font-size:10px;color:#888;margin-top:2px;">초과 시 오래된 것 자동 삭제</div>
+        <div style="font-size:22px;font-weight:700;color:#0D47A1;">${backups.length}개</div>
       </div>
       <div style="flex:1;min-width:160px;background:#FFF8E1;border-radius:10px;padding:14px 16px;">
-        <div style="font-size:11px;color:#E65100;font-weight:600;margin-bottom:4px;">최근 백업 도큐먼트 수</div>
-        <div style="font-size:22px;font-weight:700;color:#BF360C;">${latest?(latest.totalDocs||0).toLocaleString():0}<span style="font-size:12px;font-weight:400;color:#888;">개</span></div>
+        <div style="font-size:11px;color:#E65100;font-weight:600;margin-bottom:4px;">최대 백업 도큐먼트</div>
+        <div style="font-size:22px;font-weight:700;color:#BF360C;">${latest ? (latest.totalDocs||0).toLocaleString() : 0}개</div>
       </div>`;
 
     if(backups.length===0){
@@ -5567,25 +5463,23 @@ async function renderBackupDashboard(){
     }
 
     listEl.innerHTML = backups.map((b,i)=>{
-      const meta     = b.collectionMeta||{};
-      const colBadges= BACKUP_COLLECTIONS.map(col=>{
-        const cnt = meta[col] ?? (b.collections?.[col]?.length ?? 0);
+      const colStats = BACKUP_COLLECTIONS.map(col=>{
+        const cnt = (b.collections&&b.collections[col]) ? b.collections[col].length : 0;
         return cnt>0 ? `<span style="font-size:10px;background:#f0f4ff;color:#3b5bdb;padding:1px 6px;border-radius:4px;margin:1px;">${col}(${cnt})</span>` : '';
       }).join('');
       return `
       <div style="border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px;background:#fff;">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
-          <div style="flex:1;min-width:200px;">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap;">
-              ${i===0?'<span style="font-size:10px;background:var(--primary);color:#fff;padding:1px 7px;border-radius:10px;">최신</span>':''}
-              <span style="font-size:13px;font-weight:700;color:var(--primary-dark);">${b.label}</span>
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
+          <div style="flex:1;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+              <span style="font-size:13px;font-weight:700;color:var(--primary-dark);">${i===0?'<span style="font-size:10px;background:var(--primary);color:#fff;padding:1px 7px;border-radius:10px;margin-right:4px;">최신</span>':''}${b.label}</span>
             </div>
             <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;">
-              📅 ${b.createdAtStr||b.createdAt?.slice(0,10)||'-'} &nbsp;|&nbsp; 👤 ${b.createdBy||'-'} &nbsp;|&nbsp; 📦 ${(b.totalDocs||0).toLocaleString()}개
+              📅 ${b.createdAtStr||b.createdAt?.slice(0,10)||'-'} &nbsp;|&nbsp; 👤 ${b.createdBy||'-'} &nbsp;|&nbsp; 📦 ${(b.totalDocs||0).toLocaleString()}개 도큐먼트
             </div>
-            <div style="display:flex;flex-wrap:wrap;gap:2px;">${colBadges}</div>
+            <div style="display:flex;flex-wrap:wrap;gap:2px;">${colStats}</div>
           </div>
-          <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:flex-start;">
+          <div style="display:flex;flex-direction:column;gap:6px;min-width:80px;">
             <button onclick="downloadBackup('${b.id}')"
               style="padding:5px 10px;font-size:11px;font-weight:600;border:1px solid var(--primary);border-radius:6px;background:#fff;color:var(--primary);cursor:pointer;">
               📥 다운로드
@@ -5607,118 +5501,55 @@ async function renderBackupDashboard(){
   }finally{ hideLoading(); }
 }
 
-// ══════════════════════════════════════════════════════════
-// 📥 백업 다운로드 (서브컬렉션 재조합 → JSON)
-// ══════════════════════════════════════════════════════════
 async function downloadBackup(backupId){
   showLoading('다운로드 준비 중...');
   try{
-    const docSnap = await db.collection('backups').doc(backupId).get();
-    if(!docSnap.exists){ alert('백업을 찾을 수 없습니다.'); return; }
-    const meta = docSnap.data();
-
-    showLoading('데이터 재조합 중...');
-    const colData = await _loadBackupColData(backupId);
-    // 구 형식 호환 (collections 필드가 직접 포함된 이전 버전 백업)
-    if(meta.collections){
-      for(const col of BACKUP_COLLECTIONS){
-        if(!colData[col].length && meta.collections[col]?.length)
-          colData[col] = meta.collections[col];
-      }
-    }
-
-    const exportData = { ...meta, collections: colData };
-    delete exportData.collections; // 중복 방지 후 재할당
-    exportData.collections = colData;
-
-    const json = JSON.stringify(exportData, null, 2);
+    const doc = await db.collection('backups').doc(backupId).get();
+    if(!doc.exists){ alert('백업을 찾을 수 없습니다.'); return; }
+    const data = doc.data();
+    const json = JSON.stringify(data, null, 2);
     const blob = new Blob([json],{type:'application/json'});
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement('a');
-    a.href=url;
-    a.download=`온마을_백업_${meta.label}_${(meta.createdAt||'').slice(0,10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+    a.href=url; a.download=`온마을_백업_${data.label}_${(data.createdAt||'').slice(0,10)}.json`;
+    a.click(); URL.revokeObjectURL(url);
   }catch(e){ alert('다운로드 실패: '+e.message); }
   finally{ hideLoading(); }
 }
 
-// ══════════════════════════════════════════════════════════
-// ⚙️ 복원 확인 모달 (자동 백업 옵션 포함)
-// ══════════════════════════════════════════════════════════
 function confirmRestore(backupId, label){
   const body = document.getElementById('restore-confirm-body');
   body.innerHTML=`
-    <div style="background:#FFF3E0;border-radius:8px;padding:12px 14px;margin-bottom:14px;font-size:13px;line-height:1.8;">
-      ⚠️ <b>복원하면 현재 데이터가 완전히 삭제되고 덮어씌워집니다!</b><br>
-      기존에 없던 데이터도 모두 사라집니다. 이 작업은 되돌릴 수 없습니다.
+    <div style="background:#FFF3E0;border-radius:8px;padding:12px 14px;margin-bottom:14px;font-size:13px;line-height:1.7;">
+      ⚠️ <b>복원하면 현재 데이터가 모두 덮어씌워집니다!</b><br>
+      이 작업은 되돌릴 수 없습니다. 복원 전 현재 상태를 먼저 백업하는 것을 권장합니다.
     </div>
-    <div style="font-size:14px;margin-bottom:16px;"><b>복원할 백업:</b> ${label}</div>
-    <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;padding:10px 14px;background:#E8F5E9;border-radius:8px;border:1px solid #C8E6C9;">
-      <input type="checkbox" id="restore-auto-backup" checked style="accent-color:var(--primary);width:16px;height:16px;flex-shrink:0;">
-      <span>복원 전 <b>현재 데이터 자동 백업</b> 생성 (강력 권장)</span>
-    </label>`;
+    <div style="font-size:14px;"><b>복원할 백업:</b> ${label}</div>`;
   const btn = document.getElementById('restore-confirm-btn');
   btn.onclick = ()=>executeRestore(backupId, label);
   openModal('restore-confirm-modal');
 }
 
-// ══════════════════════════════════════════════════════════
-// 🔄 복원 실행 (완전 복원: 기존 삭제 → 새 데이터 쓰기)
-// ══════════════════════════════════════════════════════════
 async function executeRestore(backupId, label){
   closeModal('restore-confirm-modal');
-  const doAutoBackup = document.getElementById('restore-auto-backup')?.checked ?? true;
-
-  // ── STEP 1: 복원 전 현재 데이터 자동 백업 ──
-  if(doAutoBackup){
-    showLoading('복원 전 현재 데이터 백업 중...');
-    const sid = await createBackup(`복원전_자동백업_${new Date().toLocaleDateString('ko-KR')}`);
-    if(sid===null){ alert('사전 백업 실패. 복원을 중단합니다.'); return; }
-  }
-
-  // ── STEP 2: 백업 데이터 로드 ──
-  showLoading('백업 데이터 불러오는 중...');
+  showLoading('복원 중...');
   try{
-    const docSnap = await db.collection('backups').doc(backupId).get();
-    if(!docSnap.exists){ alert('백업을 찾을 수 없습니다.'); hideLoading(); return; }
-    const meta = docSnap.data();
-
-    const colData = await _loadBackupColData(backupId);
-    // 구 형식 호환
-    if(meta.collections){
-      for(const col of BACKUP_COLLECTIONS){
-        if(!colData[col].length && meta.collections[col]?.length)
-          colData[col] = meta.collections[col];
-      }
-    }
-
-    let restoredDocs = 0;
+    const doc = await db.collection('backups').doc(backupId).get();
+    if(!doc.exists){ alert('백업을 찾을 수 없습니다.'); hideLoading(); return; }
+    const data = doc.data();
+    let restoredDocs=0;
     for(const col of BACKUP_COLLECTIONS){
-      showLoading(`복원 중: ${col}...`);
-      const rows = colData[col]||[];
-
-      // ── STEP 3: 기존 도큐먼트 완전 삭제 (완전 복원 핵심) ──
-      const existing = await db.collection(col).get();
-      if(existing.docs.length>0)
-        await _batchDelete(existing.docs.map(d=>d.ref));
-
-      // ── STEP 4: 백업 데이터 쓰기 ──
-      if(rows.length>0){
-        const writes = rows
-          .filter(row => row.id!=null)
-          .map(row => ({
-            ref : db.collection(col).doc(String(row.id)),
-            data: row
-          }));
-        if(writes.length>0){
-          await _batchWrite(writes);
-          restoredDocs += writes.length;
+      const rows = data.collections?.[col]||[];
+      const batch = db.batch();
+      rows.forEach(row=>{
+        if(row.id){
+          batch.set(db.collection(col).doc(String(row.id)), row);
+          restoredDocs++;
         }
-      }
+      });
+      if(rows.length>0) await batch.commit();
     }
-
-    // 클라이언트 캐시 전체 초기화
+    // 캐시 초기화
     BACKUP_COLLECTIONS.forEach(c=>invalidateCache(c));
     alert(`✅ 복원 완료!\n\n백업: ${label}\n복원된 도큐먼트: ${restoredDocs}개\n\n페이지를 새로고침합니다.`);
     location.reload();
@@ -5726,72 +5557,14 @@ async function executeRestore(backupId, label){
   finally{ hideLoading(); }
 }
 
-// ══════════════════════════════════════════════════════════
-// 🗑️ 백업 삭제 (서브컬렉션 포함)
-// ══════════════════════════════════════════════════════════
-async function deleteBackup(backupId, label, silent=false){
-  if(!silent && !confirm(`백업 "${label}"을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`)) return;
-  if(!silent) showLoading('삭제 중...');
+async function deleteBackup(backupId, label){
+  if(!confirm(`백업 "${label}"을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`)) return;
+  showLoading('삭제 중...');
   try{
-    // 서브컬렉션(colData) 먼저 삭제
-    const colSnap = await db.collection('backups').doc(backupId)
-      .collection('colData').get().catch(()=>({docs:[]}));
-    if(colSnap.docs.length>0)
-      await _batchDelete(colSnap.docs.map(d=>d.ref));
-    // 부모 도큐먼트 삭제
     await db.collection('backups').doc(backupId).delete();
-    if(!silent) await renderBackupDashboard();
-  }catch(e){ if(!silent) alert('삭제 실패: '+e.message); }
-  finally{ if(!silent) hideLoading(); }
-}
-
-// ══════════════════════════════════════════════════════════
-// 📂 JSON 파일로 복원 (다운로드한 파일을 업로드)
-// ══════════════════════════════════════════════════════════
-function triggerJsonRestore(){
-  const inp = document.createElement('input');
-  inp.type='file'; inp.accept='.json';
-  inp.onchange = async(e)=>{
-    const file = e.target.files[0];
-    if(!file) return;
-    showLoading('파일 읽는 중...');
-    try{
-      const text = await file.text();
-      const data = JSON.parse(text);
-      if(!data.collections || typeof data.collections!=='object')
-        throw new Error('올바른 온마을 백업 파일이 아닙니다.');
-
-      const label  = data.label || file.name.replace('.json','');
-      const id     = 'backup_json_'+Date.now();
-
-      // 서브컬렉션에 데이터 저장
-      for(const col of BACKUP_COLLECTIONS){
-        const rows   = data.collections[col]||[];
-        if(rows.length===0) continue;
-        const chunks = _chunkArr(rows, BACKUP_CHUNK_SIZE);
-        const writes = chunks.map((chunk,ci)=>({
-          ref : db.collection('backups').doc(id).collection('colData').doc(`${col}_c${ci}`),
-          data: { col, chunk:ci, rows:chunk, count:chunk.length }
-        }));
-        await _batchWrite(writes);
-      }
-      // 메타데이터
-      await db.collection('backups').doc(id).set({
-        id, label:`[파일] ${label}`,
-        createdAt    : new Date().toISOString(),
-        createdAtStr : new Date().toLocaleString('ko-KR'),
-        createdBy    : '파일 업로드',
-        totalDocs    : data.totalDocs||0,
-        collectionMeta: Object.fromEntries(
-          BACKUP_COLLECTIONS.map(col=>[ col, (data.collections[col]||[]).length ])
-        )
-      });
-      hideLoading();
-      // 복원 확인 모달 열기
-      confirmRestore(id, `[파일] ${label}`);
-    }catch(e){ alert('파일 읽기 실패: '+e.message); hideLoading(); }
-  };
-  inp.click();
+    await renderBackupDashboard();
+  }catch(e){ alert('삭제 실패: '+e.message); }
+  finally{ hideLoading(); }
 }
 
 // ══════════════════════════════════════════════════════════
@@ -5825,6 +5598,35 @@ function closeDiaryNotice() {
   if (ov) ov.style.display = 'none';
 }
 
+// 업무일지 공개 공지 — 업체 로그인 시 팝업
+// ══════════════════════════════════════════════════════════
+async function checkDiaryNotice() {
+  const sess = getSession();
+  if (!sess || !sess.isBizAccount) return;
+  const seenKey = 'seen_diary_notices_' + sess.id;
+  const seen = JSON.parse(localStorage.getItem(seenKey) || '[]');
+  try {
+    const snap = await db.collection('diary_notices').where('isPublic', '==', true).get();
+    const notices = snap.docs.map(d => d.data())
+      .filter(n => !seen.includes(n.id))
+      .sort((a, b) => b.createdAt > a.createdAt ? 1 : -1);
+    if (notices.length === 0) return;
+    // 가장 최신 공지 하나 표시
+    const n = notices[0];
+    document.getElementById('diary-notice-title').textContent = `[${n.date}] ${n.staffName || '관리자'} 공지`;
+    document.getElementById('diary-notice-date').textContent  = n.createdAt || '';
+    document.getElementById('diary-notice-body').textContent  = (n.todo || '') + (n.memo ? '\n\n📝 ' + n.memo : '');
+    document.getElementById('diary-notice-overlay').style.display = 'flex';
+    // 현재 팝업 공지를 읽음 처리
+    seen.push(n.id);
+    localStorage.setItem(seenKey, JSON.stringify(seen));
+  } catch(e) { console.warn('공지 확인 실패:', e.message); }
+}
+
+function closeDiaryNotice() {
+  const ov = document.getElementById('diary-notice-overlay');
+  if (ov) ov.style.display = 'none';
+}
 
 // ═══════════════════════════════════════════════════════════
 // M03 담당직원 SMS 알림
