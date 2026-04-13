@@ -1966,14 +1966,17 @@ async function saveToFirebase(payload) {
       if (window.firebase && window.firebase.initializeApp) {
         if (!firebase.apps || !firebase.apps.length) firebase.initializeApp(_fbConfig);
         _fbDB = firebase.firestore();
-        // 익명 로그인 → 인증된 상태에서 Firestore 쓰기 가능
+        window._fbDB = _fbDB; // 전역 노출 — renderCoopCards가 접근
         firebase.auth().signInAnonymously()
           .then(function() {
             _fbReady = true;
             console.log('✅ Firebase 익명 로그인 완료 — 저장 준비됨');
+            // 가맹점 카드 동적 렌더링 시작
+            if (typeof renderCoopCards === 'function') renderCoopCards();
           })
           .catch(function(e) {
             console.warn('⚠️ 익명 로그인 실패:', e.message);
+            if (typeof renderCoopCards === 'function') renderCoopCards(); // 폴백으로라도 렌더
           });
       }
     } catch(e) { console.warn('⚠️ Firebase 초기화 실패:', e.message); }
@@ -2596,77 +2599,10 @@ async function saveToFirebase(payload) {
       </div>
 
       <div class="coop-card-grid reveal" id="coop-card-grid">
-        <div class="coop-card" data-cat="restaurant">
-          <!-- [업체사진 1] 마을 다이닝 카드 사진 -->
-          <img class="coop-card-img" src="images/img_cat_coop.jpg" alt="마을 다이닝">
-          <div class="coop-card-body">
-            <span class="coop-card-en">DINING</span>
-            <div class="coop-card-name">마을 다이닝</div>
-            <p class="coop-card-desc">제철 재료와 잣을 활용한 가평 향토 요리. 예약제 운영. 단체 케이터링 가능.</p>
-            <a href="http://pf.kakao.com/_FVxjZX/chat" target="_blank" class="coop-card-btn">
-              <svg width="14" height="14" viewBox="0 0 18 18" fill="none"><ellipse cx="9" cy="8" rx="8" ry="7" fill="#3A1D1D"/><path d="M9 3.5C5.96 3.5 3.5 5.46 3.5 7.88c0 1.5 1 2.82 2.56 3.62l-.6 2.2c-.04.17.13.31.28.22l2.75-1.83c.32.05.66.08 1.01.08 3.04 0 5.5-1.96 5.5-4.38S12.04 3.5 9 3.5z" fill="#FEE500"/></svg> 카카오톡으로 예약 문의
-            </a>
-          </div>
-        </div>
-        <div class="coop-card" data-cat="cafe">
-          <!-- [업체사진 2] 자카란다 카페 카드 사진 -->
-          <img class="coop-card-img" src="images/img_02.jpg" alt="자카란다 카페">
-          <div class="coop-card-body">
-            <span class="coop-card-en">CAFE</span>
-            <div class="coop-card-name">자카란다 카페</div>
-            <p class="coop-card-desc">힐링숲 품에서 즐기는 스페셜티 커피와 잣 디저트. 테라스에서 바라보는 잣나무 숲 전망.</p>
-            <a href="http://pf.kakao.com/_FVxjZX/chat" target="_blank" class="coop-card-btn">
-              <svg width="14" height="14" viewBox="0 0 18 18" fill="none"><ellipse cx="9" cy="8" rx="8" ry="7" fill="#3A1D1D"/><path d="M9 3.5C5.96 3.5 3.5 5.46 3.5 7.88c0 1.5 1 2.82 2.56 3.62l-.6 2.2c-.04.17.13.31.28.22l2.75-1.83c.32.05.66.08 1.01.08 3.04 0 5.5-1.96 5.5-4.38S12.04 3.5 9 3.5z" fill="#FEE500"/></svg> 카카오톡으로 문의하기
-            </a>
-          </div>
-        </div>
-        <div class="coop-card" data-cat="cafe">
-          <!-- [업체사진 3] 온더락 카페 카드 사진 -->
-          <img class="coop-card-img" src="images/img_03.jpg" alt="온더락 카페">
-          <div class="coop-card-body">
-            <span class="coop-card-en">CAFE · BAR</span>
-            <div class="coop-card-name">온더락 카페</div>
-            <p class="coop-card-desc">힐링숲 자락에 자리한 카페 바. 낮에는 커피, 저녁엔 칵테일과 함께 가평의 밤을 즐기는 공간.</p>
-            <a href="http://pf.kakao.com/_FVxjZX/chat" target="_blank" class="coop-card-btn">
-              <svg width="14" height="14" viewBox="0 0 18 18" fill="none"><ellipse cx="9" cy="8" rx="8" ry="7" fill="#3A1D1D"/><path d="M9 3.5C5.96 3.5 3.5 5.46 3.5 7.88c0 1.5 1 2.82 2.56 3.62l-.6 2.2c-.04.17.13.31.28.22l2.75-1.83c.32.05.66.08 1.01.08 3.04 0 5.5-1.96 5.5-4.38S12.04 3.5 9 3.5z" fill="#FEE500"/></svg> 카카오톡으로 문의하기
-            </a>
-          </div>
-        </div>
-        <div class="coop-card" data-cat="stay">
-          <!-- [업체사진 4] 힐링숲 스테이 카드 사진 -->
-          <img class="coop-card-img" src="images/img_04.jpg" alt="힐링숲 스테이">
-          <div class="coop-card-body">
-            <span class="coop-card-en">STAY</span>
-            <div class="coop-card-name">힐링숲 스테이</div>
-            <p class="coop-card-desc">잣나무 숲 속 프라이빗 펜션. 체크인 15:00 / 체크아웃 11:00. 체험 연계 패키지 상품 운영.</p>
-            <a href="http://pf.kakao.com/_FVxjZX/chat" target="_blank" class="coop-card-btn">
-              <svg width="14" height="14" viewBox="0 0 18 18" fill="none"><ellipse cx="9" cy="8" rx="8" ry="7" fill="#3A1D1D"/><path d="M9 3.5C5.96 3.5 3.5 5.46 3.5 7.88c0 1.5 1 2.82 2.56 3.62l-.6 2.2c-.04.17.13.31.28.22l2.75-1.83c.32.05.66.08 1.01.08 3.04 0 5.5-1.96 5.5-4.38S12.04 3.5 9 3.5z" fill="#FEE500"/></svg> 카카오톡으로 예약 문의
-            </a>
-          </div>
-        </div>
-        <div class="coop-card" data-cat="mart">
-          <!-- [업체사진 5] 마을 편의점 카드 사진 -->
-          <img class="coop-card-img" src="images/img_05.jpg" alt="마을 편의점">
-          <div class="coop-card-body">
-            <span class="coop-card-en">MART</span>
-            <div class="coop-card-name">마을 편의점</div>
-            <p class="coop-card-desc">온마을 방문객을 위한 생필품·로컬 특산품·잣 가공식품 판매. 스테이패스 할인 적용.</p>
-            <a href="http://pf.kakao.com/_FVxjZX/chat" target="_blank" class="coop-card-btn">
-              <svg width="14" height="14" viewBox="0 0 18 18" fill="none"><ellipse cx="9" cy="8" rx="8" ry="7" fill="#3A1D1D"/><path d="M9 3.5C5.96 3.5 3.5 5.46 3.5 7.88c0 1.5 1 2.82 2.56 3.62l-.6 2.2c-.04.17.13.31.28.22l2.75-1.83c.32.05.66.08 1.01.08 3.04 0 5.5-1.96 5.5-4.38S12.04 3.5 9 3.5z" fill="#FEE500"/></svg> 카카오톡으로 문의하기
-            </a>
-          </div>
-        </div>
-        <div class="coop-card" data-cat="craft">
-          <!-- [업체사진 6] 힐링숲 공방 카드 사진 -->
-          <img class="coop-card-img" src="images/img_cat_exp.png" alt="힐링숲 공방">
-          <div class="coop-card-body">
-            <span class="coop-card-en">CRAFT</span>
-            <div class="coop-card-name">힐링숲 공방</div>
-            <p class="coop-card-desc">다육아트·캔들·비누·테라리움 공방 체험. 나만의 작품을 만들고 기념으로 가져가세요.</p>
-            <a href="http://pf.kakao.com/_FVxjZX/chat" target="_blank" class="coop-card-btn">
-              <svg width="14" height="14" viewBox="0 0 18 18" fill="none"><ellipse cx="9" cy="8" rx="8" ry="7" fill="#3A1D1D"/><path d="M9 3.5C5.96 3.5 3.5 5.46 3.5 7.88c0 1.5 1 2.82 2.56 3.62l-.6 2.2c-.04.17.13.31.28.22l2.75-1.83c.32.05.66.08 1.01.08 3.04 0 5.5-1.96 5.5-4.38S12.04 3.5 9 3.5z" fill="#FEE500"/></svg> 카카오톡으로 예약 문의
-            </a>
-          </div>
+        <!-- Firestore landing_coops 에서 동적 렌더링 -->
+        <div id="coop-cards-loading" style="grid-column:1/-1;text-align:center;padding:48px 0;color:#888;font-size:14px;">
+          <div style="font-size:28px;margin-bottom:10px;">🌿</div>
+          가맹점 정보를 불러오는 중...
         </div>
       </div>
       <div style="text-align:center;padding:16px 0;font-size:12px;color:#2e2a26;font-weight:400;">
@@ -2681,13 +2617,8 @@ async function saveToFirebase(payload) {
             <p class="coop-map-eyebrow">MEMBER STORES</p>
             <h3 class="coop-map-heading">가맹점 한눈에 보기</h3>
             <p class="coop-map-desc">QR 패스 하나로 상면 전체를 즐겨요.<br>아침고요수목원 인근 가맹점을 확인하세요.</p>
-            <ul class="coop-store-list">
-              <li><span class="coop-store-dot" style="background:#c06a2a;"></span><span class="coop-store-name">마을 다이닝</span><span class="coop-store-badge coop-store-badge--rest">식당</span></li>
-              <li><span class="coop-store-dot" style="background:#4a90a4;"></span><span class="coop-store-name">자카란다 카페</span><span class="coop-store-badge coop-store-badge--cafe">카페</span></li>
-              <li><span class="coop-store-dot" style="background:#225536;"></span><span class="coop-store-name">온더락 카페</span><span class="coop-store-badge coop-store-badge--cafe">카페·바</span></li>
-              <li><span class="coop-store-dot" style="background:#7b5ea7;"></span><span class="coop-store-name">힐링숲 스테이</span><span class="coop-store-badge coop-store-badge--stay">숙박</span></li>
-              <li><span class="coop-store-dot" style="background:#3d7a5c;"></span><span class="coop-store-name">마을 편의점</span><span class="coop-store-badge coop-store-badge--mart">마트</span></li>
-              <li><span class="coop-store-dot" style="background:#b5863a;"></span><span class="coop-store-name">힐링숲 공방</span><span class="coop-store-badge coop-store-badge--craft">공방</span></li>
+            <ul class="coop-store-list" id="coop-map-store-list">
+              <li style="color:#aaa;font-size:13px;padding:12px 0;">불러오는 중...</li>
             </ul>
             <a class="coop-map-cta"
                href="https://map.kakao.com/link/search/경기도 가평군 상면 수목원로 313-15"
@@ -2893,116 +2824,180 @@ async function saveToFirebase(payload) {
 
 <script>
 // ── 가맹점 업종 필터 ──
-let _coopMap = null; // Leaflet 인스턴스 (중복 초기화 방지)
+let _coopMap = null;      // Leaflet 인스턴스
+let _coopStores = [];      // Firestore에서 받아온 가맹점 데이터
 
-// 가맹점 데이터 — 좌표는 실제 주소 기반 조정 가능
-const COOP_STORES = [
-  { name:'마을 다이닝',     en:'DINING',      cat:'restaurant', lat:37.8318, lng:127.5078, color:'#c06a2a', desc:'가평 향토 요리 · 예약제 운영' },
-  { name:'자카란다 카페',   en:'CAFE',        cat:'cafe',       lat:37.8330, lng:127.5090, color:'#4a90a4', desc:'스페셜티 커피 · 잣 디저트 · 테라스' },
-  { name:'온더락 카페',     en:'CAFE · BAR',  cat:'cafe',       lat:37.8325, lng:127.5085, color:'#225536', desc:'낮에는 커피 · 저녁엔 칵테일' },
-  { name:'힐링숲 스테이',   en:'STAY',        cat:'stay',       lat:37.8315, lng:127.5072, color:'#7b5ea7', desc:'잣나무 숲 속 프라이빗 펜션' },
-  { name:'마을 편의점',     en:'MART',        cat:'mart',       lat:37.8322, lng:127.5068, color:'#3d7a5c', desc:'로컬 특산품 · 스테이패스 할인' },
-  { name:'힐링숲 공방',     en:'CRAFT',       cat:'craft',      lat:37.8328, lng:127.5096, color:'#b5863a', desc:'다육아트 · 캔들 · 테라리움 체험' },
+// ── 배지 스타일 매핑 ──
+const COOP_BADGE = {
+  restaurant: { bg:'#f5e8dd', color:'#7a3d10', label:'식당' },
+  cafe:        { bg:'#ddeee5', color:'#1a5c35', label:'카페' },
+  stay:        { bg:'#ede8f5', color:'#4a2e80', label:'숙박' },
+  mart:        { bg:'#ddeef3', color:'#1d5f73', label:'마트' },
+  craft:       { bg:'#fdf0d5', color:'#8a5c00', label:'공방' },
+};
+const KAKAO_SVG = '<svg width="14" height="14" viewBox="0 0 18 18" fill="none"><ellipse cx="9" cy="8" rx="8" ry="7" fill="#3A1D1D"/><path d="M9 3.5C5.96 3.5 3.5 5.46 3.5 7.88c0 1.5 1 2.82 2.56 3.62l-.6 2.2c-.04.17.13.31.28.22l2.75-1.83c.32.05.66.08 1.01.08 3.04 0 5.5-1.96 5.5-4.38S12.04 3.5 9 3.5z" fill="#FEE500"/></svg>';
+
+// ── Firestore에서 가맹점 불러와 카드 + 지도 목록 렌더링 ──
+async function renderCoopCards() {
+  const grid   = document.getElementById('coop-card-grid');
+  const loading= document.getElementById('coop-cards-loading');
+  if (!grid) return;
+
+  // Firestore 준비 대기 (최대 5초)
+  let waited = 0;
+  while (!window._fbDB && waited < 50) { await new Promise(r=>setTimeout(r,100)); waited++; }
+
+  try {
+    let snap;
+    try {
+      snap = await window._fbDB.collection('landing_coops').orderBy('order','asc').get();
+    } catch(e) {
+      snap = await window._fbDB.collection('landing_coops').get();
+    }
+    _coopStores = snap.docs
+      .map(d => ({ ...d.data(), __id: d.id }))
+      .filter(s => s.active !== false)
+      .sort((a,b) => (a.order||99)-(b.order||99));
+
+    if (_coopStores.length === 0) {
+      // Firestore에 데이터 없으면 폴백 하드코딩 표시
+      _coopStores = _COOP_FALLBACK;
+    }
+
+    // 카드 렌더링
+    if (loading) loading.remove();
+    _coopStores.forEach(s => {
+      const card = document.createElement('div');
+      card.className = 'coop-card';
+      card.dataset.cat = s.cat || 'restaurant';
+      card.innerHTML = `
+        <img class="coop-card-img" src="${s.img || 'images/img_cat_coop.jpg'}" alt="${s.name}"
+          onerror="this.src='images/img_cat_coop.jpg'">
+        <div class="coop-card-body">
+          <span class="coop-card-en">${s.en || ''}</span>
+          <div class="coop-card-name">${s.name}</div>
+          ${s.address ? `<p style="font-size:11px;color:#888;margin:2px 0 4px;">📍 ${s.address}</p>` : ''}
+          ${s.phone   ? `<p style="font-size:11px;color:#888;margin:2px 0 4px;">📞 ${s.phone}</p>` : ''}
+          <p class="coop-card-desc">${s.desc || ''}</p>
+          <a href="${s.kakao || 'http://pf.kakao.com/_FVxjZX/chat'}" target="_blank" class="coop-card-btn">
+            ${KAKAO_SVG} 카카오톡으로 문의하기
+          </a>
+        </div>`;
+      grid.appendChild(card);
+    });
+
+    // 지도 목록 렌더링
+    _renderMapStoreList();
+
+  } catch(e) {
+    console.warn('landing_coops 로드 실패, 폴백 사용:', e.message);
+    _coopStores = _COOP_FALLBACK;
+    if (loading) loading.remove();
+    _coopStores.forEach(s => {
+      const card = document.createElement('div');
+      card.className = 'coop-card';
+      card.dataset.cat = s.cat;
+      card.innerHTML = `
+        <img class="coop-card-img" src="${s.img}" alt="${s.name}">
+        <div class="coop-card-body">
+          <span class="coop-card-en">${s.en}</span>
+          <div class="coop-card-name">${s.name}</div>
+          <p class="coop-card-desc">${s.desc}</p>
+          <a href="${s.kakao}" target="_blank" class="coop-card-btn">${KAKAO_SVG} 카카오톡으로 문의하기</a>
+        </div>`;
+      grid.appendChild(card);
+    });
+    _renderMapStoreList();
+  }
+}
+
+// 지도 패널 가맹점 목록 렌더링
+function _renderMapStoreList() {
+  const ul = document.getElementById('coop-map-store-list');
+  if (!ul || !_coopStores.length) return;
+  ul.innerHTML = _coopStores.map(s => {
+    const b = COOP_BADGE[s.cat] || { bg:'#eee', color:'#555', label:s.cat||'' };
+    return `<li>
+      <span class="coop-store-dot" style="background:${s.color||'#888'};"></span>
+      <span class="coop-store-name">${s.name}</span>
+      <span class="coop-store-badge" style="background:${b.bg};color:${b.color};">${s.en||b.label}</span>
+    </li>`;
+  }).join('');
+}
+
+// 폴백 하드코딩 (Firestore 불가 시)
+const _COOP_FALLBACK = [
+  { name:'마을 다이닝',   en:'DINING',    cat:'restaurant', desc:'가평 향토 요리 · 예약제 운영', img:'images/img_cat_coop.jpg', lat:37.8318, lng:127.5078, color:'#c06a2a', kakao:'http://pf.kakao.com/_FVxjZX/chat' },
+  { name:'자카란다 카페', en:'CAFE',      cat:'cafe',       desc:'스페셜티 커피 · 잣 디저트',     img:'images/img_02.jpg',       lat:37.8330, lng:127.5090, color:'#4a90a4', kakao:'http://pf.kakao.com/_FVxjZX/chat' },
+  { name:'온더락 카페',   en:'CAFE·BAR',  cat:'cafe',       desc:'낮에는 커피 · 저녁엔 칵테일',   img:'images/img_03.jpg',       lat:37.8325, lng:127.5085, color:'#225536', kakao:'http://pf.kakao.com/_FVxjZX/chat' },
+  { name:'힐링숲 스테이', en:'STAY',      cat:'stay',       desc:'잣나무 숲 속 프라이빗 펜션',     img:'images/img_04.jpg',       lat:37.8315, lng:127.5072, color:'#7b5ea7', kakao:'http://pf.kakao.com/_FVxjZX/chat' },
+  { name:'마을 편의점',   en:'MART',      cat:'mart',       desc:'로컬 특산품 · 스테이패스 할인',  img:'images/img_05.jpg',       lat:37.8322, lng:127.5068, color:'#3d7a5c', kakao:'http://pf.kakao.com/_FVxjZX/chat' },
+  { name:'힐링숲 공방',   en:'CRAFT',     cat:'craft',      desc:'다육아트·캔들·테라리움 체험',    img:'images/img_cat_exp.png',  lat:37.8328, lng:127.5096, color:'#b5863a', kakao:'http://pf.kakao.com/_FVxjZX/chat' },
 ];
 
+// Leaflet 지도 초기화 — _coopStores 기반으로 마커 그림
 function _initCoopMap() {
-  if (_coopMap) {
-    // 이미 초기화됐으면 크기만 재계산
-    setTimeout(() => _coopMap.invalidateSize(), 100);
-    return;
-  }
-
+  if (_coopMap) { setTimeout(() => _coopMap.invalidateSize(), 100); return; }
   const mapEl = document.getElementById('coop-leaflet-map');
   if (!mapEl || typeof L === 'undefined') return;
 
-  // 지도 초기화 — 가맹점 중심 좌표
   _coopMap = L.map('coop-leaflet-map', {
     center: [37.8322, 127.5081],
     zoom: 16,
     zoomControl: true,
-    scrollWheelZoom: false, // 페이지 스크롤 충돌 방지
+    scrollWheelZoom: false,
   });
 
-  // OpenStreetMap 타일
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
     maxZoom: 19,
   }).addTo(_coopMap);
 
-  // 협동조합 본부 마커 (별도 스타일)
+  // 본부 마커
   const hqIcon = L.divIcon({
     className: '',
-    html: `<div style="
-      width:36px;height:36px;border-radius:50%;
-      background:#1a4028;border:3px solid #fff;
-      display:flex;align-items:center;justify-content:center;
-      box-shadow:0 3px 10px rgba(0,0,0,0.35);
-      font-size:16px;line-height:1;">🏢</div>`,
-    iconSize: [36, 36],
-    iconAnchor: [18, 18],
-    popupAnchor: [0, -20],
+    html: `<div style="width:36px;height:36px;border-radius:50%;background:#1a4028;border:3px solid #fff;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,0.35);font-size:16px;">🏢</div>`,
+    iconSize:[36,36], iconAnchor:[18,18], popupAnchor:[0,-20],
   });
   L.marker([37.8322, 127.5081], { icon: hqIcon })
-    .bindPopup(`<div style="font-size:13px;line-height:1.7;min-width:160px;">
-      <strong style="color:#1a4028;font-size:14px;">아침고요상생연대 협동조합</strong><br>
-      <span style="color:#666;font-size:11px;">경기도 가평군 상면 수목원로 313-15</span>
-    </div>`, { maxWidth: 220 })
+    .bindPopup(`<div style="font-size:13px;line-height:1.7;min-width:160px;"><strong style="color:#1a4028;">아침고요상생연대 협동조합</strong><br><span style="color:#666;font-size:11px;">경기도 가평군 상면 수목원로 313-15</span></div>`)
     .addTo(_coopMap);
 
-  // 가맹점 마커 추가
-  COOP_STORES.forEach(store => {
+  // 가맹점 마커 — _coopStores 기반
+  const stores = _coopStores.length ? _coopStores : _COOP_FALLBACK;
+  const bounds = [[37.8322, 127.5081]];
+  stores.forEach(s => {
+    if (!s.lat || !s.lng) return;
     const icon = L.divIcon({
       className: '',
-      html: `<div style="
-        width:30px;height:30px;border-radius:50%;
-        background:${store.color};border:2.5px solid #fff;
-        display:flex;align-items:center;justify-content:center;
-        box-shadow:0 2px 8px rgba(0,0,0,0.3);
-        cursor:pointer;">
-        <div style="width:10px;height:10px;background:#fff;border-radius:50%;opacity:0.9;"></div>
-      </div>`,
-      iconSize: [30, 30],
-      iconAnchor: [15, 15],
-      popupAnchor: [0, -18],
+      html: `<div style="width:30px;height:30px;border-radius:50%;background:${s.color||'#888'};border:2.5px solid #fff;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.3);cursor:pointer;"><div style="width:10px;height:10px;background:#fff;border-radius:50%;opacity:0.9;"></div></div>`,
+      iconSize:[30,30], iconAnchor:[15,15], popupAnchor:[0,-18],
     });
-
-    const catBadgeColors = {
-      restaurant: { bg:'#f5e8dd', color:'#7a3d10' },
-      cafe:       { bg:'#ddeee5', color:'#1a5c35' },
-      stay:       { bg:'#ede8f5', color:'#4a2e80' },
-      mart:       { bg:'#ddeef3', color:'#1d5f73' },
-      craft:      { bg:'#fdf0d5', color:'#8a5c00' },
-    };
-    const badge = catBadgeColors[store.cat] || { bg:'#eee', color:'#333' };
-
-    L.marker([store.lat, store.lng], { icon })
-      .bindPopup(`<div style="font-size:13px;line-height:1.7;min-width:150px;">
+    const b = COOP_BADGE[s.cat] || { bg:'#eee', color:'#555', label:'' };
+    const addrLine = s.address ? `<br><span style="font-size:11px;color:#888;">📍 ${s.address}</span>` : '';
+    const telLine  = s.phone   ? `<br><span style="font-size:11px;color:#888;">📞 ${s.phone}</span>`   : '';
+    L.marker([s.lat, s.lng], { icon })
+      .bindPopup(`<div style="font-size:13px;line-height:1.7;min-width:160px;">
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
-          <span style="width:10px;height:10px;border-radius:50%;background:${store.color};display:inline-block;flex-shrink:0;"></span>
-          <strong style="font-size:14px;color:#1a1714;">${store.name}</strong>
+          <span style="width:10px;height:10px;border-radius:50%;background:${s.color||'#888'};display:inline-block;"></span>
+          <strong style="font-size:14px;">${s.name}</strong>
         </div>
-        <span style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:12px;
-          background:${badge.bg};color:${badge.color};">${store.en}</span><br>
-        <span style="color:#555;font-size:12px;">${store.desc}</span>
-      </div>`, { maxWidth: 220 })
+        <span style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:12px;background:${b.bg};color:${b.color};">${s.en||b.label}</span>
+        ${addrLine}${telLine}
+        <br><span style="color:#555;font-size:12px;">${s.desc||''}</span>
+      </div>`, { maxWidth: 230 })
       .addTo(_coopMap);
+    bounds.push([s.lat, s.lng]);
   });
 
-  // 전체 마커가 보이도록 범위 조정
-  const allLatLngs = COOP_STORES.map(s => [s.lat, s.lng]);
-  allLatLngs.push([37.8322, 127.5081]); // 본부 포함
-  _coopMap.fitBounds(L.latLngBounds(allLatLngs), { padding: [40, 40] });
-
+  if (bounds.length > 1) _coopMap.fitBounds(L.latLngBounds(bounds), { padding:[40,40] });
   setTimeout(() => _coopMap.invalidateSize(), 200);
 }
 
 function filterCoop(cat) {
-  // 탭 활성화
   document.querySelectorAll('.genre-tab').forEach(btn => {
-    const isCat = btn.getAttribute('onclick').includes("'" + cat + "'");
-    btn.classList.toggle('active', isCat);
+    btn.classList.toggle('active', btn.getAttribute('onclick').includes("'" + cat + "'"));
   });
-
   const cardGrid = document.getElementById('coop-card-grid');
   const mapPanel = document.getElementById('coop-map-panel');
 
@@ -3010,22 +3005,17 @@ function filterCoop(cat) {
     if (cardGrid) cardGrid.style.display = 'none';
     if (mapPanel) {
       mapPanel.style.display = 'block';
-      // 패널이 보인 뒤 Leaflet 초기화 (display:none 상태에서는 크기 계산 불가)
       requestAnimationFrame(() => _initCoopMap());
     }
     return;
   }
-
-  // 지도 패널 숨기고 카드 그리드 복원
   if (mapPanel) mapPanel.style.display = 'none';
   if (cardGrid) cardGrid.style.display = '';
-
-  // 카드 필터
   document.querySelectorAll('#coop-card-grid .coop-card').forEach(card => {
-    const cardCat = card.dataset.cat;
-    card.classList.toggle('hidden', cat !== 'all' && cardCat !== cat);
+    card.classList.toggle('hidden', cat !== 'all' && card.dataset.cat !== cat);
   });
 }
+
 
 // ── 카테고리 탭 전환 (토글 + 스크롤) ──
 const CAT_IDS = ['exp','coop','suwon'];  // 확장 시 여기에만 추가

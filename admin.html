@@ -785,6 +785,9 @@ body.role-viewer .perm-write { display: none !important; }
     <a onclick="showModule('backup')" id="nav-backup" class="perm-admin">
       <span class="ico">💾</span> 백업 시점 관리
     </a>
+    <a onclick="showModule('landing')" id="nav-landing" class="perm-admin">
+      <span class="ico">🌐</span> 랜딩페이지 관리
+    </a>
   </nav>
   <div style="padding:14px 18px;border-top:1px solid rgba(255,255,255,.1);" id="sidebar-user-info">
     <div style="font-size:11px;color:rgba(255,255,255,.5);">로그인 중</div>
@@ -1489,10 +1492,128 @@ body.role-viewer .perm-write { display: none !important; }
       <div id="report-content"></div>
     </div>
 
+    <!-- 🌐 랜딩페이지 관리 모듈 -->
+    <div id="module-landing" class="module perm-admin" style="display:none;">
+      <div class="card">
+        <div class="card-header">
+          <h3>🌐 랜딩페이지 가맹점 관리</h3>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <button class="btn btn-primary btn-sm" onclick="openLandingAdd()">+ 가맹점 추가</button>
+            <button class="btn btn-ghost btn-sm" onclick="renderLandingManager()">🔄 새로고침</button>
+            <a href="https://onmaeulpass-gp.github.io/onmaeul/" target="_blank" class="btn btn-ghost btn-sm">🖥 랜딩 미리보기 →</a>
+          </div>
+        </div>
+        <div class="card-body">
+          <div style="background:#E8F5E9;border-radius:8px;padding:11px 14px;margin-bottom:16px;font-size:12px;color:#2E7D32;line-height:1.7;">
+            💡 여기서 정보를 수정·저장하면 <b>랜딩페이지(index.html)에 자동 반영</b>됩니다.<br>
+            이미지는 URL 입력 방식입니다. GitHub images/ 폴더 경로 또는 외부 이미지 URL을 사용하세요.
+          </div>
+          <!-- 변경 목록 안내 -->
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-bottom:20px;">
+            <div style="background:#f0f4ff;border-radius:8px;padding:10px 12px;font-size:12px;color:#3b5bdb;line-height:1.6;">📝 <b>업체명</b><br>한글 + 영문(EN)</div>
+            <div style="background:#f0f4ff;border-radius:8px;padding:10px 12px;font-size:12px;color:#3b5bdb;line-height:1.6;">🏷️ <b>업종</b><br>식당/카페/숙박/마트/공방</div>
+            <div style="background:#f0f4ff;border-radius:8px;padding:10px 12px;font-size:12px;color:#3b5bdb;line-height:1.6;">📄 <b>설명</b><br>카드 본문 텍스트</div>
+            <div style="background:#f0f4ff;border-radius:8px;padding:10px 12px;font-size:12px;color:#3b5bdb;line-height:1.6;">📍 <b>주소</b><br>상세 주소</div>
+            <div style="background:#f0f4ff;border-radius:8px;padding:10px 12px;font-size:12px;color:#3b5bdb;line-height:1.6;">📞 <b>전화번호</b><br>업체 연락처</div>
+            <div style="background:#f0f4ff;border-radius:8px;padding:10px 12px;font-size:12px;color:#3b5bdb;line-height:1.6;">🖼 <b>사진 URL</b><br>카드 대표 이미지</div>
+            <div style="background:#f0f4ff;border-radius:8px;padding:10px 12px;font-size:12px;color:#3b5bdb;line-height:1.6;">📍 <b>지도 좌표</b><br>위도 / 경도</div>
+            <div style="background:#f0f4ff;border-radius:8px;padding:10px 12px;font-size:12px;color:#3b5bdb;line-height:1.6;">🔗 <b>카카오 링크</b><br>예약/문의 채널</div>
+          </div>
+          <div id="landing-store-list"></div>
+        </div>
+      </div>
+    </div>
+
   </div><!-- /page-content -->
 </div><!-- /main -->
 
 <!-- ===== MODALS ===== -->
+
+<!-- 랜딩 가맹점 편집 Modal -->
+<div class="modal-overlay" id="landing-store-modal">
+  <div class="modal" style="max-width:600px;">
+    <div class="modal-header">
+      <h3 id="landing-store-modal-title">가맹점 정보 편집</h3>
+      <button class="modal-close" onclick="closeModal('landing-store-modal')">✕</button>
+    </div>
+    <div class="modal-body" style="max-height:75vh;overflow-y:auto;">
+      <div class="form-grid" style="grid-template-columns:1fr 1fr;">
+        <div class="form-group" style="grid-column:1/-1;">
+          <label>업체명 (한글) *</label>
+          <input id="ls-name" placeholder="예: 마을 다이닝">
+        </div>
+        <div class="form-group">
+          <label>업체명 (영문) *</label>
+          <input id="ls-en" placeholder="DINING">
+        </div>
+        <div class="form-group">
+          <label>업종 *</label>
+          <select id="ls-cat" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;">
+            <option value="restaurant">🍽 식당</option>
+            <option value="cafe">☕ 카페</option>
+            <option value="stay">🏡 숙박</option>
+            <option value="mart">🛒 마트</option>
+            <option value="craft">🎨 공방</option>
+          </select>
+        </div>
+        <div class="form-group" style="grid-column:1/-1;">
+          <label>업체 설명</label>
+          <textarea id="ls-desc" rows="2" placeholder="카드에 표시될 짧은 설명 (2줄 이내 권장)" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;resize:vertical;"></textarea>
+        </div>
+        <div class="form-group" style="grid-column:1/-1;">
+          <label>주소</label>
+          <input id="ls-address" placeholder="경기도 가평군 상면 수목원로 313-xx">
+        </div>
+        <div class="form-group">
+          <label>전화번호</label>
+          <input id="ls-phone" placeholder="031-000-0000" oninput="formatPhone(this)">
+        </div>
+        <div class="form-group">
+          <label>카카오 채널 링크</label>
+          <input id="ls-kakao" placeholder="http://pf.kakao.com/...">
+        </div>
+        <div class="form-group" style="grid-column:1/-1;">
+          <label>대표 이미지 URL</label>
+          <input id="ls-img" placeholder="images/img_01.jpg  또는  https://...">
+          <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">GitHub images/ 폴더 파일명 또는 외부 이미지 주소</div>
+          <div id="ls-img-preview" style="margin-top:8px;display:none;">
+            <img id="ls-img-preview-img" style="width:100%;max-height:140px;object-fit:cover;border-radius:8px;border:1px solid var(--border);">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>지도 위도 (lat)</label>
+          <input id="ls-lat" type="number" step="0.0001" placeholder="37.8322">
+        </div>
+        <div class="form-group">
+          <label>지도 경도 (lng)</label>
+          <input id="ls-lng" type="number" step="0.0001" placeholder="127.5081">
+        </div>
+        <div class="form-group">
+          <label>마커 색상</label>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input id="ls-color" type="color" value="#225536" style="width:48px;height:36px;border:none;border-radius:6px;cursor:pointer;padding:2px;">
+            <span id="ls-color-val" style="font-size:12px;color:var(--text-muted);">#225536</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>노출 순서</label>
+          <input id="ls-order" type="number" min="1" placeholder="1" style="width:100%;">
+        </div>
+        <div class="form-group">
+          <label>공개 여부</label>
+          <select id="ls-active" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;">
+            <option value="true">✅ 공개</option>
+            <option value="false">🔒 비공개</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('landing-store-modal')">취소</button>
+      <button class="btn btn-primary" onclick="saveLandingStore()">💾 저장 (랜딩 자동 반영)</button>
+    </div>
+  </div>
+</div>
 
 <!-- M01 고객 Modal -->
 <div class="modal-overlay" id="m01-modal">
@@ -3217,7 +3338,7 @@ function showModule(mod) {
     m03:'03. 업무관리',m04:'04. 조합연계',m05:'05. 정산관리',m06:'06. 항목관리',
     users:'사용자 관리', m07:'업무일지', m08:'이벤트발송', report:'월별 리포트',
     m09:'🎫 온마을 스테이패스', 'biz-settings':'⚙️ 업체 설정', 'admin-monitor':'🏪 업체 모니터링',
-    'backup':'💾 백업 시점 관리'};
+    'backup':'💾 백업 시점 관리', 'landing':'🌐 랜딩페이지 관리'};
   document.getElementById('page-title').textContent = titles[mod]||'';
   closeSidebar();
   if(mod==='dashboard') renderDashboard();
@@ -3225,7 +3346,6 @@ function showModule(mod) {
   if(mod==='m02') { populateM02Selects(); renderM02(); }
   if(mod==='m03') {
     const _sr = (getSession()||{}).role;
-    // 기본 탭: staff/admin 모두 월간으로
     populateM03Selects();
     renderM03();
     switchM03Tab('month');
@@ -3241,6 +3361,7 @@ function showModule(mod) {
   if(mod==='biz-settings') loadBizSettings();
   if(mod==='admin-monitor') renderAdminMonitor();
   if(mod==='backup') renderBackupDashboard();
+  if(mod==='landing') renderLandingManager();
 }
 function toggleSidebar(){ document.getElementById('sidebar').classList.toggle('open'); document.getElementById('overlay').classList.toggle('open'); }
 function closeSidebar(){ document.getElementById('sidebar').classList.remove('open'); document.getElementById('overlay').classList.remove('open'); }
@@ -5354,6 +5475,192 @@ async function saveBizSettings() {
   } catch(e) {
     showToast('저장 실패: ' + e.message, 'error');
   } finally { hideLoading(); }
+}
+
+// ══════════════════════════════════════════════════════════
+// 🌐 랜딩페이지 가맹점 관리 (landing_coops 컬렉션)
+// 저장하면 index.html이 Firestore에서 읽어 자동 반영됨
+// ══════════════════════════════════════════════════════════
+
+const CAT_LABELS = { restaurant:'🍽 식당', cafe:'☕ 카페', stay:'🏡 숙박', mart:'🛒 마트', craft:'🎨 공방' };
+let _landingEditId = null;
+
+// 초기 데이터 시드 — landing_coops가 비어있을 때 기본값으로 채움
+const LANDING_DEFAULT_STORES = [
+  { name:'마을 다이닝',   en:'DINING',    cat:'restaurant', desc:'제철 재료와 잣을 활용한 가평 향토 요리. 예약제 운영. 단체 케이터링 가능.', address:'경기도 가평군 상면 수목원로 313-15', phone:'', kakao:'http://pf.kakao.com/_FVxjZX/chat', img:'images/img_cat_coop.jpg', lat:37.8318, lng:127.5078, color:'#c06a2a', order:1, active:true },
+  { name:'자카란다 카페', en:'CAFE',      cat:'cafe',       desc:'힐링숲 품에서 즐기는 스페셜티 커피와 잣 디저트. 테라스에서 바라보는 잣나무 숲 전망.', address:'경기도 가평군 상면 수목원로 313-15', phone:'', kakao:'http://pf.kakao.com/_FVxjZX/chat', img:'images/img_02.jpg', lat:37.8330, lng:127.5090, color:'#4a90a4', order:2, active:true },
+  { name:'온더락 카페',   en:'CAFE · BAR',cat:'cafe',       desc:'힐링숲 자락에 자리한 카페 바. 낮에는 커피, 저녁엔 칵테일과 함께 가평의 밤을 즐기는 공간.', address:'경기도 가평군 상면 수목원로 313-15', phone:'', kakao:'http://pf.kakao.com/_FVxjZX/chat', img:'images/img_03.jpg', lat:37.8325, lng:127.5085, color:'#225536', order:3, active:true },
+  { name:'힐링숲 스테이', en:'STAY',      cat:'stay',       desc:'잣나무 숲 속 프라이빗 펜션. 체크인 15:00 / 체크아웃 11:00. 체험 연계 패키지 상품 운영.', address:'경기도 가평군 상면 수목원로 313-15', phone:'', kakao:'http://pf.kakao.com/_FVxjZX/chat', img:'images/img_04.jpg', lat:37.8315, lng:127.5072, color:'#7b5ea7', order:4, active:true },
+  { name:'마을 편의점',   en:'MART',      cat:'mart',       desc:'온마을 방문객을 위한 생필품·로컬 특산품·잣 가공식품 판매. 스테이패스 할인 적용.', address:'경기도 가평군 상면 수목원로 313-15', phone:'', kakao:'http://pf.kakao.com/_FVxjZX/chat', img:'images/img_05.jpg', lat:37.8322, lng:127.5068, color:'#3d7a5c', order:5, active:true },
+  { name:'힐링숲 공방',   en:'CRAFT',     cat:'craft',      desc:'다육아트·캔들·비누·테라리움 공방 체험. 나만의 작품을 만들고 기념으로 가져가세요.', address:'경기도 가평군 상면 수목원로 313-15', phone:'', kakao:'http://pf.kakao.com/_FVxjZX/chat', img:'images/img_cat_exp.png', lat:37.8328, lng:127.5096, color:'#b5863a', order:6, active:true },
+];
+
+async function renderLandingManager(){
+  const listEl = document.getElementById('landing-store-list');
+  if(!listEl) return;
+  showLoading('가맹점 목록 불러오는 중...');
+  try{
+    let snap = await db.collection('landing_coops').orderBy('order','asc').get().catch(()=>db.collection('landing_coops').get());
+    let stores = snap.docs.map(d=>({...d.data(), __docId:d.id}));
+
+    // 비어있으면 기본 데이터 시드
+    if(stores.length===0){
+      if(confirm('랜딩 가맹점 데이터가 없습니다.\n기본 6개 업체로 초기 데이터를 생성하시겠습니까?')){
+        for(const s of LANDING_DEFAULT_STORES){
+          const ref = await db.collection('landing_coops').add({...s, createdAt:new Date().toISOString()});
+          stores.push({...s, __docId:ref.id});
+        }
+      }
+    }
+
+    if(stores.length===0){ listEl.innerHTML='<div style="text-align:center;padding:40px;color:var(--text-muted);">등록된 가맹점이 없습니다. [+ 가맹점 추가] 버튼을 눌러 추가하세요.</div>'; return; }
+
+    listEl.innerHTML = `
+      <table class="table" style="width:100%;">
+        <thead><tr>
+          <th style="width:40px;">#</th>
+          <th>업체명</th>
+          <th>업종</th>
+          <th>주소</th>
+          <th>전화</th>
+          <th style="width:60px;">공개</th>
+          <th style="width:130px;">작업</th>
+        </tr></thead>
+        <tbody>
+        ${stores.sort((a,b)=>(a.order||99)-(b.order||99)).map(s=>`
+          <tr style="${!s.active?'opacity:0.45;':''}">
+            <td><span style="font-size:12px;color:var(--text-muted);">${s.order||'-'}</span></td>
+            <td>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span style="width:10px;height:10px;border-radius:50%;background:${s.color||'#888'};display:inline-block;flex-shrink:0;"></span>
+                <div>
+                  <div style="font-weight:600;font-size:13px;">${s.name||'-'}</div>
+                  <div style="font-size:11px;color:var(--text-muted);">${s.en||''}</div>
+                </div>
+              </div>
+            </td>
+            <td><span style="font-size:12px;">${CAT_LABELS[s.cat]||s.cat||'-'}</span></td>
+            <td style="font-size:12px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.address||'-'}</td>
+            <td style="font-size:12px;">${s.phone||'-'}</td>
+            <td style="text-align:center;">${s.active?'✅':'🔒'}</td>
+            <td>
+              <div style="display:flex;gap:4px;">
+                <button class="btn btn-ghost btn-sm" onclick="openLandingEdit('${s.__docId}')">✏️ 수정</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteLandingStore('${s.__docId}','${(s.name||'').replace(/'/g,"\\'")}')">🗑️</button>
+              </div>
+            </td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+      <div style="text-align:center;padding:12px;font-size:12px;color:var(--text-muted);">
+        총 ${stores.length}개 가맹점 · 저장 즉시 랜딩페이지에 자동 반영됩니다
+      </div>`;
+  }catch(e){ if(listEl) listEl.innerHTML=`<div style="color:#e53935;padding:20px;">오류: ${e.message}</div>`; }
+  finally{ hideLoading(); }
+}
+
+function openLandingAdd(){
+  _landingEditId = null;
+  document.getElementById('landing-store-modal-title').textContent = '가맹점 추가';
+  ['ls-name','ls-en','ls-desc','ls-address','ls-phone','ls-kakao','ls-img','ls-lat','ls-lng'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  document.getElementById('ls-cat').value='restaurant';
+  document.getElementById('ls-active').value='true';
+  document.getElementById('ls-color').value='#225536';
+  document.getElementById('ls-color-val').textContent='#225536';
+  document.getElementById('ls-order').value='';
+  document.getElementById('ls-img-preview').style.display='none';
+  openModal('landing-store-modal');
+}
+
+async function openLandingEdit(docId){
+  showLoading();
+  try{
+    const doc = await db.collection('landing_coops').doc(docId).get();
+    if(!doc.exists){ alert('데이터를 찾을 수 없습니다.'); return; }
+    const s = doc.data();
+    _landingEditId = docId;
+    document.getElementById('landing-store-modal-title').textContent = `수정 — ${s.name||''}`;
+    document.getElementById('ls-name').value   = s.name||'';
+    document.getElementById('ls-en').value     = s.en||'';
+    document.getElementById('ls-desc').value   = s.desc||'';
+    document.getElementById('ls-address').value= s.address||'';
+    document.getElementById('ls-phone').value  = s.phone||'';
+    document.getElementById('ls-kakao').value  = s.kakao||'';
+    document.getElementById('ls-img').value    = s.img||'';
+    document.getElementById('ls-lat').value    = s.lat||'';
+    document.getElementById('ls-lng').value    = s.lng||'';
+    document.getElementById('ls-cat').value    = s.cat||'restaurant';
+    document.getElementById('ls-active').value = String(s.active!==false);
+    document.getElementById('ls-order').value  = s.order||1;
+    const col = s.color||'#225536';
+    document.getElementById('ls-color').value    = col;
+    document.getElementById('ls-color-val').textContent = col;
+    // 이미지 미리보기
+    if(s.img){
+      document.getElementById('ls-img-preview-img').src = s.img;
+      document.getElementById('ls-img-preview').style.display='block';
+    }
+    openModal('landing-store-modal');
+  }catch(e){ alert('오류: '+e.message); }
+  finally{ hideLoading(); }
+}
+
+// 색상 변경 시 hex 표시
+document.addEventListener('DOMContentLoaded',()=>{
+  const colorInput = document.getElementById('ls-color');
+  if(colorInput) colorInput.addEventListener('input',e=>{
+    document.getElementById('ls-color-val').textContent = e.target.value;
+  });
+  const imgInput = document.getElementById('ls-img');
+  if(imgInput) imgInput.addEventListener('input', e=>{
+    const v = e.target.value.trim();
+    if(v){ document.getElementById('ls-img-preview-img').src=v; document.getElementById('ls-img-preview').style.display='block'; }
+    else  { document.getElementById('ls-img-preview').style.display='none'; }
+  });
+});
+
+async function saveLandingStore(){
+  const name = document.getElementById('ls-name').value.trim();
+  const en   = document.getElementById('ls-en').value.trim();
+  if(!name){ alert('업체명을 입력하세요.'); return; }
+  showLoading('저장 중...');
+  try{
+    const data = {
+      name, en,
+      cat:      document.getElementById('ls-cat').value,
+      desc:     document.getElementById('ls-desc').value.trim(),
+      address:  document.getElementById('ls-address').value.trim(),
+      phone:    document.getElementById('ls-phone').value.trim(),
+      kakao:    document.getElementById('ls-kakao').value.trim(),
+      img:      document.getElementById('ls-img').value.trim(),
+      lat:      parseFloat(document.getElementById('ls-lat').value)||37.8322,
+      lng:      parseFloat(document.getElementById('ls-lng').value)||127.5081,
+      color:    document.getElementById('ls-color').value,
+      order:    parseInt(document.getElementById('ls-order').value)||99,
+      active:   document.getElementById('ls-active').value==='true',
+      updatedAt:new Date().toISOString(),
+    };
+    if(_landingEditId){
+      await db.collection('landing_coops').doc(_landingEditId).update(data);
+    } else {
+      data.createdAt = new Date().toISOString();
+      await db.collection('landing_coops').add(data);
+    }
+    closeModal('landing-store-modal');
+    await renderLandingManager();
+    alert(`✅ "${name}" 저장 완료!\n랜딩페이지를 새로고침하면 반영됩니다.`);
+  }catch(e){ alert('저장 실패: '+e.message); }
+  finally{ hideLoading(); }
+}
+
+async function deleteLandingStore(docId, name){
+  if(!confirm(`"${name}"을(를) 삭제하시겠습니까?\n랜딩페이지에서도 즉시 제거됩니다.`)) return;
+  showLoading('삭제 중...');
+  try{
+    await db.collection('landing_coops').doc(docId).delete();
+    await renderLandingManager();
+  }catch(e){ alert('삭제 실패: '+e.message); }
+  finally{ hideLoading(); }
 }
 
 // ══════════════════════════════════════════════════════════
