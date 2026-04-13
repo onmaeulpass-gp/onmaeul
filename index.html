@@ -2012,6 +2012,9 @@ async function saveToFirebase(payload) {
   window.addEventListener('offline', function() { console.warn('📴 인터넷 끊김'); });
 })();
 </script>
+<!-- Leaflet.js (가맹점 지도) -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV/XN/WLcE=" crossorigin=""></script>
 </head>
 <body>
 
@@ -2697,15 +2700,7 @@ async function saveToFirebase(payload) {
           </div>
           <!-- 오른쪽: 지도 -->
           <div class="coop-map-frame">
-            <iframe
-              id="coop-kakaomap"
-              src=""
-              data-src="https://map.kakao.com/link/map/아침고요상생연대협동조합,37.8322,127.5081"
-              width="100%" height="100%"
-              style="border:none;display:block;"
-              allowfullscreen loading="lazy"
-              title="온마을 가맹점 위치 지도">
-            </iframe>
+            <div id="coop-leaflet-map" style="width:100%;height:100%;"></div>
             <div class="coop-map-addr">
               <strong>아침고요상생연대 협동조합</strong>
               경기도 가평군 상면 수목원로 313-15
@@ -2898,6 +2893,109 @@ async function saveToFirebase(payload) {
 
 <script>
 // ── 가맹점 업종 필터 ──
+let _coopMap = null; // Leaflet 인스턴스 (중복 초기화 방지)
+
+// 가맹점 데이터 — 좌표는 실제 주소 기반 조정 가능
+const COOP_STORES = [
+  { name:'마을 다이닝',     en:'DINING',      cat:'restaurant', lat:37.8318, lng:127.5078, color:'#c06a2a', desc:'가평 향토 요리 · 예약제 운영' },
+  { name:'자카란다 카페',   en:'CAFE',        cat:'cafe',       lat:37.8330, lng:127.5090, color:'#4a90a4', desc:'스페셜티 커피 · 잣 디저트 · 테라스' },
+  { name:'온더락 카페',     en:'CAFE · BAR',  cat:'cafe',       lat:37.8325, lng:127.5085, color:'#225536', desc:'낮에는 커피 · 저녁엔 칵테일' },
+  { name:'힐링숲 스테이',   en:'STAY',        cat:'stay',       lat:37.8315, lng:127.5072, color:'#7b5ea7', desc:'잣나무 숲 속 프라이빗 펜션' },
+  { name:'마을 편의점',     en:'MART',        cat:'mart',       lat:37.8322, lng:127.5068, color:'#3d7a5c', desc:'로컬 특산품 · 스테이패스 할인' },
+  { name:'힐링숲 공방',     en:'CRAFT',       cat:'craft',      lat:37.8328, lng:127.5096, color:'#b5863a', desc:'다육아트 · 캔들 · 테라리움 체험' },
+];
+
+function _initCoopMap() {
+  if (_coopMap) {
+    // 이미 초기화됐으면 크기만 재계산
+    setTimeout(() => _coopMap.invalidateSize(), 100);
+    return;
+  }
+
+  const mapEl = document.getElementById('coop-leaflet-map');
+  if (!mapEl || typeof L === 'undefined') return;
+
+  // 지도 초기화 — 가맹점 중심 좌표
+  _coopMap = L.map('coop-leaflet-map', {
+    center: [37.8322, 127.5081],
+    zoom: 16,
+    zoomControl: true,
+    scrollWheelZoom: false, // 페이지 스크롤 충돌 방지
+  });
+
+  // OpenStreetMap 타일
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    maxZoom: 19,
+  }).addTo(_coopMap);
+
+  // 협동조합 본부 마커 (별도 스타일)
+  const hqIcon = L.divIcon({
+    className: '',
+    html: `<div style="
+      width:36px;height:36px;border-radius:50%;
+      background:#1a4028;border:3px solid #fff;
+      display:flex;align-items:center;justify-content:center;
+      box-shadow:0 3px 10px rgba(0,0,0,0.35);
+      font-size:16px;line-height:1;">🏢</div>`,
+    iconSize: [36, 36],
+    iconAnchor: [18, 18],
+    popupAnchor: [0, -20],
+  });
+  L.marker([37.8322, 127.5081], { icon: hqIcon })
+    .bindPopup(`<div style="font-size:13px;line-height:1.7;min-width:160px;">
+      <strong style="color:#1a4028;font-size:14px;">아침고요상생연대 협동조합</strong><br>
+      <span style="color:#666;font-size:11px;">경기도 가평군 상면 수목원로 313-15</span>
+    </div>`, { maxWidth: 220 })
+    .addTo(_coopMap);
+
+  // 가맹점 마커 추가
+  COOP_STORES.forEach(store => {
+    const icon = L.divIcon({
+      className: '',
+      html: `<div style="
+        width:30px;height:30px;border-radius:50%;
+        background:${store.color};border:2.5px solid #fff;
+        display:flex;align-items:center;justify-content:center;
+        box-shadow:0 2px 8px rgba(0,0,0,0.3);
+        cursor:pointer;">
+        <div style="width:10px;height:10px;background:#fff;border-radius:50%;opacity:0.9;"></div>
+      </div>`,
+      iconSize: [30, 30],
+      iconAnchor: [15, 15],
+      popupAnchor: [0, -18],
+    });
+
+    const catBadgeColors = {
+      restaurant: { bg:'#f5e8dd', color:'#7a3d10' },
+      cafe:       { bg:'#ddeee5', color:'#1a5c35' },
+      stay:       { bg:'#ede8f5', color:'#4a2e80' },
+      mart:       { bg:'#ddeef3', color:'#1d5f73' },
+      craft:      { bg:'#fdf0d5', color:'#8a5c00' },
+    };
+    const badge = catBadgeColors[store.cat] || { bg:'#eee', color:'#333' };
+
+    L.marker([store.lat, store.lng], { icon })
+      .bindPopup(`<div style="font-size:13px;line-height:1.7;min-width:150px;">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+          <span style="width:10px;height:10px;border-radius:50%;background:${store.color};display:inline-block;flex-shrink:0;"></span>
+          <strong style="font-size:14px;color:#1a1714;">${store.name}</strong>
+        </div>
+        <span style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:12px;
+          background:${badge.bg};color:${badge.color};">${store.en}</span><br>
+        <span style="color:#555;font-size:12px;">${store.desc}</span>
+      </div>`, { maxWidth: 220 })
+      .addTo(_coopMap);
+  });
+
+  // 전체 마커가 보이도록 범위 조정
+  const allLatLngs = COOP_STORES.map(s => [s.lat, s.lng]);
+  allLatLngs.push([37.8322, 127.5081]); // 본부 포함
+  _coopMap.fitBounds(L.latLngBounds(allLatLngs), { padding: [40, 40] });
+
+  setTimeout(() => _coopMap.invalidateSize(), 200);
+}
+
 function filterCoop(cat) {
   // 탭 활성화
   document.querySelectorAll('.genre-tab').forEach(btn => {
@@ -2909,15 +3007,11 @@ function filterCoop(cat) {
   const mapPanel = document.getElementById('coop-map-panel');
 
   if (cat === 'map') {
-    // 카드 그리드 숨기고 지도 패널 표시
     if (cardGrid) cardGrid.style.display = 'none';
     if (mapPanel) {
       mapPanel.style.display = 'block';
-      // lazy: 처음 열릴 때 iframe src 설정
-      const iframe = document.getElementById('coop-kakaomap');
-      if (iframe && !iframe.src && iframe.dataset.src) {
-        iframe.src = iframe.dataset.src;
-      }
+      // 패널이 보인 뒤 Leaflet 초기화 (display:none 상태에서는 크기 계산 불가)
+      requestAnimationFrame(() => _initCoopMap());
     }
     return;
   }
