@@ -1393,7 +1393,7 @@ body.role-viewer .perm-write { display: none !important; }
     </div>
 
     <!-- ===== 월별 리포트 ===== -->
-    <div id="module-biz-settings" class="module" style="display:none;">
+    <div id="module-biz-settings" class="module">
       <div class="settings-card">
         <h4>⚙️ 업체 설정</h4>
         <div class="settings-row">
@@ -1419,7 +1419,7 @@ body.role-viewer .perm-write { display: none !important; }
     </div>
 
     <!-- ===== ADMIN-MONITOR 관리자 업체 모니터링 ===== -->
-    <div id="module-admin-monitor" class="module perm-admin" style="display:none;">
+    <div id="module-admin-monitor" class="module perm-admin">
       <div class="card">
         <div class="card-header">
           <h3>🏪 업체 할인율 모니터링</h3>
@@ -1435,7 +1435,7 @@ body.role-viewer .perm-write { display: none !important; }
     </div>
 
     <!-- 💾 백업 시점 관리 모듈 -->
-    <div id="module-backup" class="module perm-admin" style="display:none;">
+    <div id="module-backup" class="module perm-admin">
       <div class="card">
         <div class="card-header">
           <h3>💾 백업 시점 관리</h3>
@@ -1493,7 +1493,7 @@ body.role-viewer .perm-write { display: none !important; }
     </div>
 
     <!-- 🌐 랜딩페이지 관리 모듈 -->
-    <div id="module-landing" class="module perm-admin" style="display:none;">
+    <div id="module-landing" class="module perm-admin">
       <div class="card">
         <div class="card-header">
           <h3>🌐 랜딩페이지 가맹점 관리</h3>
@@ -3143,7 +3143,8 @@ function applySession() {
   // ── admin — 모든 nav 복원 ────────────────────────────────
   if (s.role === 'admin') {
     const allAdminNav = ['nav-dashboard','nav-m01','nav-m02','nav-m03','nav-m04',
-      'nav-m05','nav-m06','nav-users','nav-m07','nav-m08','nav-report','nav-admin-monitor'];
+      'nav-m05','nav-m06','nav-users','nav-m07','nav-m08','nav-report',
+      'nav-admin-monitor','nav-backup','nav-landing'];
     allAdminNav.forEach(id => { const n=document.getElementById(id); if(n) n.style.display=''; });
     const navBiz = document.getElementById('nav-biz-settings');
     if(navBiz) navBiz.style.display = 'none';
@@ -3158,7 +3159,7 @@ function applySession() {
       .forEach(el => { el.style.display='none'; el.setAttribute('data-biz-hidden','1'); });
     document.body.classList.add('biz-mode');
     const bizShowNav = ['nav-dashboard','nav-m03','nav-m07','nav-m09','nav-biz-settings'];
-    const bizHideNav = ['nav-m01','nav-m02','nav-m04','nav-m05','nav-m06','nav-users','nav-m08','nav-report','nav-admin-monitor'];
+    const bizHideNav = ['nav-m01','nav-m02','nav-m04','nav-m05','nav-m06','nav-users','nav-m08','nav-report','nav-admin-monitor','nav-backup','nav-landing'];
     bizShowNav.forEach(id => { const n=document.getElementById(id); if(n) n.style.display=''; });
     bizHideNav.forEach(id => { const n=document.getElementById(id); if(n) n.style.display='none'; });
     loadBizSettings();
@@ -3328,10 +3329,13 @@ function showModule(mod) {
       return;
     }
   }
-  document.querySelectorAll('.module').forEach(m=>m.classList.remove('active'));
+  document.querySelectorAll('.module').forEach(m=>{ m.classList.remove('active'); });
   document.querySelectorAll('#sidebar nav a').forEach(a=>a.classList.remove('active'));
   const el=document.getElementById('module-'+mod);
-  if(el) el.classList.add('active');
+  if(el){
+    el.classList.add('active');
+    el.style.removeProperty('display'); // 인라인 display:none 제거
+  }
   const nav=document.getElementById('nav-'+mod);
   if(nav) nav.classList.add('active');
   const titles={dashboard:'대시보드',m01:'01. 고객관리',m02:'02. 직원관리',
