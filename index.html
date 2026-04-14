@@ -2639,113 +2639,162 @@ async function renderExpCards() {
   if (loading) loading.remove();
 
   items.forEach(function(s, idx) {
-    const rn   = s.reserve || s.name;
-    const tags = (s.tags||'').split(',').map(function(t){ return t.trim(); }).filter(Boolean);
+    var rn   = s.reserve || s.name;
+    var tags = (s.tags||'').split(',').map(function(t){ return t.trim(); }).filter(Boolean);
 
-    // 카드
-    const card  = document.createElement('div');
+    /* ── 카드 ── */
+    var card = document.createElement('div');
     card.className = 'exp-card';
-    const img   = document.createElement('img');
+
+    var img = document.createElement('img');
     img.className = 'exp-card-img';
-    img.src   = s.img || 'images/img_02.jpg';
-    img.alt   = s.name;
+    img.src = s.img || 'images/img_02.jpg';
+    img.alt = s.name;
     img.onerror = function(){ this.src = 'images/img_02.jpg'; };
-    const body  = document.createElement('div');
+
+    var body = document.createElement('div');
     body.className = 'exp-card-inner exp-card-body';
-    const numEl = document.createElement('span');
+
+    var numEl = document.createElement('span');
     numEl.className = 'exp-num';
     numEl.style.cssText = 'font-family:"DM Sans",sans-serif;font-size:0.72rem;letter-spacing:0.18em;color:var(--gold);margin-bottom:6px;display:block;';
     numEl.textContent = '0' + (idx + 1);
-    const nameEl = document.createElement('span');
-    nameEl.className = 'exp-name';  nameEl.textContent = s.name;
-    const enEl   = document.createElement('span');
-    enEl.className = 'exp-en';    enEl.textContent = s.en || '';
-    const descEl = document.createElement('p');
-    descEl.className = 'exp-desc'; descEl.textContent = s.desc || '';
-    body.append(numEl, nameEl, enEl, descEl);
+
+    var nameEl = document.createElement('span'); nameEl.className='exp-name'; nameEl.textContent=s.name;
+    var enEl   = document.createElement('span'); enEl.className='exp-en';   enEl.textContent=s.en||'';
+    var descEl = document.createElement('p');    descEl.className='exp-desc'; descEl.textContent=s.desc||'';
+
+    body.appendChild(numEl); body.appendChild(nameEl); body.appendChild(enEl); body.appendChild(descEl);
+
     if (tags.length) {
-      const tw = document.createElement('div');
-      tw.className = 'exp-tags';
-      tags.forEach(function(t){ const sp=document.createElement('span'); sp.className='exp-tag'; sp.textContent=t; tw.appendChild(sp); });
+      var tw = document.createElement('div'); tw.className='exp-tags';
+      tags.forEach(function(t){ var sp=document.createElement('span'); sp.className='exp-tag'; sp.textContent=t; tw.appendChild(sp); });
       body.appendChild(tw);
     }
-    const btn = document.createElement('button');
-    btn.className   = 'btn-exp-reserve';
-    btn.textContent = '예약 신청하기';
-    btn.addEventListener('click', (function(r){ return function(){ if(window.startBookingFrom) window.startBookingFrom(r); }; })(rn));
-    body.appendChild(btn);
-    card.append(img, body);
+
+    var reserveBtn = document.createElement('button');
+    reserveBtn.className = 'btn-exp-reserve';
+    reserveBtn.textContent = '예약 신청하기';
+    reserveBtn.addEventListener('click', (function(r){ return function(){ if(window.startBookingFrom) window.startBookingFrom(r); }; })(rn));
+    body.appendChild(reserveBtn);
+
+    card.appendChild(img); card.appendChild(body);
     grid.appendChild(card);
 
-    // 인라인 드로어 — DOM API로 생성 (따옴표 충돌 없음)
-    const drawer = document.createElement('div');
-    drawer.className  = 'exp-inline-drawer';
+    /* ── 인라인 드로어 — 원본 CSS 클래스 사용 ── */
+    var drawer = document.createElement('div');
+    drawer.className = 'exp-inline-drawer';
     drawer.dataset.prog = rn;
-    const inner = document.createElement('div');
+
+    var inner = document.createElement('div');
     inner.className = 'drawer-inner';
 
-    // 스텝 인디케이터
-    const steps = document.createElement('div');
-    steps.className = 'drawer-steps';
-    const s1 = document.createElement('span'); s1.className='drawer-step-ind active'; s1.textContent='01 정보입력';
-    const sep= document.createElement('span'); sep.className='drawer-step-sep';       sep.textContent='—';
-    const s2 = document.createElement('span'); s2.className='drawer-step-ind';        s2.textContent='02 신청완료';
-    const closeBtn = document.createElement('button');
-    closeBtn.className   = 'drawer-close-btn';
-    closeBtn.textContent = '✕';
-    closeBtn.addEventListener('click', (function(r){ return function(){ if(window.closeDrawer) window.closeDrawer(r); }; })(rn));
-    steps.append(s1, sep, s2, closeBtn);
-    inner.appendChild(steps);
+    /* 스텝 인디케이터 */
+    var stepsEl = document.createElement('div'); stepsEl.className='drawer-steps';
+    var si1 = document.createElement('span'); si1.className='drawer-step-ind active'; si1.textContent='정보 입력';
+    var sl  = document.createElement('span'); sl.className='drawer-step-line';
+    var si2 = document.createElement('span'); si2.className='drawer-step-ind'; si2.textContent='신청 완료';
+    stepsEl.appendChild(si1); stepsEl.appendChild(sl); stepsEl.appendChild(si2);
+    inner.appendChild(stepsEl);
 
-    // 패널 1 — 입력 폼
-    const p1 = document.createElement('div');
-    p1.className = 'drawer-panel active';
-    const fg = document.createElement('div');
-    fg.className = 'booking-form-grid';
+    /* 패널 1 — 입력폼 */
+    var p1 = document.createElement('div'); p1.className='drawer-panel active';
 
-    function makeRow(label, inputTag, cls, type, placeholder, errCls) {
-      const row  = document.createElement('div'); row.className = 'booking-form-row';
-      const lbl  = document.createElement('label'); lbl.className='booking-label'; lbl.textContent=label;
-      const inp  = document.createElement(inputTag); inp.className='form-input '+cls;
-      if(type)        inp.type=type;
-      if(placeholder) inp.placeholder=placeholder;
-      const err  = document.createElement('div'); err.className='form-error '+errCls; err.textContent=label+'을(를) 입력해주세요';
-      row.append(lbl, inp, err);
-      return row;
+    /* 선택 프로그램 배지 */
+    var badge = document.createElement('div'); badge.className='drawer-selected-badge';
+    var diamond = document.createElement('span'); diamond.textContent='♦ '; diamond.style.color='var(--gold)';
+    badge.appendChild(diamond); badge.appendChild(document.createTextNode(rn));
+
+    /* 필드 그리드 */
+    var fields = document.createElement('div'); fields.className='drawer-fields';
+
+    /* 이름 + 연락처 (2컬럼 행) */
+    var row1 = document.createElement('div'); row1.className='drawer-field-row';
+
+    function makeField(labelKo, labelEn, inputTag, cls, inputType, ph) {
+      var wrap = document.createElement('div'); wrap.className='drawer-field';
+      var lbl  = document.createElement('label');
+            lbl.textContent = labelKo + ' ';
+      var em = document.createElement('em');
+      em.textContent = labelEn;
+      em.style.fontFamily = '"DM Sans",sans-serif';
+      em.style.letterSpacing = '.08em';
+      em.style.opacity = '.55';
+      em.style.fontStyle = 'normal';
+      em.style.fontSize = '.65rem';
+      lbl.appendChild(em);
+      var el = document.createElement(inputTag);
+      el.className = 'form-input ' + cls;
+      if(inputType) el.type = inputType;
+      if(ph)        el.placeholder = ph;
+      var err = document.createElement('div'); err.className='form-error';
+      wrap.appendChild(lbl); wrap.appendChild(el); wrap.appendChild(err);
+      return wrap;
     }
 
-    const rowName   = makeRow('예약자 이름 *','input','d-name','text','홍길동','d-err-name');
-    const rowPhone  = makeRow('연락처 *','input','d-phone','tel','010-0000-0000','d-err-phone');
-    const rowDate   = makeRow('희망 날짜 *','input','d-date','date','','d-err-date');
+    row1.appendChild(makeField('예약자 이름 *','NAME','input','d-name','text','홍길동'));
+    row1.appendChild(makeField('연락처 *','PHONE','input','d-phone','tel','010-0000-0000'));
 
-    const rowPeople = document.createElement('div'); rowPeople.className='booking-form-row';
-    const pLbl = document.createElement('label'); pLbl.className='booking-label'; pLbl.textContent='인원 *';
-    const pSel = document.createElement('select'); pSel.className='form-select d-people';
-    ['','1명','2명','3명','4명','5명','6명 이상'].forEach(function(v,i){
-      const o=document.createElement('option'); o.value=i===0?'':v; o.textContent=i===0?'인원 선택':v; pSel.appendChild(o);
+    /* 날짜 + 인원 (2컬럼 행) */
+    var row2 = document.createElement('div'); row2.className='drawer-field-row';
+    row2.appendChild(makeField('희망 날짜 *','DATE','input','d-date','date',''));
+
+    var peopleFld = document.createElement('div'); peopleFld.className='drawer-field';
+    var pLbl = document.createElement('label');
+    pLbl.textContent = '인원 * ';
+    var _em_pLbl = document.createElement('em');
+    _em_pLbl.textContent = 'GUESTS';
+    _em_pLbl.style.cssText = 'font-family:"DM Sans",sans-serif;letter-spacing:.08em;opacity:.55;font-style:normal;font-size:.65rem;';
+    pLbl.appendChild(_em_pLbl)
+    var pSel = document.createElement('select'); pSel.className='form-select d-people';
+    ['선택','1명','2명','3명','4명','5명','6명 이상'].forEach(function(v,i){
+      var o=document.createElement('option'); o.value=i===0?'':v; o.textContent=v; pSel.appendChild(o);
     });
-    const pErr = document.createElement('div'); pErr.className='form-error d-err-people'; pErr.textContent='인원을 선택해주세요';
-    rowPeople.append(pLbl, pSel, pErr);
+    var pErr = document.createElement('div'); pErr.className='form-error';
+    peopleFld.appendChild(pLbl); peopleFld.appendChild(pSel); peopleFld.appendChild(pErr);
+    row2.appendChild(peopleFld);
 
-    const rowMemo = makeRow('메모 (선택)','textarea','d-memo','','알레르기, 요청사항 등','');
+    /* 메모 (전체 폭) */
+    var memoFld = document.createElement('div'); memoFld.className='drawer-field';
+    var mLbl = document.createElement('label');
+    mLbl.textContent = '메모 (선택) ';
+    var _em_mLbl = document.createElement('em');
+    _em_mLbl.textContent = 'NOTE (OPTIONAL)';
+    _em_mLbl.style.cssText = 'font-family:"DM Sans",sans-serif;letter-spacing:.08em;opacity:.55;font-style:normal;font-size:.65rem;';
+    mLbl.appendChild(_em_mLbl)
+    var mTa = document.createElement('textarea'); mTa.className='form-input d-memo'; mTa.rows=2; mTa.placeholder='알레르기, 특이사항 등';
+    memoFld.appendChild(mLbl); memoFld.appendChild(mTa);
 
-    fg.append(rowName, rowPhone, rowDate, rowPeople, rowMemo);
-    const subBtn = document.createElement('button');
-    subBtn.className   = 'd-submit-btn';
-    subBtn.textContent = '신청 완료하기';
-    subBtn.addEventListener('click', (function(r){ return function(){ if(window.submitDrawer) window.submitDrawer(r); }; })(rn));
-    p1.append(fg, subBtn);
+    fields.appendChild(row1); fields.appendChild(row2); fields.appendChild(memoFld);
+
+    /* 액션 버튼 */
+    var actions = document.createElement('div'); actions.className='drawer-actions';
+    var cancelBtn = document.createElement('button');
+    cancelBtn.className = 'btn-booking-cancel';
+    cancelBtn.textContent = '취소';
+    cancelBtn.style.cssText = 'padding:12px 24px;background:transparent;border:1px solid rgba(184,150,90,0.3);color:rgba(250,247,242,0.6);font-family:"DM Sans",sans-serif;font-size:.8rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;transition:all .2s;';
+    cancelBtn.addEventListener('click', (function(r){ return function(){ if(window.closeDrawer) window.closeDrawer(r); }; })(rn));
+    var submitBtn = document.createElement('button');
+    submitBtn.className = 'btn-booking-next d-submit-btn';
+    submitBtn.textContent = '신청 완료하기';
+    submitBtn.addEventListener('click', (function(r){ return function(){ if(window.submitDrawer) window.submitDrawer(r); }; })(rn));
+    actions.appendChild(cancelBtn); actions.appendChild(submitBtn);
+
+    p1.appendChild(badge); p1.appendChild(fields); p1.appendChild(actions);
     inner.appendChild(p1);
 
-    // 패널 2 — 완료
-    const p2 = document.createElement('div');
-    p2.className = 'drawer-panel';
-    const doneH = document.createElement('div'); doneH.className='booking-done-header'; doneH.textContent='✅ 예약 신청이 완료되었습니다';
-    const doneInfo = document.createElement('div'); doneInfo.className='d-done-info';
-    const doneClose = document.createElement('button');
-    doneClose.className='drawer-close-btn-done'; doneClose.textContent='닫기';
-    doneClose.addEventListener('click', (function(r){ return function(){ if(window.closeDrawer) window.closeDrawer(r); }; })(rn));
-    p2.append(doneH, doneInfo, doneClose);
+    /* 패널 2 — 완료 */
+    var p2 = document.createElement('div'); p2.className='drawer-panel';
+    var doneIcon  = document.createElement('div'); doneIcon.className='booking-done-icon'; doneIcon.textContent='✓';
+    var doneTitle = document.createElement('div'); doneTitle.className='booking-done-title'; doneTitle.textContent='예약 신청이 완료되었습니다';
+    var doneSub   = document.createElement('div'); doneSub.className='booking-done-sub'; doneSub.textContent='담당자 확인 후 연락드리겠습니다.';
+    var doneInfo  = document.createElement('div'); doneInfo.className='booking-done-info d-done-info';
+    var doneAct   = document.createElement('div'); doneAct.className='drawer-actions';
+    var closeBtn2 = document.createElement('button');
+    closeBtn2.className='btn-booking-next'; closeBtn2.textContent='닫기';
+    closeBtn2.addEventListener('click', (function(r){ return function(){ if(window.closeDrawer) window.closeDrawer(r); }; })(rn));
+    doneAct.appendChild(closeBtn2);
+    p2.appendChild(doneIcon); p2.appendChild(doneTitle); p2.appendChild(doneSub); p2.appendChild(doneInfo); p2.appendChild(doneAct);
     inner.appendChild(p2);
 
     drawer.appendChild(inner);
