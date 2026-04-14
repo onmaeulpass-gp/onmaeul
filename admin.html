@@ -1496,30 +1496,66 @@ body.role-viewer .perm-write { display: none !important; }
     <div id="module-landing" class="module perm-admin">
       <div class="card">
         <div class="card-header">
-          <h3>🌐 랜딩페이지 가맹점 관리</h3>
+          <h3>🌐 랜딩페이지 콘텐츠 관리</h3>
           <div style="display:flex;gap:8px;align-items:center;">
-            <button class="btn btn-primary btn-sm" onclick="openLandingAdd()">+ 가맹점 추가</button>
+            <button class="btn btn-primary btn-sm" id="landing-add-btn" onclick="openLandingAddCurrent()">+ 항목 추가</button>
             <button class="btn btn-ghost btn-sm" onclick="renderLandingManager()">🔄 새로고침</button>
-            <a href="https://onmaeulpass-gp.github.io/onmaeul/" target="_blank" class="btn btn-ghost btn-sm">🖥 랜딩 미리보기 →</a>
+            <a href="https://onmaeulpass-gp.github.io/onmaeul/" target="_blank" class="btn btn-ghost btn-sm">🖥 미리보기 →</a>
           </div>
         </div>
         <div class="card-body">
-          <div style="background:#E8F5E9;border-radius:8px;padding:11px 14px;margin-bottom:16px;font-size:12px;color:#2E7D32;line-height:1.7;">
-            💡 여기서 정보를 수정·저장하면 <b>랜딩페이지(index.html)에 자동 반영</b>됩니다.<br>
-            이미지는 URL 입력 방식입니다. GitHub images/ 폴더 경로 또는 외부 이미지 URL을 사용하세요.
+          <!-- 안내 -->
+          <div style="background:#E8F5E9;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:12px;color:#2E7D32;line-height:1.7;">
+            💡 저장하면 <b>랜딩페이지에 자동 반영</b>됩니다. 이미지는 GitHub <code>images/</code> 경로 또는 외부 URL을 사용하세요.
           </div>
-          <!-- 변경 목록 안내 -->
-          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-bottom:20px;">
-            <div style="background:#f0f4ff;border-radius:8px;padding:10px 12px;font-size:12px;color:#3b5bdb;line-height:1.6;">📝 <b>업체명</b><br>한글 + 영문(EN)</div>
-            <div style="background:#f0f4ff;border-radius:8px;padding:10px 12px;font-size:12px;color:#3b5bdb;line-height:1.6;">🏷️ <b>업종</b><br>식당/카페/숙박/마트/공방</div>
-            <div style="background:#f0f4ff;border-radius:8px;padding:10px 12px;font-size:12px;color:#3b5bdb;line-height:1.6;">📄 <b>설명</b><br>카드 본문 텍스트</div>
-            <div style="background:#f0f4ff;border-radius:8px;padding:10px 12px;font-size:12px;color:#3b5bdb;line-height:1.6;">📍 <b>주소</b><br>상세 주소</div>
-            <div style="background:#f0f4ff;border-radius:8px;padding:10px 12px;font-size:12px;color:#3b5bdb;line-height:1.6;">📞 <b>전화번호</b><br>업체 연락처</div>
-            <div style="background:#f0f4ff;border-radius:8px;padding:10px 12px;font-size:12px;color:#3b5bdb;line-height:1.6;">🖼 <b>사진 URL</b><br>카드 대표 이미지</div>
-            <div style="background:#f0f4ff;border-radius:8px;padding:10px 12px;font-size:12px;color:#3b5bdb;line-height:1.6;">📍 <b>지도 좌표</b><br>위도 / 경도</div>
-            <div style="background:#f0f4ff;border-radius:8px;padding:10px 12px;font-size:12px;color:#3b5bdb;line-height:1.6;">🔗 <b>카카오 링크</b><br>예약/문의 채널</div>
+          <!-- 섹션 탭 (5개) -->
+          <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:20px;border-bottom:2px solid var(--border);padding-bottom:0;">
+            <button id="ltab-coop" class="landing-sec-tab active" onclick="switchLandingTab('coop')"
+              style="padding:7px 14px;border:none;border-radius:8px 8px 0 0;cursor:pointer;font-size:12px;font-weight:600;background:var(--primary);color:#fff;margin-bottom:-2px;border-bottom:2px solid var(--primary);">
+              🏪 가맹점
+            </button>
+            <button id="ltab-exp" class="landing-sec-tab" onclick="switchLandingTab('exp')"
+              style="padding:7px 14px;border:none;border-radius:8px 8px 0 0;cursor:pointer;font-size:12px;font-weight:600;background:#f0f0f0;color:#666;margin-bottom:-2px;border-bottom:2px solid transparent;">
+              🌿 체험프로그램
+            </button>
+            <button id="ltab-suwon" class="landing-sec-tab" onclick="switchLandingTab('suwon')"
+              style="padding:7px 14px;border:none;border-radius:8px 8px 0 0;cursor:pointer;font-size:12px;font-weight:600;background:#f0f0f0;color:#666;margin-bottom:-2px;border-bottom:2px solid transparent;">
+              🌸 수목원·동물원
+            </button>
+            <button id="ltab-sections" class="landing-sec-tab" onclick="switchLandingTab('sections')"
+              style="padding:7px 14px;border:none;border-radius:8px 8px 0 0;cursor:pointer;font-size:12px;font-weight:600;background:#f0f0f0;color:#666;margin-bottom:-2px;border-bottom:2px solid transparent;">
+              📌 대형 섹션탭
+            </button>
+            <button id="ltab-cats" class="landing-sec-tab" onclick="switchLandingTab('cats')"
+              style="padding:7px 14px;border:none;border-radius:8px 8px 0 0;cursor:pointer;font-size:12px;font-weight:600;background:#f0f0f0;color:#666;margin-bottom:-2px;border-bottom:2px solid transparent;">
+              🏷️ 업종 카테고리
+            </button>
           </div>
-          <div id="landing-store-list"></div>
+          <!-- 패널: 가맹점 -->
+          <div id="lpanel-coop">
+            <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">관리 항목: 업체명, 영문명, 업종, 설명, 주소, 전화번호, 이미지, 지도좌표, 카카오링크, 순서, 공개여부</div>
+            <div id="landing-store-list"></div>
+          </div>
+          <!-- 패널: 체험 -->
+          <div id="lpanel-exp" style="display:none;">
+            <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">관리 항목: 프로그램명, 영문명, 설명, 이미지, 가격태그(쉼표 구분), 예약명, 순서, 공개여부</div>
+            <div id="landing-exp-list"></div>
+          </div>
+          <!-- 패널: 수목원 -->
+          <div id="lpanel-suwon" style="display:none;">
+            <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">관리 항목: 시설명, 영문명, 설명, 이미지, 링크 URL, 링크 버튼 텍스트, 순서, 공개여부</div>
+            <div id="landing-suwon-list"></div>
+          </div>
+          <!-- 패널: 대형 섹션탭 -->
+          <div id="lpanel-sections" style="display:none;">
+            <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">관리 항목: 탭 번호, 한글명, 영문명, 배지텍스트, 배경이미지, 연결 패널 ID(exp/coop/suwon), 순서, 공개여부</div>
+            <div id="landing-sections-list"></div>
+          </div>
+          <!-- 패널: 업종 카테고리 -->
+          <div id="lpanel-cats" style="display:none;">
+            <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">가맹점 필터 탭 관리 — 이모지+이름으로 입력 (예: 🍽 식당), 순서·공개 여부 조정 가능</div>
+            <div id="landing-cats-list"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -1529,79 +1565,50 @@ body.role-viewer .perm-write { display: none !important; }
 
 <!-- ===== MODALS ===== -->
 
-<!-- 랜딩 가맹점 편집 Modal -->
-<div class="modal-overlay" id="landing-store-modal">
-  <div class="modal" style="max-width:600px;">
+<!-- 랜딩 섹션탭 편집 Modal -->
+<div class="modal-overlay" id="landing-section-modal">
+  <div class="modal" style="max-width:520px;">
     <div class="modal-header">
-      <h3 id="landing-store-modal-title">가맹점 정보 편집</h3>
-      <button class="modal-close" onclick="closeModal('landing-store-modal')">✕</button>
+      <h3 id="landing-section-modal-title">섹션탭 편집</h3>
+      <button class="modal-close" onclick="closeModal('landing-section-modal')">✕</button>
     </div>
-    <div class="modal-body" style="max-height:75vh;overflow-y:auto;">
+    <div class="modal-body">
       <div class="form-grid" style="grid-template-columns:1fr 1fr;">
-        <div class="form-group" style="grid-column:1/-1;">
-          <label>업체명 (한글) *</label>
-          <input id="ls-name" placeholder="예: 마을 다이닝">
+        <div class="form-group">
+          <label>탭 ID * <span style="font-size:10px;color:var(--text-muted);">패널과 일치</span></label>
+          <input id="lsec-id" placeholder="exp / coop / suwon">
+          <div style="font-size:11px;color:var(--text-muted);margin-top:3px;">랜딩 패널 id="cat-exp" → exp</div>
         </div>
         <div class="form-group">
-          <label>업체명 (영문) *</label>
-          <input id="ls-en" placeholder="DINING">
-        </div>
-        <div class="form-group">
-          <label>업종 *</label>
-          <select id="ls-cat" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;">
-            <option value="restaurant">🍽 식당</option>
-            <option value="cafe">☕ 카페</option>
-            <option value="stay">🏡 숙박</option>
-            <option value="mart">🛒 마트</option>
-            <option value="craft">🎨 공방</option>
-          </select>
+          <label>번호 표시</label>
+          <input id="lsec-num" placeholder="01">
         </div>
         <div class="form-group" style="grid-column:1/-1;">
-          <label>업체 설명</label>
-          <textarea id="ls-desc" rows="2" placeholder="카드에 표시될 짧은 설명 (2줄 이내 권장)" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;resize:vertical;"></textarea>
+          <label>한글명 * <span style="font-size:10px;color:var(--text-muted);">줄바꿈: \n 입력</span></label>
+          <input id="lsec-label" placeholder="체험 프로그램">
+        </div>
+        <div class="form-group">
+          <label>영문명</label>
+          <input id="lsec-en" placeholder="EXPERIENCES">
+        </div>
+        <div class="form-group">
+          <label>배지 텍스트</label>
+          <input id="lsec-badge" placeholder="추천 (없으면 빈칸)">
         </div>
         <div class="form-group" style="grid-column:1/-1;">
-          <label>주소</label>
-          <input id="ls-address" placeholder="경기도 가평군 상면 수목원로 313-xx">
-        </div>
-        <div class="form-group">
-          <label>전화번호</label>
-          <input id="ls-phone" placeholder="031-000-0000" oninput="formatPhone(this)">
-        </div>
-        <div class="form-group">
-          <label>카카오 채널 링크</label>
-          <input id="ls-kakao" placeholder="http://pf.kakao.com/...">
-        </div>
-        <div class="form-group" style="grid-column:1/-1;">
-          <label>대표 이미지 URL</label>
-          <input id="ls-img" placeholder="images/img_01.jpg  또는  https://...">
-          <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">GitHub images/ 폴더 파일명 또는 외부 이미지 주소</div>
-          <div id="ls-img-preview" style="margin-top:8px;display:none;">
-            <img id="ls-img-preview-img" style="width:100%;max-height:140px;object-fit:cover;border-radius:8px;border:1px solid var(--border);">
-          </div>
-        </div>
-        <div class="form-group">
-          <label>지도 위도 (lat)</label>
-          <input id="ls-lat" type="number" step="0.0001" placeholder="37.8322">
-        </div>
-        <div class="form-group">
-          <label>지도 경도 (lng)</label>
-          <input id="ls-lng" type="number" step="0.0001" placeholder="127.5081">
-        </div>
-        <div class="form-group">
-          <label>마커 색상</label>
-          <div style="display:flex;gap:8px;align-items:center;">
-            <input id="ls-color" type="color" value="#225536" style="width:48px;height:36px;border:none;border-radius:6px;cursor:pointer;padding:2px;">
-            <span id="ls-color-val" style="font-size:12px;color:var(--text-muted);">#225536</span>
+          <label>배경 이미지 URL</label>
+          <input id="lsec-bg" placeholder="images/img_cat_exp.png">
+          <div id="lsec-bg-preview" style="display:none;margin-top:8px;">
+            <img id="lsec-bg-preview-img" style="width:100%;max-height:120px;object-fit:cover;border-radius:8px;border:1px solid var(--border);">
           </div>
         </div>
         <div class="form-group">
           <label>노출 순서</label>
-          <input id="ls-order" type="number" min="1" placeholder="1" style="width:100%;">
+          <input id="lsec-order" type="number" min="1" placeholder="1" style="width:100%;">
         </div>
         <div class="form-group">
           <label>공개 여부</label>
-          <select id="ls-active" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;">
+          <select id="lsec-active" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;">
             <option value="true">✅ 공개</option>
             <option value="false">🔒 비공개</option>
           </select>
@@ -1609,8 +1616,46 @@ body.role-viewer .perm-write { display: none !important; }
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal('landing-store-modal')">취소</button>
-      <button class="btn btn-primary" onclick="saveLandingStore()">💾 저장 (랜딩 자동 반영)</button>
+      <button class="btn btn-ghost" onclick="closeModal('landing-section-modal')">취소</button>
+      <button class="btn btn-primary" onclick="saveLandingSection()">💾 저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 랜딩 업종 카테고리 편집 Modal -->
+<div class="modal-overlay" id="landing-cat-modal">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-header">
+      <h3 id="landing-cat-modal-title">업종 카테고리 편집</h3>
+      <button class="modal-close" onclick="closeModal('landing-cat-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid" style="grid-template-columns:1fr 1fr;">
+        <div class="form-group">
+          <label>업종 ID * <span style="font-size:10px;color:var(--text-muted);">영문 소문자</span></label>
+          <input id="lcat-id" placeholder="restaurant">
+          <div style="font-size:11px;color:var(--text-muted);margin-top:3px;">가맹점 카드 data-cat과 일치</div>
+        </div>
+        <div class="form-group">
+          <label>표시 이름 * <span style="font-size:10px;color:var(--text-muted);">이모지+텍스트</span></label>
+          <input id="lcat-label" placeholder="🍽 식당">
+        </div>
+        <div class="form-group">
+          <label>노출 순서</label>
+          <input id="lcat-order" type="number" min="1" placeholder="1" style="width:100%;">
+        </div>
+        <div class="form-group">
+          <label>공개 여부</label>
+          <select id="lcat-active" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;">
+            <option value="true">✅ 공개</option>
+            <option value="false">🔒 비공개</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('landing-cat-modal')">취소</button>
+      <button class="btn btn-primary" onclick="saveLandingCat()">💾 저장</button>
     </div>
   </div>
 </div>
@@ -5482,12 +5527,73 @@ async function saveBizSettings() {
 }
 
 // ══════════════════════════════════════════════════════════
-// 🌐 랜딩페이지 가맹점 관리 (landing_coops 컬렉션)
-// 저장하면 index.html이 Firestore에서 읽어 자동 반영됨
+// 🌐 랜딩페이지 콘텐츠 관리
+// landing_coops / landing_exp / landing_suwon 3개 컬렉션
 // ══════════════════════════════════════════════════════════
 
 const CAT_LABELS = { restaurant:'🍽 식당', cafe:'☕ 카페', stay:'🏡 숙박', mart:'🛒 마트', craft:'🎨 공방' };
 let _landingEditId = null;
+let _landingCurrentTab = 'coop'; // 현재 활성 탭
+
+// ── 탭 전환 ──
+function switchLandingTab(tab) {
+  _landingCurrentTab = tab;
+  ['coop','exp','suwon','sections','cats'].forEach(t => {
+    const panel = document.getElementById('lpanel-' + t);
+    const btn   = document.getElementById('ltab-' + t);
+    if(panel) panel.style.display = t===tab ? 'block' : 'none';
+    if(btn){
+      btn.style.background   = t===tab ? 'var(--primary)' : '#f0f0f0';
+      btn.style.color        = t===tab ? '#fff' : '#666';
+      btn.style.borderBottom = t===tab ? '2px solid var(--primary)' : '2px solid transparent';
+    }
+  });
+  const labels = {
+    coop:'+ 가맹점 추가', exp:'+ 체험 추가', suwon:'+ 카드 추가',
+    sections:'+ 섹션탭 추가', cats:'+ 업종 추가'
+  };
+  const addBtn = document.getElementById('landing-add-btn');
+  if(addBtn) addBtn.textContent = labels[tab] || '+ 추가';
+}
+
+// 현재 탭 기준으로 추가 열기
+function openLandingAddCurrent() {
+  if(_landingCurrentTab==='coop')     openLandingAdd();
+  else if(_landingCurrentTab==='exp')      openLandingExpAdd();
+  else if(_landingCurrentTab==='suwon')    openLandingSuwonAdd();
+  else if(_landingCurrentTab==='sections') openLandingSectionAdd();
+  else if(_landingCurrentTab==='cats')     openLandingCatAdd();
+}
+
+// 이미지 입력 미리보기 공통
+function _bindImgPreview(inputId, previewId, imgId) {
+  const inp = document.getElementById(inputId);
+  if(!inp) return;
+  inp.addEventListener('input', e => {
+    const v = e.target.value.trim();
+    const prev = document.getElementById(previewId);
+    const img  = document.getElementById(imgId);
+    if(v && prev && img){ img.src=v; prev.style.display='block'; }
+    else if(prev){ prev.style.display='none'; }
+  });
+}
+
+// DOMContentLoaded에서 미리보기 + 색상 바인딩
+document.addEventListener('DOMContentLoaded', () => {
+  _bindImgPreview('ls-img',  'ls-img-preview',   'ls-img-preview-img');
+  _bindImgPreview('le-img',  'le-img-preview',   'le-img-preview-img');
+  _bindImgPreview('lw-img',  'lw-img-preview',   'lw-img-preview-img');
+  _bindImgPreview('lsec-bg', 'lsec-bg-preview',  'lsec-bg-preview-img');
+  const colorInput = document.getElementById('ls-color');
+  if(colorInput) colorInput.addEventListener('input', e => {
+    const cv = document.getElementById('ls-color-val');
+    if(cv) cv.textContent = e.target.value;
+  });
+});
+
+// ══════════════════════════════════════════════════════════
+// 가맹점 (landing_coops)
+// ══════════════════════════════════════════════════════════
 
 // 초기 데이터 시드 — landing_coops가 비어있을 때 기본값으로 채움
 const LANDING_DEFAULT_STORES = [
@@ -5499,82 +5605,474 @@ const LANDING_DEFAULT_STORES = [
   { name:'힐링숲 공방',   en:'CRAFT',     cat:'craft',      desc:'다육아트·캔들·비누·테라리움 공방 체험. 나만의 작품을 만들고 기념으로 가져가세요.', address:'경기도 가평군 상면 수목원로 313-15', phone:'', kakao:'http://pf.kakao.com/_FVxjZX/chat', img:'images/img_cat_exp.png', lat:37.8328, lng:127.5096, color:'#b5863a', order:6, active:true },
 ];
 
+// 초기 시드 — landing_exp
+const LANDING_DEFAULT_EXP = [
+  { name:'먹다 · 잣 체험', en:'Pine Nut Cooking', desc:'힐링숲에서 직접 수확한 잣으로 쿠키, 전병, 아이스크림을 만들어 보는 요리 프로그램.', img:'images/img_02.jpg', tags:'잣 쿠키 · 20,000원,잣 전병 · 15,000원,잣 아이스크림 · 10,000원', reserve:'먹다 · 잣 체험', order:1, active:true },
+  { name:'만들다 · 공예',   en:'Forest Craft',    desc:'힐링숲을 테마로 나만의 작품을 만드는 공예 프로그램. 다육아트, 테라리움, 비누, 레진아트 등.', img:'images/img_03.jpg', tags:'다육아트 · 25,000원,테라리움 · 25,000원,비누 · 캔들 · 20,000원', reserve:'만들다 · 공예', order:2, active:true },
+  { name:'느끼다 · 힐링숲', en:'Forest Healing',  desc:'잣나무와 전나무 가득한 숲 속에서 에코티어링, 밧줄놀이, 잣줍기 등 자연 생태체험을 경험하세요.', img:'images/img_04.jpg', tags:'에코티어링 · 15,000원,자연 생태체험 · 20,000원', reserve:'느끼다 · 힐링숲', order:3, active:true },
+];
+
+// 초기 시드 — landing_suwon
+const LANDING_DEFAULT_SUWON = [
+  { name:'아침고요수목원', en:'GARDEN', desc:'축령산 자락 5,000여 평, 20개 이상의 테마 정원. 계절마다 달라지는 꽃과 나무의 향연.\n온마을 스테이패스 제시 시 입장 할인 (MOU 협약 예정)', img:'images/img_suwon_garden.jpg', link:'https://www.morningcalm.co.kr', linkText:'공식 홈페이지 →', order:1, active:true },
+  { name:'아침고요 동물원', en:'ZOO',    desc:'수목원 인근 가족 친화형 동물원. 어린이와 함께하는 자연 체험의 완성.\n온마을 패키지 연계 방문 가능', img:'images/img_suwon_zoo.png', link:'http://pf.kakao.com/_FVxjZX/chat', linkText:'패키지 문의하기', order:2, active:true },
+];
+
 async function renderLandingManager(){
+  showLoading('콘텐츠 불러오는 중...');
+  try{
+    await Promise.all([
+      _renderLandingCoops(),
+      _renderLandingExp(),
+      _renderLandingSuwon(),
+      _renderLandingSections(),
+      _renderLandingCats(),
+    ]);
+    switchLandingTab(_landingCurrentTab);
+  }finally{ hideLoading(); }
+}
+
+// 공통 테이블 렌더
+function _renderLandingTable(containerId, items, editFn, deleteFn, cols) {
+  const el = document.getElementById(containerId);
+  if(!el) return;
+  if(!items.length){ el.innerHTML='<div style="text-align:center;padding:32px;color:var(--text-muted);">항목이 없습니다. [+ 추가] 버튼을 눌러 추가하세요.</div>'; return; }
+  el.innerHTML = `<table class="table" style="width:100%;">
+    <thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}<th style="width:120px;">작업</th></tr></thead>
+    <tbody>
+    ${items.map(s=>`<tr style="${!s.active?'opacity:0.45;':''}">
+      ${cols.slice(0,-1).map((c,i)=> i===0
+        ? `<td><span style="font-size:11px;color:var(--text-muted);">${s.order||'-'}</span></td>`
+        : i===1 ? `<td><b style="font-size:13px;">${s.name}</b><br><span style="font-size:11px;color:var(--text-muted);">${s.en||''}</span></td>`
+        : i===2 ? `<td style="font-size:12px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s[Object.keys(s)[i+1]]||'-'}</td>`
+        : `<td style="font-size:12px;">${s.active?'✅':'🔒'}</td>`
+      ).join('')}
+      <td><div style="display:flex;gap:4px;">
+        <button class="btn btn-ghost btn-sm" onclick="${editFn}('${s.__docId}')">✏️ 수정</button>
+        <button class="btn btn-danger btn-sm" onclick="${deleteFn}('${s.__docId}','${(s.name||'').replace(/'/g,"\\'")}')">🗑️</button>
+      </div></td>
+    </tr>`).join('')}
+    </tbody></table>
+    <div style="text-align:center;padding:10px;font-size:12px;color:var(--text-muted);">총 ${items.length}개 · 저장 즉시 랜딩페이지에 자동 반영</div>`;
+}
+
+async function _renderLandingCoops(){
   const listEl = document.getElementById('landing-store-list');
   if(!listEl) return;
-  showLoading('가맹점 목록 불러오는 중...');
   try{
     let snap = await db.collection('landing_coops').orderBy('order','asc').get().catch(()=>db.collection('landing_coops').get());
     let stores = snap.docs.map(d=>({...d.data(), __docId:d.id}));
-
-    // 비어있으면 기본 데이터 시드
     if(stores.length===0){
-      if(confirm('랜딩 가맹점 데이터가 없습니다.\n기본 6개 업체로 초기 데이터를 생성하시겠습니까?')){
-        for(const s of LANDING_DEFAULT_STORES){
-          const ref = await db.collection('landing_coops').add({...s, createdAt:new Date().toISOString()});
-          stores.push({...s, __docId:ref.id});
+      if(confirm('가맹점 기본 데이터를 생성하시겠습니까? (6개 업체)')){
+        for(const s of LANDING_DEFAULT_STORES){ const r=await db.collection('landing_coops').add({...s,createdAt:new Date().toISOString()}); stores.push({...s,__docId:r.id}); }
+      }
+    }
+    stores = stores.sort((a,b)=>(a.order||99)-(b.order||99));
+    if(!stores.length){ listEl.innerHTML='<div style="text-align:center;padding:32px;color:var(--text-muted);">가맹점이 없습니다.</div>'; return; }
+    listEl.innerHTML = `<table class="table" style="width:100%;">
+      <thead><tr><th>#</th><th>업체명</th><th>업종</th><th>주소</th><th>전화</th><th>공개</th><th style="width:120px;">작업</th></tr></thead>
+      <tbody>${stores.map(s=>`<tr style="${!s.active?'opacity:0.45;':''}">
+        <td><span style="font-size:11px;color:var(--text-muted);">${s.order||'-'}</span></td>
+        <td><div style="display:flex;align-items:center;gap:8px;">
+          <span style="width:10px;height:10px;border-radius:50%;background:${s.color||'#888'};flex-shrink:0;display:inline-block;"></span>
+          <div><div style="font-weight:600;font-size:13px;">${s.name}</div><div style="font-size:11px;color:var(--text-muted);">${s.en||''}</div></div>
+        </div></td>
+        <td><span style="font-size:12px;">${CAT_LABELS[s.cat]||s.cat||'-'}</span></td>
+        <td style="font-size:12px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.address||'-'}</td>
+        <td style="font-size:12px;">${s.phone||'-'}</td>
+        <td style="text-align:center;">${s.active?'✅':'🔒'}</td>
+        <td><div style="display:flex;gap:4px;">
+          <button class="btn btn-ghost btn-sm" onclick="openLandingEdit('${s.__docId}')">✏️</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteLandingStore('${s.__docId}','${(s.name||'').replace(/'/g,"\\'")}')">🗑️</button>
+        </div></td>
+      </tr>`).join('')}</tbody></table>
+      <div style="text-align:center;padding:10px;font-size:12px;color:var(--text-muted);">총 ${stores.length}개</div>`;
+  }catch(e){ if(listEl) listEl.innerHTML=`<div style="color:#e53935;padding:20px;">오류: ${e.message}</div>`; }
+}
+
+async function _renderLandingExp(){
+  const listEl = document.getElementById('landing-exp-list');
+  if(!listEl) return;
+  try{
+    let snap = await db.collection('landing_exp').orderBy('order','asc').get().catch(()=>db.collection('landing_exp').get());
+    let items = snap.docs.map(d=>({...d.data(), __docId:d.id}));
+    if(items.length===0){
+      if(confirm('체험 프로그램 기본 데이터를 생성하시겠습니까? (3개)')){
+        for(const s of LANDING_DEFAULT_EXP){ const r=await db.collection('landing_exp').add({...s,createdAt:new Date().toISOString()}); items.push({...s,__docId:r.id}); }
+      }
+    }
+    items = items.sort((a,b)=>(a.order||99)-(b.order||99));
+    if(!items.length){ listEl.innerHTML='<div style="text-align:center;padding:32px;color:var(--text-muted);">체험 프로그램이 없습니다.</div>'; return; }
+    listEl.innerHTML = `<table class="table" style="width:100%;">
+      <thead><tr><th>#</th><th>프로그램명</th><th>가격 태그</th><th>이미지</th><th>공개</th><th style="width:120px;">작업</th></tr></thead>
+      <tbody>${items.map(s=>`<tr style="${!s.active?'opacity:0.45;':''}">
+        <td><span style="font-size:11px;color:var(--text-muted);">${s.order||'-'}</span></td>
+        <td><b style="font-size:13px;">${s.name}</b><br><span style="font-size:11px;color:var(--text-muted);">${s.en||''}</span></td>
+        <td style="font-size:11px;max-width:180px;">${(s.tags||'').split(',').map(t=>`<span style="background:#f5f0e8;color:#7a5c2a;padding:2px 6px;border-radius:4px;margin:1px;display:inline-block;">${t.trim()}</span>`).join('')}</td>
+        <td style="font-size:11px;color:var(--text-muted);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.img||'-'}</td>
+        <td style="text-align:center;">${s.active?'✅':'🔒'}</td>
+        <td><div style="display:flex;gap:4px;">
+          <button class="btn btn-ghost btn-sm" onclick="openLandingExpEdit('${s.__docId}')">✏️</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteLandingItem('landing_exp','${s.__docId}','${(s.name||'').replace(/'/g,"\\'")}','landing-exp-list',_renderLandingExp)">🗑️</button>
+        </div></td>
+      </tr>`).join('')}</tbody></table>
+      <div style="text-align:center;padding:10px;font-size:12px;color:var(--text-muted);">총 ${items.length}개</div>`;
+  }catch(e){ if(listEl) listEl.innerHTML=`<div style="color:#e53935;padding:20px;">오류: ${e.message}</div>`; }
+}
+
+async function _renderLandingSuwon(){
+  const listEl = document.getElementById('landing-suwon-list');
+  if(!listEl) return;
+  try{
+    let snap = await db.collection('landing_suwon').orderBy('order','asc').get().catch(()=>db.collection('landing_suwon').get());
+    let items = snap.docs.map(d=>({...d.data(), __docId:d.id}));
+    if(items.length===0){
+      if(confirm('수목원·동물원 기본 데이터를 생성하시겠습니까? (2개)')){
+        for(const s of LANDING_DEFAULT_SUWON){ const r=await db.collection('landing_suwon').add({...s,createdAt:new Date().toISOString()}); items.push({...s,__docId:r.id}); }
+      }
+    }
+    items = items.sort((a,b)=>(a.order||99)-(b.order||99));
+    if(!items.length){ listEl.innerHTML='<div style="text-align:center;padding:32px;color:var(--text-muted);">항목이 없습니다.</div>'; return; }
+    listEl.innerHTML = `<table class="table" style="width:100%;">
+      <thead><tr><th>#</th><th>시설명</th><th>설명 (요약)</th><th>링크</th><th>공개</th><th style="width:120px;">작업</th></tr></thead>
+      <tbody>${items.map(s=>`<tr style="${!s.active?'opacity:0.45;':''}">
+        <td><span style="font-size:11px;color:var(--text-muted);">${s.order||'-'}</span></td>
+        <td><b style="font-size:13px;">${s.name}</b><br><span style="font-size:11px;color:var(--text-muted);">${s.en||''}</span></td>
+        <td style="font-size:12px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${(s.desc||'').replace(/\n/g,' ')}</td>
+        <td style="font-size:11px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.link||'-'}</td>
+        <td style="text-align:center;">${s.active?'✅':'🔒'}</td>
+        <td><div style="display:flex;gap:4px;">
+          <button class="btn btn-ghost btn-sm" onclick="openLandingSuwonEdit('${s.__docId}')">✏️</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteLandingItem('landing_suwon','${s.__docId}','${(s.name||'').replace(/'/g,"\\'")}','landing-suwon-list',_renderLandingSuwon)">🗑️</button>
+        </div></td>
+      </tr>`).join('')}</tbody></table>
+      <div style="text-align:center;padding:10px;font-size:12px;color:var(--text-muted);">총 ${items.length}개</div>`;
+  }catch(e){ if(listEl) listEl.innerHTML=`<div style="color:#e53935;padding:20px;">오류: ${e.message}</div>`; }
+}
+
+// ── 대형 섹션탭(landing_sections) 렌더 ──
+const LANDING_DEFAULT_SECTIONS = [
+  { id:'exp',   num:'01', label:'체험 프로그램',             en:'EXPERIENCES', badge:'추천', bg:'images/img_cat_exp.png',  order:1, active:true },
+  { id:'coop',  num:'02', label:'온마을 가맹점',              en:'VILLAGE SHOPS', badge:'',  bg:'images/img_cat_coop.jpg', order:2, active:true },
+  { id:'suwon', num:'03', label:'아침고요\n수목원 & 동물원', en:'MORNINGCALM',   badge:'',  bg:'images/img_cat_suwon.png', order:3, active:true },
+];
+
+async function _renderLandingSections(){
+  const listEl = document.getElementById('landing-sections-list');
+  if(!listEl) return;
+  try{
+    let snap = await db.collection('landing_sections').orderBy('order','asc').get().catch(()=>db.collection('landing_sections').get());
+    let items = snap.docs.map(d=>({...d.data(),__docId:d.id}));
+    if(items.length===0){
+      if(confirm('섹션탭 기본 데이터를 생성할까요? (3개 탭)')){
+        for(const s of LANDING_DEFAULT_SECTIONS){
+          const r = await db.collection('landing_sections').add({...s,createdAt:new Date().toISOString()});
+          items.push({...s,__docId:r.id});
         }
       }
     }
-
-    if(stores.length===0){ listEl.innerHTML='<div style="text-align:center;padding:40px;color:var(--text-muted);">등록된 가맹점이 없습니다. [+ 가맹점 추가] 버튼을 눌러 추가하세요.</div>'; return; }
-
+    items = items.sort((a,b)=>(a.order||99)-(b.order||99));
+    if(!items.length){ listEl.innerHTML='<div style="text-align:center;padding:32px;color:var(--text-muted);">섹션탭이 없습니다.</div>'; return; }
     listEl.innerHTML = `
       <table class="table" style="width:100%;">
-        <thead><tr>
-          <th style="width:40px;">#</th>
-          <th>업체명</th>
-          <th>업종</th>
-          <th>주소</th>
-          <th>전화</th>
-          <th style="width:60px;">공개</th>
-          <th style="width:130px;">작업</th>
-        </tr></thead>
-        <tbody>
-        ${stores.sort((a,b)=>(a.order||99)-(b.order||99)).map(s=>`
-          <tr style="${!s.active?'opacity:0.45;':''}">
-            <td><span style="font-size:12px;color:var(--text-muted);">${s.order||'-'}</span></td>
-            <td>
-              <div style="display:flex;align-items:center;gap:8px;">
-                <span style="width:10px;height:10px;border-radius:50%;background:${s.color||'#888'};display:inline-block;flex-shrink:0;"></span>
-                <div>
-                  <div style="font-weight:600;font-size:13px;">${s.name||'-'}</div>
-                  <div style="font-size:11px;color:var(--text-muted);">${s.en||''}</div>
-                </div>
-              </div>
-            </td>
-            <td><span style="font-size:12px;">${CAT_LABELS[s.cat]||s.cat||'-'}</span></td>
-            <td style="font-size:12px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.address||'-'}</td>
-            <td style="font-size:12px;">${s.phone||'-'}</td>
-            <td style="text-align:center;">${s.active?'✅':'🔒'}</td>
-            <td>
-              <div style="display:flex;gap:4px;">
-                <button class="btn btn-ghost btn-sm" onclick="openLandingEdit('${s.__docId}')">✏️ 수정</button>
-                <button class="btn btn-danger btn-sm" onclick="deleteLandingStore('${s.__docId}','${(s.name||'').replace(/'/g,"\\'")}')">🗑️</button>
-              </div>
-            </td>
-          </tr>`).join('')}
-        </tbody>
+        <thead><tr><th>#</th><th>탭 ID</th><th>번호</th><th>한글명</th><th>영문명</th><th>배지</th><th>배경이미지</th><th>공개</th><th style="width:120px;">작업</th></tr></thead>
+        <tbody>${items.map(s=>`<tr style="${!s.active?'opacity:0.45;':''}">
+          <td><span style="font-size:11px;color:var(--text-muted);">${s.order||'-'}</span></td>
+          <td><code style="font-size:11px;background:#f0f0f0;padding:2px 6px;border-radius:4px;">${s.id||'-'}</code></td>
+          <td style="font-size:13px;font-weight:700;color:var(--primary);">${s.num||'-'}</td>
+          <td style="font-size:13px;font-weight:600;">${(s.label||'').replace(/\n/g,' ')}</td>
+          <td style="font-size:12px;color:var(--text-muted);">${s.en||'-'}</td>
+          <td>${s.badge?`<span style="background:#e8f5e9;color:#2e7d32;font-size:11px;padding:2px 8px;border-radius:12px;">${s.badge}</span>`:'-'}</td>
+          <td style="font-size:11px;color:var(--text-muted);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.bg||'-'}</td>
+          <td style="text-align:center;">${s.active?'✅':'🔒'}</td>
+          <td><div style="display:flex;gap:4px;">
+            <button class="btn btn-ghost btn-sm" onclick="openLandingSectionEdit('${s.__docId}')">✏️</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteLandingItem('landing_sections','${s.__docId}','${(s.label||'').replace(/\n/g,' ').replace(/'/g,"\\'")}','landing-sections-list',_renderLandingSections)">🗑️</button>
+          </div></td>
+        </tr>`).join('')}</tbody>
       </table>
-      <div style="text-align:center;padding:12px;font-size:12px;color:var(--text-muted);">
-        총 ${stores.length}개 가맹점 · 저장 즉시 랜딩페이지에 자동 반영됩니다
-      </div>`;
-  }catch(e){ if(listEl) listEl.innerHTML=`<div style="color:#e53935;padding:20px;">오류: ${e.message}</div>`; }
+      <div style="text-align:center;padding:10px;font-size:12px;color:var(--text-muted);">총 ${items.length}개 · 탭 ID는 cat-exp/cat-coop/cat-suwon과 일치해야 합니다</div>`;
+  }catch(e){ listEl.innerHTML=`<div style="color:#e53935;padding:20px;">오류: ${e.message}</div>`; }
+}
+
+let _landingSectionEditId = null;
+function openLandingSectionAdd(){
+  _landingSectionEditId = null;
+  document.getElementById('landing-section-modal-title').textContent = '섹션탭 추가';
+  ['lsec-id','lsec-num','lsec-label','lsec-en','lsec-badge','lsec-bg'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  document.getElementById('lsec-active').value='true';
+  document.getElementById('lsec-order').value='';
+  const prev=document.getElementById('lsec-bg-preview'); if(prev) prev.style.display='none';
+  openModal('landing-section-modal');
+}
+async function openLandingSectionEdit(docId){
+  showLoading();
+  try{
+    const doc=await db.collection('landing_sections').doc(docId).get();
+    if(!doc.exists){ alert('항목을 찾을 수 없습니다.'); return; }
+    const s=doc.data();
+    _landingSectionEditId=docId;
+    document.getElementById('landing-section-modal-title').textContent=`수정 — ${(s.label||'').replace(/\n/g,' ')}`;
+    document.getElementById('lsec-id').value    =s.id||'';
+    document.getElementById('lsec-num').value   =s.num||'';
+    document.getElementById('lsec-label').value =s.label||'';
+    document.getElementById('lsec-en').value    =s.en||'';
+    document.getElementById('lsec-badge').value =s.badge||'';
+    document.getElementById('lsec-bg').value    =s.bg||'';
+    document.getElementById('lsec-active').value=String(s.active!==false);
+    document.getElementById('lsec-order').value =s.order||1;
+    const prev=document.getElementById('lsec-bg-preview');
+    const img=document.getElementById('lsec-bg-preview-img');
+    if(s.bg && prev && img){ img.src=s.bg; prev.style.display='block'; }
+    openModal('landing-section-modal');
+  }catch(e){ alert('오류: '+e.message); }
+  finally{ hideLoading(); }
+}
+async function saveLandingSection(){
+  const id=document.getElementById('lsec-id').value.trim();
+  const label=document.getElementById('lsec-label').value.trim();
+  if(!id||!label){ alert('탭 ID와 한글명을 입력하세요.'); return; }
+  showLoading('저장 중...');
+  try{
+    const data={
+      id, num:document.getElementById('lsec-num').value.trim(),
+      label, en:document.getElementById('lsec-en').value.trim(),
+      badge:document.getElementById('lsec-badge').value.trim(),
+      bg:   document.getElementById('lsec-bg').value.trim(),
+      order:parseInt(document.getElementById('lsec-order').value)||99,
+      active:document.getElementById('lsec-active').value==='true',
+      updatedAt:new Date().toISOString(),
+    };
+    if(_landingSectionEditId){ await db.collection('landing_sections').doc(_landingSectionEditId).update(data); }
+    else{ data.createdAt=new Date().toISOString(); await db.collection('landing_sections').add(data); }
+    closeModal('landing-section-modal');
+    await _renderLandingSections();
+    alert(`✅ "${label}" 저장 완료!`);
+  }catch(e){ alert('저장 실패: '+e.message); }
   finally{ hideLoading(); }
 }
 
-function openLandingAdd(){
-  _landingEditId = null;
-  document.getElementById('landing-store-modal-title').textContent = '가맹점 추가';
-  ['ls-name','ls-en','ls-desc','ls-address','ls-phone','ls-kakao','ls-img','ls-lat','ls-lng'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
-  document.getElementById('ls-cat').value='restaurant';
-  document.getElementById('ls-active').value='true';
-  document.getElementById('ls-color').value='#225536';
-  document.getElementById('ls-color-val').textContent='#225536';
-  document.getElementById('ls-order').value='';
-  document.getElementById('ls-img-preview').style.display='none';
-  openModal('landing-store-modal');
+// ── 업종 카테고리(landing_cats) 렌더 ──
+const LANDING_DEFAULT_CATS = [
+  { id:'restaurant', label:'🍽 식당', order:1, active:true },
+  { id:'cafe',       label:'☕ 카페', order:2, active:true },
+  { id:'stay',       label:'🏡 숙박', order:3, active:true },
+  { id:'mart',       label:'🛒 마트', order:4, active:true },
+  { id:'craft',      label:'🎨 공방', order:5, active:true },
+];
+
+async function _renderLandingCats(){
+  const listEl=document.getElementById('landing-cats-list');
+  if(!listEl) return;
+  try{
+    let snap=await db.collection('landing_cats').orderBy('order','asc').get().catch(()=>db.collection('landing_cats').get());
+    let items=snap.docs.map(d=>({...d.data(),__docId:d.id}));
+    if(items.length===0){
+      if(confirm('업종 카테고리 기본 데이터를 생성할까요? (5개)')){
+        for(const c of LANDING_DEFAULT_CATS){
+          const r=await db.collection('landing_cats').add({...c,createdAt:new Date().toISOString()});
+          items.push({...c,__docId:r.id});
+        }
+      }
+    }
+    items=items.sort((a,b)=>(a.order||99)-(b.order||99));
+    if(!items.length){ listEl.innerHTML='<div style="text-align:center;padding:32px;color:var(--text-muted);">업종이 없습니다.</div>'; return; }
+    listEl.innerHTML=`
+      <table class="table" style="width:100%;">
+        <thead><tr><th>#</th><th>업종 ID</th><th>표시 이름 (이모지+텍스트)</th><th>공개</th><th style="width:120px;">작업</th></tr></thead>
+        <tbody>${items.map(c=>`<tr style="${!c.active?'opacity:0.45;':''}">
+          <td><span style="font-size:11px;color:var(--text-muted);">${c.order||'-'}</span></td>
+          <td><code style="font-size:11px;background:#f0f0f0;padding:2px 6px;border-radius:4px;">${c.id}</code></td>
+          <td style="font-size:14px;font-weight:600;">${c.label||'-'}</td>
+          <td style="text-align:center;">${c.active?'✅':'🔒'}</td>
+          <td><div style="display:flex;gap:4px;">
+            <button class="btn btn-ghost btn-sm" onclick="openLandingCatEdit('${c.__docId}')">✏️</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteLandingItem('landing_cats','${c.__docId}','${(c.label||'').replace(/'/g,"\\'")}','landing-cats-list',_renderLandingCats)">🗑️</button>
+          </div></td>
+        </tr>`).join('')}</tbody>
+      </table>
+      <div style="background:#FFF8E1;border-radius:8px;padding:10px 14px;margin-top:12px;font-size:12px;color:#E65100;line-height:1.7;">
+        ⚠️ 업종 ID는 가맹점 카드의 <code>data-cat</code>과 일치해야 합니다 (예: restaurant, cafe, stay, mart, craft)<br>
+        변경 후 랜딩페이지 새로고침 시 필터 탭에 자동 반영됩니다.
+      </div>
+      <div style="text-align:center;padding:10px;font-size:12px;color:var(--text-muted);">총 ${items.length}개</div>`;
+  }catch(e){ listEl.innerHTML=`<div style="color:#e53935;padding:20px;">오류: ${e.message}</div>`; }
 }
+
+let _landingCatEditId=null;
+function openLandingCatAdd(){
+  _landingCatEditId=null;
+  document.getElementById('landing-cat-modal-title').textContent='업종 카테고리 추가';
+  ['lcat-id','lcat-label'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('lcat-active').value='true';
+  document.getElementById('lcat-order').value='';
+  openModal('landing-cat-modal');
+}
+async function openLandingCatEdit(docId){
+  showLoading();
+  try{
+    const doc=await db.collection('landing_cats').doc(docId).get();
+    if(!doc.exists){ alert('항목을 찾을 수 없습니다.'); return; }
+    const c=doc.data();
+    _landingCatEditId=docId;
+    document.getElementById('landing-cat-modal-title').textContent=`수정 — ${c.label||''}`;
+    document.getElementById('lcat-id').value    =c.id||'';
+    document.getElementById('lcat-label').value =c.label||'';
+    document.getElementById('lcat-active').value=String(c.active!==false);
+    document.getElementById('lcat-order').value =c.order||1;
+    openModal('landing-cat-modal');
+  }catch(e){ alert('오류: '+e.message); }
+  finally{ hideLoading(); }
+}
+async function saveLandingCat(){
+  const id=document.getElementById('lcat-id').value.trim();
+  const label=document.getElementById('lcat-label').value.trim();
+  if(!id||!label){ alert('업종 ID와 표시 이름을 입력하세요.'); return; }
+  showLoading('저장 중...');
+  try{
+    const data={
+      id, label,
+      order:parseInt(document.getElementById('lcat-order').value)||99,
+      active:document.getElementById('lcat-active').value==='true',
+      updatedAt:new Date().toISOString(),
+    };
+    if(_landingCatEditId){ await db.collection('landing_cats').doc(_landingCatEditId).update(data); }
+    else{ data.createdAt=new Date().toISOString(); await db.collection('landing_cats').add(data); }
+    closeModal('landing-cat-modal');
+    await _renderLandingCats();
+    alert(`✅ "${label}" 저장 완료!`);
+  }catch(e){ alert('저장 실패: '+e.message); }
+  finally{ hideLoading(); }
+}
+
+// 공통 삭제
+async function deleteLandingItem(collection, docId, name, listId, reRenderFn){
+  if(!confirm(`"${name}"을(를) 삭제하시겠습니까?`)) return;
+  showLoading('삭제 중...');
+  try{ await db.collection(collection).doc(docId).delete(); await reRenderFn(); }
+  catch(e){ alert('삭제 실패: '+e.message); }
+  finally{ hideLoading(); }
+}
+
+// ── 체험 프로그램 CRUD ──
+let _landingExpEditId = null;
+
+function openLandingExpAdd(){
+  _landingExpEditId = null;
+  document.getElementById('landing-exp-modal-title').textContent = '체험 프로그램 추가';
+  ['le-name','le-en','le-desc','le-tags','le-img','le-reserve'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  document.getElementById('le-active').value='true';
+  document.getElementById('le-order').value='';
+  const prev=document.getElementById('le-img-preview'); if(prev) prev.style.display='none';
+  openModal('landing-exp-modal');
+}
+async function openLandingExpEdit(docId){
+  showLoading();
+  try{
+    const doc = await db.collection('landing_exp').doc(docId).get();
+    if(!doc.exists){ alert('항목을 찾을 수 없습니다.'); return; }
+    const s = doc.data();
+    _landingExpEditId = docId;
+    document.getElementById('landing-exp-modal-title').textContent = `수정 — ${s.name||''}`;
+    document.getElementById('le-name').value    = s.name||'';
+    document.getElementById('le-en').value      = s.en||'';
+    document.getElementById('le-desc').value    = s.desc||'';
+    document.getElementById('le-tags').value    = s.tags||'';
+    document.getElementById('le-img').value     = s.img||'';
+    document.getElementById('le-reserve').value = s.reserve||s.name||'';
+    document.getElementById('le-active').value  = String(s.active!==false);
+    document.getElementById('le-order').value   = s.order||1;
+    const prev=document.getElementById('le-img-preview'); const img=document.getElementById('le-img-preview-img');
+    if(s.img && prev && img){ img.src=s.img; prev.style.display='block'; }
+    openModal('landing-exp-modal');
+  }catch(e){ alert('오류: '+e.message); }
+  finally{ hideLoading(); }
+}
+async function saveLandingExp(){
+  const name = document.getElementById('le-name').value.trim();
+  if(!name){ alert('프로그램명을 입력하세요.'); return; }
+  showLoading('저장 중...');
+  try{
+    const data = {
+      name, en: document.getElementById('le-en').value.trim(),
+      desc: document.getElementById('le-desc').value.trim(),
+      tags: document.getElementById('le-tags').value.trim(),
+      img:  document.getElementById('le-img').value.trim(),
+      reserve: document.getElementById('le-reserve').value.trim() || name,
+      order:  parseInt(document.getElementById('le-order').value)||99,
+      active: document.getElementById('le-active').value==='true',
+      updatedAt: new Date().toISOString(),
+    };
+    if(_landingExpEditId){ await db.collection('landing_exp').doc(_landingExpEditId).update(data); }
+    else{ data.createdAt=new Date().toISOString(); await db.collection('landing_exp').add(data); }
+    closeModal('landing-exp-modal');
+    await _renderLandingExp();
+    alert(`✅ "${name}" 저장 완료!`);
+  }catch(e){ alert('저장 실패: '+e.message); }
+  finally{ hideLoading(); }
+}
+
+// ── 수목원·동물원 CRUD ──
+let _landingSuwonEditId = null;
+
+function openLandingSuwonAdd(){
+  _landingSuwonEditId = null;
+  document.getElementById('landing-suwon-modal-title').textContent = '카드 추가';
+  ['lw-name','lw-en','lw-desc','lw-link','lw-link-text','lw-img'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  document.getElementById('lw-active').value='true';
+  document.getElementById('lw-order').value='';
+  const prev=document.getElementById('lw-img-preview'); if(prev) prev.style.display='none';
+  openModal('landing-suwon-modal');
+}
+async function openLandingSuwonEdit(docId){
+  showLoading();
+  try{
+    const doc = await db.collection('landing_suwon').doc(docId).get();
+    if(!doc.exists){ alert('항목을 찾을 수 없습니다.'); return; }
+    const s = doc.data();
+    _landingSuwonEditId = docId;
+    document.getElementById('landing-suwon-modal-title').textContent = `수정 — ${s.name||''}`;
+    document.getElementById('lw-name').value      = s.name||'';
+    document.getElementById('lw-en').value        = s.en||'';
+    document.getElementById('lw-desc').value      = s.desc||'';
+    document.getElementById('lw-link').value      = s.link||'';
+    document.getElementById('lw-link-text').value = s.linkText||'';
+    document.getElementById('lw-img').value       = s.img||'';
+    document.getElementById('lw-active').value    = String(s.active!==false);
+    document.getElementById('lw-order').value     = s.order||1;
+    const prev=document.getElementById('lw-img-preview'); const img=document.getElementById('lw-img-preview-img');
+    if(s.img && prev && img){ img.src=s.img; prev.style.display='block'; }
+    openModal('landing-suwon-modal');
+  }catch(e){ alert('오류: '+e.message); }
+  finally{ hideLoading(); }
+}
+async function saveLandingSuwon(){
+  const name = document.getElementById('lw-name').value.trim();
+  if(!name){ alert('시설명을 입력하세요.'); return; }
+  showLoading('저장 중...');
+  try{
+    const data = {
+      name, en: document.getElementById('lw-en').value.trim(),
+      desc:     document.getElementById('lw-desc').value.trim(),
+      link:     document.getElementById('lw-link').value.trim(),
+      linkText: document.getElementById('lw-link-text').value.trim(),
+      img:      document.getElementById('lw-img').value.trim(),
+      order:    parseInt(document.getElementById('lw-order').value)||99,
+      active:   document.getElementById('lw-active').value==='true',
+      updatedAt:new Date().toISOString(),
+    };
+    if(_landingSuwonEditId){ await db.collection('landing_suwon').doc(_landingSuwonEditId).update(data); }
+    else{ data.createdAt=new Date().toISOString(); await db.collection('landing_suwon').add(data); }
+    closeModal('landing-suwon-modal');
+    await _renderLandingSuwon();
+    alert(`✅ "${name}" 저장 완료!`);
+  }catch(e){ alert('저장 실패: '+e.message); }
+  finally{ hideLoading(); }
+}
+
+// ── 가맹점 CRUD (기존 유지) ──
 
 async function openLandingEdit(docId){
   showLoading();

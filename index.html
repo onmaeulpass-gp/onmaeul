@@ -1365,11 +1365,27 @@ body.has-weather .hero-content { padding-top: 136px; }
 .coop-map-cta:hover { background: #1a4028; }
 .coop-map-frame {
   position: relative; height: 400px;
-  border-radius: 12px; overflow: hidden;
+  border-radius: 12px;
   border: 1px solid rgba(0,0,0,.1);
   background: #dde8e0;
   box-shadow: 0 4px 20px rgba(0,0,0,.07);
 }
+/* Leaflet 지도 레이어 z-index 보정 */
+#coop-leaflet-map {
+  width: 100%; height: 100%;
+  border-radius: 12px;
+  z-index: 0;
+}
+/* Leaflet 커스텀 마커 기본 스타일 초기화 */
+.coop-map-hq-icon,
+.coop-map-store-icon {
+  background: none !important;
+  border: none !important;
+}
+/* Leaflet z-index 보정 (다른 요소와 겹침 방지) */
+.leaflet-pane { z-index: 1 !important; }
+.leaflet-top, .leaflet-bottom { z-index: 2 !important; }
+.leaflet-popup-pane { z-index: 3 !important; }
 .coop-map-addr {
   position: absolute; bottom: 12px; left: 12px;
   background: rgba(255,255,255,.92);
@@ -1971,12 +1987,20 @@ async function saveToFirebase(payload) {
           .then(function() {
             _fbReady = true;
             console.log('✅ Firebase 익명 로그인 완료 — 저장 준비됨');
-            // 가맹점 카드 동적 렌더링 시작
-            if (typeof renderCoopCards === 'function') renderCoopCards();
+            // 전체 카드 섹션 동적 렌더링
+            if (typeof renderSectionTabs === 'function') renderSectionTabs();
+            if (typeof renderGenreTabs   === 'function') renderGenreTabs();
+            if (typeof renderCoopCards   === 'function') renderCoopCards();
+            if (typeof renderExpCards    === 'function') renderExpCards();
+            if (typeof renderSuwonCards  === 'function') renderSuwonCards();
           })
           .catch(function(e) {
             console.warn('⚠️ 익명 로그인 실패:', e.message);
-            if (typeof renderCoopCards === 'function') renderCoopCards(); // 폴백으로라도 렌더
+            if (typeof renderSectionTabs === 'function') renderSectionTabs();
+            if (typeof renderGenreTabs   === 'function') renderGenreTabs();
+            if (typeof renderCoopCards   === 'function') renderCoopCards();
+            if (typeof renderExpCards    === 'function') renderExpCards();
+            if (typeof renderSuwonCards  === 'function') renderSuwonCards();
           });
       }
     } catch(e) { console.warn('⚠️ Firebase 초기화 실패:', e.message); }
@@ -2098,484 +2122,23 @@ async function saveToFirebase(payload) {
     </div>
 
     <!-- ── 카테고리 탭 (초기: 탭 카드만 표시, 콘텐츠 숨김) ── -->
+    <!-- ── 카테고리 탭 (Firestore landing_sections에서 동적 렌더링) ── -->
     <div class="cat-tabs reveal" id="cat-tabs-wrap">
-      <button class="cat-tab" id="tab-btn-exp" onclick="switchCat('exp')" style="background-image:url('images/img_cat_exp.png');">
-      <!-- [탭배경 1] 체험 프로그램 탭 배경 · url() 안 파일명 수정 -->
-        <span class="cat-tab-num">01</span>
-        <span class="cat-tab-label">체험 프로그램</span>
-        <span class="cat-tab-en">EXPERIENCES</span>
-        <span class="cat-tab-badge">추천</span>
-        <span class="cat-tab-arrow">›</span>
-      </button>
-      <button class="cat-tab" id="tab-btn-coop" onclick="switchCat('coop')" style="background-image:url('images/img_cat_coop.jpg');">
-      <!-- [탭배경 2] 온마을 가맹점 탭 배경 · url() 안 파일명 수정 -->
-        <span class="cat-tab-num">02</span>
-        <span class="cat-tab-label">온마을 가맹점</span>
-        <span class="cat-tab-en">VILLAGE SHOPS</span>
-        <span class="cat-tab-arrow">›</span>
-      </button>
-      <button class="cat-tab" id="tab-btn-suwon" onclick="switchCat('suwon')" style="background-image:url('images/img_cat_suwon.png');">
-      <!-- [탭배경 3] 아침고요 수목원 탭 배경 · url() 안 파일명 수정 -->
-        <span class="cat-tab-num">03</span>
-        <span class="cat-tab-label">아침고요<br>수목원 &amp; 동물원</span>
-        <span class="cat-tab-en">MORNINGCALM</span>
-        <span class="cat-tab-arrow">›</span>
-      </button>
+      <div id="cat-tabs-loading" style="grid-column:1/-1;text-align:center;padding:32px;color:#888;font-size:13px;">불러오는 중...</div>
     </div>
 
     <!-- ══ 카테고리 01: 체험 프로그램 ══ -->
     <div class="cat-panel" id="cat-exp">
     <div class="cat-panel-inner">
-    <div class="exp-grid">
-
-      <!-- 01 먹다 -->
-      <div class="exp-card reveal reveal-d1">
-        <!-- [체험사진 1] 먹다·잣 체험 카드 사진 -->
-        <img class="exp-card-img" src="images/img_02.jpg" alt="잣 체험프로그램">
-        <div class="exp-card-inner exp-card-body">
-          <span class="exp-num" style="font-family:'DM Sans',sans-serif;font-size:0.72rem;letter-spacing:0.18em;color:var(--gold);margin-bottom:6px;display:block;">01</span>
-          <span class="exp-name">먹다 · 잣 체험</span>
-          <span class="exp-en">Pine Nut Cooking</span>
-          <p class="exp-desc">힐링숲에서 직접 수확한 잣으로 쿠키, 전병, 아이스크림을 만들어 보는 요리 프로그램.</p>
-          <div class="exp-tags">
-            <span class="exp-tag">잣 쿠키 · 20,000원</span>
-            <span class="exp-tag">잣 전병 · 15,000원</span>
-            <span class="exp-tag">잣 아이스크림 · 10,000원</span>
-          </div>
-          <button class="btn-exp-reserve" onclick="startBookingFrom('먹다 · 잣 체험', this)">
-            예약 신청하기
-          </button>
-        </div>
+    <div class="exp-grid" id="exp-grid">
+      <!-- Firestore landing_exp 에서 동적 렌더링 -->
+      <div id="exp-cards-loading" style="grid-column:1/-1;text-align:center;padding:64px 0;color:#888;font-size:14px;">
+        <div style="font-size:28px;margin-bottom:10px;">🌿</div>
+        체험 프로그램을 불러오는 중...
       </div>
-      <!-- 인라인 예약 드로어: 먹다 · 잣 체험 -->
-      <div class="exp-inline-drawer" data-prog="먹다 · 잣 체험">
-        <div class="drawer-inner">
-          <!-- Step 인디케이터 -->
-          <div class="drawer-steps">
-            <div class="drawer-step-ind active"><span>정보 입력</span></div>
-            <div class="drawer-step-line"></div>
-            <div class="drawer-step-ind"><span>신청 완료</span></div>
-          </div>
-
-          <!-- STEP 1: 정보 입력 -->
-          <div class="drawer-panel active">
-            <div class="drawer-selected-badge">✦ 먹다 · 잣 체험</div>
-            <div class="drawer-fields">
-              <div class="drawer-field-row">
-                <div class="drawer-field">
-                  <label>예약자 이름 * <span style='font-size:10px;opacity:0.5;font-weight:400;'>Name</span></label>
-                  <input class="form-input d-name" placeholder="홍길동">
-                  <div class="form-error d-err-name">이름을 입력하세요</div>
-                </div>
-                <div class="drawer-field">
-                  <label>연락처 * <span style='font-size:10px;opacity:0.5;font-weight:400;'>Phone</span></label>
-                  <input class="form-input d-phone" placeholder="010-0000-0000">
-                  <div class="form-error d-err-phone">연락처를 입력하세요</div>
-                </div>
-              </div>
-              <div class="drawer-field-row">
-                <div class="drawer-field">
-                  <label>희망 날짜 * <span style='font-size:10px;opacity:0.5;font-weight:400;'>Date</span></label>
-                  <div class="date-input-wrap">
-                    <span class="date-icon-btn" onclick="var inp=this.nextElementSibling;try{if(inp.showPicker)inp.showPicker();else inp.focus();}catch(e){inp.focus();}">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                    </span>
-                    <input class="form-input d-date" type="date">
-                  </div>
-                  <div class="form-error d-err-date">날짜를 선택하세요</div>
-                </div>
-                <div class="drawer-field">
-                  <label>인원 * <span style='font-size:10px;opacity:0.5;font-weight:400;'>Guests</span></label>
-                  <select class="form-select d-people">
-                    <option value="">선택</option>
-                    <option value="1">1명</option>
-                    <option value="2">2명</option>
-                    <option value="3">3명</option>
-                    <option value="4">4명</option>
-                    <option value="5명 이상">5명 이상</option>
-                  </select>
-                  <div class="form-error d-err-people">인원을 선택하세요</div>
-                </div>
-              </div>
-              <div class="drawer-field" style="grid-column:1/-1">
-                <label>메모 (선택) <span style='font-size:10px;opacity:0.5;font-weight:400;'>Note (optional)</span></label>
-                <input class="form-input d-memo" placeholder="알레르기, 특이사항 등">
-              </div>
-            </div>
-            <div class="drawer-actions">
-              <button class="btn-booking-ghost" onclick="closeDrawer('먹다 · 잣 체험')">취소</button>
-              <button class="btn-booking-next d-submit-btn" onclick="submitDrawer('먹다 · 잣 체험')">신청 완료하기</button>
-            </div>
-          </div>
-
-          <!-- STEP 2: 완료 -->
-          <div class="drawer-panel">
-            <div style="text-align:center;padding:8px 0 20px;">
-              <div class="booking-done-icon">✓</div>
-              <h3 class="booking-done-title">신청이 접수되었습니다</h3>
-              <p class="booking-done-sub">담당자 확인 후 카카오톡으로 연락드립니다.<br>카카오톡 채널 <a href="http://pf.kakao.com/_FVxjZX/chat" target="_blank" style="color:var(--gold);text-decoration:none;">온마을가평</a>으로 문의하셔도 됩니다.<br><span style="font-size:0.78rem;color:rgba(107,102,96,0.7);letter-spacing:0.5px;">Booking received. We'll contact you via KakaoTalk.</span></p>
-            </div>
-            <div class="booking-done-info d-done-info"></div>
-            <!-- 카카오 친구추가 유도 -->
-            <div class="kakao-cta-block">
-              <span class="kakao-cta-label">Special Offer</span>
-              <p class="kakao-cta-msg">
-                카카오 채널 친구추가 하시면<br>
-                <strong>체험 10% 할인쿠폰</strong>을 바로 받으실 수 있어요 🎁<br>
-                <small style="color:var(--fog);font-size:0.78rem;">담당자 알림도 카톡으로 바로 받으세요</small><br>
-                <small style="color:rgba(107,102,96,0.6);font-size:0.74rem;letter-spacing:0.5px;">Get 10% off coupon · Receive updates via KakaoTalk</small>
-              </p>
-              <a href="https://pf.kakao.com/_FVxjZX/friend" target="_blank" class="btn-kakao-add">
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><ellipse cx="10" cy="9" rx="9" ry="8" fill="#3A1D1D"/><path d="M10 4C6.57 4 3.8 6.24 3.8 9c0 1.72 1.1 3.23 2.76 4.11l-.68 2.5c-.05.2.16.37.34.25l2.94-1.96c.31.05.64.07.84.07 3.43 0 6.2-2.24 6.2-5S13.43 4 10 4z" fill="#FEE500"/></svg>
-                온마을가평 친구추가 · 할인쿠폰 받기
-              </a>
-            </div>
-            <div style="text-align:center;margin-top:16px;">
-              <button class="booking-reset-btn" onclick="closeDrawer('먹다 · 잣 체험')">닫기</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 02 만들다 -->
-      <div class="exp-card reveal reveal-d2">
-        <!-- [체험사진 2] 만들다·공예 카드 사진 -->
-        <img class="exp-card-img" src="images/img_03.jpg" alt="힐링숲 테마 공예">
-        <div class="exp-card-inner exp-card-body">
-          <span class="exp-num" style="font-family:'DM Sans',sans-serif;font-size:0.72rem;letter-spacing:0.18em;color:var(--gold);margin-bottom:6px;display:block;">02</span>
-          <span class="exp-name">만들다 · 공예</span>
-          <span class="exp-en">Forest Craft</span>
-          <p class="exp-desc">힐링숲을 테마로 나만의 작품을 만드는 공예 프로그램. 다육아트, 테라리움, 비누, 레진아트 등.</p>
-          <div class="exp-tags">
-            <span class="exp-tag">다육아트 · 25,000원</span>
-            <span class="exp-tag">테라리움 · 25,000원</span>
-            <span class="exp-tag">비누 · 캔들 · 20,000원</span>
-          </div>
-          <button class="btn-exp-reserve" onclick="startBookingFrom('만들다 · 공예', this)">
-            예약 신청하기
-          </button>
-        </div>
-      </div>
-      <!-- 인라인 예약 드로어: 만들다 · 공예 -->
-      <div class="exp-inline-drawer" data-prog="만들다 · 공예">
-        <div class="drawer-inner">
-          <!-- Step 인디케이터 -->
-          <div class="drawer-steps">
-            <div class="drawer-step-ind active"><span>정보 입력</span></div>
-            <div class="drawer-step-line"></div>
-            <div class="drawer-step-ind"><span>신청 완료</span></div>
-          </div>
-
-          <!-- STEP 1: 정보 입력 -->
-          <div class="drawer-panel active">
-            <div class="drawer-selected-badge">✦ 만들다 · 공예</div>
-            <div class="drawer-fields">
-              <div class="drawer-field-row">
-                <div class="drawer-field">
-                  <label>예약자 이름 * <span style='font-size:10px;opacity:0.5;font-weight:400;'>Name</span></label>
-                  <input class="form-input d-name" placeholder="홍길동">
-                  <div class="form-error d-err-name">이름을 입력하세요</div>
-                </div>
-                <div class="drawer-field">
-                  <label>연락처 * <span style='font-size:10px;opacity:0.5;font-weight:400;'>Phone</span></label>
-                  <input class="form-input d-phone" placeholder="010-0000-0000">
-                  <div class="form-error d-err-phone">연락처를 입력하세요</div>
-                </div>
-              </div>
-              <div class="drawer-field-row">
-                <div class="drawer-field">
-                  <label>희망 날짜 * <span style='font-size:10px;opacity:0.5;font-weight:400;'>Date</span></label>
-                  <div class="date-input-wrap">
-                    <span class="date-icon-btn" onclick="var inp=this.nextElementSibling;try{if(inp.showPicker)inp.showPicker();else inp.focus();}catch(e){inp.focus();}">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                    </span>
-                    <input class="form-input d-date" type="date">
-                  </div>
-                  <div class="form-error d-err-date">날짜를 선택하세요</div>
-                </div>
-                <div class="drawer-field">
-                  <label>인원 * <span style='font-size:10px;opacity:0.5;font-weight:400;'>Guests</span></label>
-                  <select class="form-select d-people">
-                    <option value="">선택</option>
-                    <option value="1">1명</option>
-                    <option value="2">2명</option>
-                    <option value="3">3명</option>
-                    <option value="4">4명</option>
-                    <option value="5명 이상">5명 이상</option>
-                  </select>
-                  <div class="form-error d-err-people">인원을 선택하세요</div>
-                </div>
-              </div>
-              <div class="drawer-field" style="grid-column:1/-1">
-                <label>메모 (선택) <span style='font-size:10px;opacity:0.5;font-weight:400;'>Note (optional)</span></label>
-                <input class="form-input d-memo" placeholder="알레르기, 특이사항 등">
-              </div>
-            </div>
-            <div class="drawer-actions">
-              <button class="btn-booking-ghost" onclick="closeDrawer('만들다 · 공예')">취소</button>
-              <button class="btn-booking-next d-submit-btn" onclick="submitDrawer('만들다 · 공예')">신청 완료하기</button>
-            </div>
-          </div>
-
-          <!-- STEP 2: 완료 -->
-          <div class="drawer-panel">
-            <div style="text-align:center;padding:8px 0 20px;">
-              <div class="booking-done-icon">✓</div>
-              <h3 class="booking-done-title">신청이 접수되었습니다</h3>
-              <p class="booking-done-sub">담당자 확인 후 카카오톡으로 연락드립니다.<br>카카오톡 채널 <a href="http://pf.kakao.com/_FVxjZX/chat" target="_blank" style="color:var(--gold);text-decoration:none;">온마을가평</a>으로 문의하셔도 됩니다.<br><span style="font-size:0.78rem;color:rgba(107,102,96,0.7);letter-spacing:0.5px;">Booking received. We'll contact you via KakaoTalk.</span></p>
-            </div>
-            <div class="booking-done-info d-done-info"></div>
-            <!-- 카카오 친구추가 유도 -->
-            <div class="kakao-cta-block">
-              <span class="kakao-cta-label">Special Offer</span>
-              <p class="kakao-cta-msg">
-                카카오 채널 친구추가 하시면<br>
-                <strong>체험 10% 할인쿠폰</strong>을 바로 받으실 수 있어요 🎁<br>
-                <small style="color:var(--fog);font-size:0.78rem;">담당자 알림도 카톡으로 바로 받으세요</small><br>
-                <small style="color:rgba(107,102,96,0.6);font-size:0.74rem;letter-spacing:0.5px;">Get 10% off coupon · Receive updates via KakaoTalk</small>
-              </p>
-              <a href="https://pf.kakao.com/_FVxjZX/friend" target="_blank" class="btn-kakao-add">
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><ellipse cx="10" cy="9" rx="9" ry="8" fill="#3A1D1D"/><path d="M10 4C6.57 4 3.8 6.24 3.8 9c0 1.72 1.1 3.23 2.76 4.11l-.68 2.5c-.05.2.16.37.34.25l2.94-1.96c.31.05.64.07.84.07 3.43 0 6.2-2.24 6.2-5S13.43 4 10 4z" fill="#FEE500"/></svg>
-                온마을가평 친구추가 · 할인쿠폰 받기
-              </a>
-            </div>
-            <div style="text-align:center;margin-top:16px;">
-              <button class="booking-reset-btn" onclick="closeDrawer('만들다 · 공예')">닫기</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 03 느끼다 -->
-      <div class="exp-card reveal reveal-d3">
-        <!-- [체험사진 3] 느끼다·힐링숲 카드 사진 -->
-        <img class="exp-card-img" src="images/img_04.jpg" alt="힐링숲 자연 생태체험">
-        <div class="exp-card-inner exp-card-body">
-          <span class="exp-num" style="font-family:'DM Sans',sans-serif;font-size:0.72rem;letter-spacing:0.18em;color:var(--gold);margin-bottom:6px;display:block;">03</span>
-          <span class="exp-name">느끼다 · 힐링숲</span>
-          <span class="exp-en">Forest Healing</span>
-          <p class="exp-desc">잣나무와 전나무 가득한 숲 속에서 에코티어링, 밧줄놀이, 잣줍기 등 자연 생태체험을 경험하세요.</p>
-          <div class="exp-tags">
-            <span class="exp-tag">에코티어링</span>
-            <span class="exp-tag">밧줄놀이</span>
-            <span class="exp-tag">잣줍기 채집</span>
-          </div>
-          <button class="btn-exp-reserve" onclick="startBookingFrom('느끼다 · 힐링숲', this)">
-            예약 신청하기
-          </button>
-        </div>
-      </div>
-      <!-- 인라인 예약 드로어: 느끼다 · 힐링숲 -->
-      <div class="exp-inline-drawer" data-prog="느끼다 · 힐링숲">
-        <div class="drawer-inner">
-          <!-- Step 인디케이터 -->
-          <div class="drawer-steps">
-            <div class="drawer-step-ind active"><span>정보 입력</span></div>
-            <div class="drawer-step-line"></div>
-            <div class="drawer-step-ind"><span>신청 완료</span></div>
-          </div>
-
-          <!-- STEP 1: 정보 입력 -->
-          <div class="drawer-panel active">
-            <div class="drawer-selected-badge">✦ 느끼다 · 힐링숲</div>
-            <div class="drawer-fields">
-              <div class="drawer-field-row">
-                <div class="drawer-field">
-                  <label>예약자 이름 * <span style='font-size:10px;opacity:0.5;font-weight:400;'>Name</span></label>
-                  <input class="form-input d-name" placeholder="홍길동">
-                  <div class="form-error d-err-name">이름을 입력하세요</div>
-                </div>
-                <div class="drawer-field">
-                  <label>연락처 * <span style='font-size:10px;opacity:0.5;font-weight:400;'>Phone</span></label>
-                  <input class="form-input d-phone" placeholder="010-0000-0000">
-                  <div class="form-error d-err-phone">연락처를 입력하세요</div>
-                </div>
-              </div>
-              <div class="drawer-field-row">
-                <div class="drawer-field">
-                  <label>희망 날짜 * <span style='font-size:10px;opacity:0.5;font-weight:400;'>Date</span></label>
-                  <div class="date-input-wrap">
-                    <span class="date-icon-btn" onclick="var inp=this.nextElementSibling;try{if(inp.showPicker)inp.showPicker();else inp.focus();}catch(e){inp.focus();}">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                    </span>
-                    <input class="form-input d-date" type="date">
-                  </div>
-                  <div class="form-error d-err-date">날짜를 선택하세요</div>
-                </div>
-                <div class="drawer-field">
-                  <label>인원 * <span style='font-size:10px;opacity:0.5;font-weight:400;'>Guests</span></label>
-                  <select class="form-select d-people">
-                    <option value="">선택</option>
-                    <option value="1">1명</option>
-                    <option value="2">2명</option>
-                    <option value="3">3명</option>
-                    <option value="4">4명</option>
-                    <option value="5명 이상">5명 이상</option>
-                  </select>
-                  <div class="form-error d-err-people">인원을 선택하세요</div>
-                </div>
-              </div>
-              <div class="drawer-field" style="grid-column:1/-1">
-                <label>메모 (선택) <span style='font-size:10px;opacity:0.5;font-weight:400;'>Note (optional)</span></label>
-                <input class="form-input d-memo" placeholder="알레르기, 특이사항 등">
-              </div>
-            </div>
-            <div class="drawer-actions">
-              <button class="btn-booking-ghost" onclick="closeDrawer('느끼다 · 힐링숲')">취소</button>
-              <button class="btn-booking-next d-submit-btn" onclick="submitDrawer('느끼다 · 힐링숲')">신청 완료하기</button>
-            </div>
-          </div>
-
-          <!-- STEP 2: 완료 -->
-          <div class="drawer-panel">
-            <div style="text-align:center;padding:8px 0 20px;">
-              <div class="booking-done-icon">✓</div>
-              <h3 class="booking-done-title">신청이 접수되었습니다</h3>
-              <p class="booking-done-sub">담당자 확인 후 카카오톡으로 연락드립니다.<br>카카오톡 채널 <a href="http://pf.kakao.com/_FVxjZX/chat" target="_blank" style="color:var(--gold);text-decoration:none;">온마을가평</a>으로 문의하셔도 됩니다.<br><span style="font-size:0.78rem;color:rgba(107,102,96,0.7);letter-spacing:0.5px;">Booking received. We'll contact you via KakaoTalk.</span></p>
-            </div>
-            <div class="booking-done-info d-done-info"></div>
-            <!-- 카카오 친구추가 유도 -->
-            <div class="kakao-cta-block">
-              <span class="kakao-cta-label">Special Offer</span>
-              <p class="kakao-cta-msg">
-                카카오 채널 친구추가 하시면<br>
-                <strong>체험 10% 할인쿠폰</strong>을 바로 받으실 수 있어요 🎁<br>
-                <small style="color:var(--fog);font-size:0.78rem;">담당자 알림도 카톡으로 바로 받으세요</small><br>
-                <small style="color:rgba(107,102,96,0.6);font-size:0.74rem;letter-spacing:0.5px;">Get 10% off coupon · Receive updates via KakaoTalk</small>
-              </p>
-              <a href="https://pf.kakao.com/_FVxjZX/friend" target="_blank" class="btn-kakao-add">
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><ellipse cx="10" cy="9" rx="9" ry="8" fill="#3A1D1D"/><path d="M10 4C6.57 4 3.8 6.24 3.8 9c0 1.72 1.1 3.23 2.76 4.11l-.68 2.5c-.05.2.16.37.34.25l2.94-1.96c.31.05.64.07.84.07 3.43 0 6.2-2.24 6.2-5S13.43 4 10 4z" fill="#FEE500"/></svg>
-                온마을가평 친구추가 · 할인쿠폰 받기
-              </a>
-            </div>
-            <div style="text-align:center;margin-top:16px;">
-              <button class="booking-reset-btn" onclick="closeDrawer('느끼다 · 힐링숲')">닫기</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 04 함께하다 -->
-      <div class="exp-card reveal reveal-d4">
-        <!-- [체험사진 4] 함께하다·단체 카드 사진 -->
-        <img class="exp-card-img" src="images/img_05.jpg" alt="단체 프로그램">
-        <div class="exp-card-inner exp-card-body">
-          <span class="exp-num" style="font-family:'DM Sans',sans-serif;font-size:0.72rem;letter-spacing:0.18em;color:var(--gold);margin-bottom:6px;display:block;">04</span>
-          <span class="exp-name">함께하다 · 단체</span>
-          <span class="exp-en">Group Program</span>
-          <p class="exp-desc">피톤치드 가득한 자연 속 피크닉, 에코캠프(1박 2일), 임산물 채취 등 특별 단체 프로그램.</p>
-          <div class="exp-tags">
-            <span class="exp-tag">피크닉</span>
-            <span class="exp-tag">에코캠프 1박2일</span>
-            <span class="exp-tag">임산물 체험</span>
-          </div>
-          <button class="btn-exp-reserve" onclick="startBookingFrom('함께하다 · 단체', this)">
-            예약 신청하기
-          </button>
-        </div>
-      </div>
-      <!-- 인라인 예약 드로어: 함께하다 · 단체 -->
-      <div class="exp-inline-drawer" data-prog="함께하다 · 단체">
-        <div class="drawer-inner">
-          <!-- Step 인디케이터 -->
-          <div class="drawer-steps">
-            <div class="drawer-step-ind active"><span>정보 입력</span></div>
-            <div class="drawer-step-line"></div>
-            <div class="drawer-step-ind"><span>신청 완료</span></div>
-          </div>
-
-          <!-- STEP 1: 정보 입력 -->
-          <div class="drawer-panel active">
-            <div class="drawer-selected-badge">✦ 함께하다 · 단체</div>
-            <div class="drawer-fields">
-              <div class="drawer-field-row">
-                <div class="drawer-field">
-                  <label>예약자 이름 * <span style='font-size:10px;opacity:0.5;font-weight:400;'>Name</span></label>
-                  <input class="form-input d-name" placeholder="홍길동">
-                  <div class="form-error d-err-name">이름을 입력하세요</div>
-                </div>
-                <div class="drawer-field">
-                  <label>연락처 * <span style='font-size:10px;opacity:0.5;font-weight:400;'>Phone</span></label>
-                  <input class="form-input d-phone" placeholder="010-0000-0000">
-                  <div class="form-error d-err-phone">연락처를 입력하세요</div>
-                </div>
-              </div>
-              <div class="drawer-field-row">
-                <div class="drawer-field">
-                  <label>희망 날짜 * <span style='font-size:10px;opacity:0.5;font-weight:400;'>Date</span></label>
-                  <div class="date-input-wrap">
-                    <span class="date-icon-btn" onclick="var inp=this.nextElementSibling;try{if(inp.showPicker)inp.showPicker();else inp.focus();}catch(e){inp.focus();}">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                    </span>
-                    <input class="form-input d-date" type="date">
-                  </div>
-                  <div class="form-error d-err-date">날짜를 선택하세요</div>
-                </div>
-                <div class="drawer-field">
-                  <label>인원 * <span style='font-size:10px;opacity:0.5;font-weight:400;'>Guests</span></label>
-                  <select class="form-select d-people">
-                    <option value="">선택</option>
-                    <option value="1">1명</option>
-                    <option value="2">2명</option>
-                    <option value="3">3명</option>
-                    <option value="4">4명</option>
-                    <option value="5명 이상">5명 이상</option>
-                  </select>
-                  <div class="form-error d-err-people">인원을 선택하세요</div>
-                </div>
-              </div>
-              <div class="drawer-field" style="grid-column:1/-1">
-                <label>메모 (선택) <span style='font-size:10px;opacity:0.5;font-weight:400;'>Note (optional)</span></label>
-                <input class="form-input d-memo" placeholder="알레르기, 특이사항 등">
-              </div>
-            </div>
-            <div class="drawer-actions">
-              <button class="btn-booking-ghost" onclick="closeDrawer('함께하다 · 단체')">취소</button>
-              <button class="btn-booking-next d-submit-btn" onclick="submitDrawer('함께하다 · 단체')">신청 완료하기</button>
-            </div>
-          </div>
-
-          <!-- STEP 2: 완료 -->
-          <div class="drawer-panel">
-            <div style="text-align:center;padding:8px 0 20px;">
-              <div class="booking-done-icon">✓</div>
-              <h3 class="booking-done-title">신청이 접수되었습니다</h3>
-              <p class="booking-done-sub">담당자 확인 후 카카오톡으로 연락드립니다.<br>카카오톡 채널 <a href="http://pf.kakao.com/_FVxjZX/chat" target="_blank" style="color:var(--gold);text-decoration:none;">온마을가평</a>으로 문의하셔도 됩니다.<br><span style="font-size:0.78rem;color:rgba(107,102,96,0.7);letter-spacing:0.5px;">Booking received. We'll contact you via KakaoTalk.</span></p>
-            </div>
-            <div class="booking-done-info d-done-info"></div>
-            <!-- 카카오 친구추가 유도 -->
-            <div class="kakao-cta-block">
-              <span class="kakao-cta-label">Special Offer</span>
-              <p class="kakao-cta-msg">
-                카카오 채널 친구추가 하시면<br>
-                <strong>체험 10% 할인쿠폰</strong>을 바로 받으실 수 있어요 🎁<br>
-                <small style="color:var(--fog);font-size:0.78rem;">담당자 알림도 카톡으로 바로 받으세요</small><br>
-                <small style="color:rgba(107,102,96,0.6);font-size:0.74rem;letter-spacing:0.5px;">Get 10% off coupon · Receive updates via KakaoTalk</small>
-              </p>
-              <a href="https://pf.kakao.com/_FVxjZX/friend" target="_blank" class="btn-kakao-add">
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><ellipse cx="10" cy="9" rx="9" ry="8" fill="#3A1D1D"/><path d="M10 4C6.57 4 3.8 6.24 3.8 9c0 1.72 1.1 3.23 2.76 4.11l-.68 2.5c-.05.2.16.37.34.25l2.94-1.96c.31.05.64.07.84.07 3.43 0 6.2-2.24 6.2-5S13.43 4 10 4z" fill="#FEE500"/></svg>
-                온마을가평 친구추가 · 할인쿠폰 받기
-              </a>
-            </div>
-            <div style="text-align:center;margin-top:16px;">
-              <button class="booking-reset-btn" onclick="closeDrawer('함께하다 · 단체')">닫기</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
     </div>
-    <!-- 체험 안내 공통 정보 -->
-    <div class="exp-info reveal" style="margin-top:40px;padding:28px 32px;background:rgba(184,150,90,0.06);border:1px solid rgba(184,150,90,0.15);text-align:center;">
-      <p style="font-family:'Noto Serif KR',serif;font-weight:300;font-size:0.85rem;color:var(--fog);line-height:2;letter-spacing:0.04em;">
-        모든 체험은 <span style="color:var(--gold-pale);">사전 예약제</span>로 운영됩니다 &nbsp;·&nbsp; 대상: 누구나 (일부 초등학생 이상) &nbsp;·&nbsp; 운영기간: 연중<br>
-        자세한 프로그램 안내 및 예약 문의: <span style="color:var(--gold-pale);">카카오톡 채널 온마을가평</span>
-      </p>
-      <a href="https://morningcalmgreenvillage.co.kr/231227_html/index.html#Main" target="_blank"
-         style="display:inline-block;margin-top:16px;font-family:'DM Sans',sans-serif;font-size:0.78rem;letter-spacing:0.14em;color:var(--gold);text-decoration:none;border-bottom:1px solid rgba(184,150,90,0.4);padding-bottom:2px;">
-        아침고요 푸른마을 체험 상세 안내 →
-      </a>
-    </div>
+    </div><!-- /cat-panel-inner -->
+    </div><!-- /cat-exp -->
     </div><!-- /cat-panel-inner -->
     </div><!-- /cat-exp -->
 
@@ -2589,12 +2152,8 @@ async function saveToFirebase(payload) {
 
       <!-- 업종 필터 탭 -->
       <div class="genre-tabs reveal" id="genre-tabs">
+        <!-- Firestore landing_cats에서 동적 렌더링 — renderGenreTabs() -->
         <button class="genre-tab active" onclick="filterCoop('all')">전체</button>
-        <button class="genre-tab" onclick="filterCoop('restaurant')">🍽 식당</button>
-        <button class="genre-tab" onclick="filterCoop('cafe')">☕ 카페</button>
-        <button class="genre-tab" onclick="filterCoop('stay')">🏡 숙박</button>
-        <button class="genre-tab" onclick="filterCoop('mart')">🛒 마트</button>
-        <button class="genre-tab" onclick="filterCoop('craft')">🎨 공방</button>
         <button class="genre-tab genre-tab--map" onclick="filterCoop('map')">🗺 지도로 보기</button>
       </div>
 
@@ -2649,34 +2208,14 @@ async function saveToFirebase(payload) {
         온마을 스테이패스로 아침고요수목원 입장 할인 혜택을 받으세요. 수목원에서 온마을로, 마을이 하나로 이어집니다.<br>
         <span style="font-size:12px;color:rgba(107,102,96,0.7);">StayPass holders enjoy discounts at Morningcalm Garden &amp; Zoo.</span>
       </p>
-      <div class="coop-card-grid reveal">
-        <div class="coop-card">
-          <!-- [수목원사진 1] 아침고요수목원 카드 사진 -->
-          <img class="coop-card-img" src="images/img_suwon_garden.jpg" alt="아침고요수목원" style="object-position:center top;">
-          <div class="coop-card-body">
-            <span class="coop-card-en">GARDEN</span>
-            <div class="coop-card-name">아침고요수목원</div>
-            <p class="coop-card-desc">축령산 자락 5,000여 평, 20개 이상의 테마 정원. 계절마다 달라지는 꽃과 나무의 향연.<br>온마을 스테이패스 제시 시 입장 할인 (MOU 협약 예정)</p>
-            <a href="https://www.morningcalm.co.kr" target="_blank" rel="noopener" class="coop-card-btn">
-              공식 홈페이지 →
-            </a>
-          </div>
-        </div>
-        <div class="coop-card">
-          <!-- [수목원사진 2] 아침고요 동물원 카드 사진 -->
-          <img class="coop-card-img" src="images/img_suwon_zoo.png" alt="아침고요 동물원" style="object-position:center center;">
-          <div class="coop-card-body">
-            <span class="coop-card-en">ZOO</span>
-            <div class="coop-card-name">아침고요 동물원</div>
-            <p class="coop-card-desc">수목원 인근 가족 친화형 동물원. 어린이와 함께하는 자연 체험의 완성.<br>온마을 패키지 연계 방문 가능</p>
-            <a href="http://pf.kakao.com/_FVxjZX/chat" target="_blank" class="coop-card-btn">
-              <svg width="16" height="16" viewBox="0 0 18 18" fill="none"><ellipse cx="9" cy="8" rx="8" ry="7" fill="#3A1D1D"/><path d="M9 3.5C5.96 3.5 3.5 5.46 3.5 7.88c0 1.5 1 2.82 2.56 3.62l-.6 2.2c-.04.17.13.31.28.22l2.75-1.83c.32.05.66.08 1.01.08 3.04 0 5.5-1.96 5.5-4.38S12.04 3.5 9 3.5z" fill="#FEE500"/></svg>
-              패키지 문의하기
-            </a>
-          </div>
+      <div class="coop-card-grid reveal" id="suwon-card-grid">
+        <!-- Firestore landing_suwon 에서 동적 렌더링 -->
+        <div id="suwon-cards-loading" style="grid-column:1/-1;text-align:center;padding:48px 0;color:#888;font-size:14px;">
+          <div style="font-size:28px;margin-bottom:10px;">🌸</div>
+          정보를 불러오는 중...
         </div>
       </div>
-      <div style="text-align:center;padding:20px;background:rgba(184,150,90,0.05);border-radius:12px;border:1px solid rgba(184,150,90,0.15);margin-top:8px;">
+      <div id="suwon-notice" style="text-align:center;padding:20px;background:rgba(184,150,90,0.05);border-radius:12px;border:1px solid rgba(184,150,90,0.15);margin-top:8px;">
         <p style="font-size:0.82rem;color:#3d3830;line-height:2;">
           🌿 온마을 ↔ 아침고요수목원 상호 할인 협약 추진 중<br>
           스테이패스 발급 후 수목원 방문 시 할인 적용 예정 · 업데이트 알림은 카카오채널 <span style="color:var(--gold-pale);">@온마을가평</span> 구독
@@ -2828,6 +2367,85 @@ let _coopMap = null;      // Leaflet 인스턴스
 let _coopStores = [];      // Firestore에서 받아온 가맹점 데이터
 
 // ── 배지 스타일 매핑 ──
+// ── 섹션 탭(cat-tabs) 동적 렌더링 ──
+const SECTIONS_FALLBACK = [
+  { id:'exp',   num:'01', label:'체험 프로그램',           en:'EXPERIENCES', badge:'추천', bg:'images/img_cat_exp.png',  active:true, order:1 },
+  { id:'coop',  num:'02', label:'온마을 가맹점',            en:'VILLAGE SHOPS', badge:'', bg:'images/img_cat_coop.jpg', active:true, order:2 },
+  { id:'suwon', num:'03', label:'아침고요\n수목원 & 동물원', en:'MORNINGCALM', badge:'', bg:'images/img_cat_suwon.png', active:true, order:3 },
+];
+
+async function renderSectionTabs() {
+  const wrap = document.getElementById('cat-tabs-wrap');
+  if (!wrap) return;
+  let sections = [];
+  try {
+    if (window._fbDB) {
+      const snap = await window._fbDB.collection('landing_sections').orderBy('order','asc').get()
+        .catch(() => window._fbDB.collection('landing_sections').get());
+      sections = snap.docs.map(d=>d.data()).filter(s=>s.active!==false).sort((a,b)=>(a.order||99)-(b.order||99));
+    }
+  } catch(e) { console.warn('landing_sections 로드 실패:', e.message); }
+  if (!sections.length) sections = SECTIONS_FALLBACK;
+
+  const loading = document.getElementById('cat-tabs-loading');
+  if (loading) loading.remove();
+  wrap.className = 'cat-tabs reveal has-' + Math.min(sections.length, 5);
+
+  sections.forEach(s => {
+    const labelHtml = (s.label||'').replace(/\\n/g,'<br>').replace(/\n/g,'<br>');
+    const btn = document.createElement('button');
+    btn.className = 'cat-tab';
+    btn.id = 'tab-btn-' + s.id;
+    btn.setAttribute('onclick', "switchCat('" + s.id + "')");
+    btn.style.backgroundImage = "url('" + (s.bg||'') + "')";
+    btn.innerHTML =
+      '<span class="cat-tab-num">' + (s.num||'') + '</span>' +
+      '<span class="cat-tab-label">' + labelHtml + '</span>' +
+      '<span class="cat-tab-en">' + (s.en||'') + '</span>' +
+      (s.badge ? '<span class="cat-tab-badge">' + s.badge + '</span>' : '') +
+      '<span class="cat-tab-arrow">›</span>';
+    wrap.appendChild(btn);
+  });
+}
+
+// ── 업종 필터탭(genre-tabs) 동적 렌더링 ──
+const CATS_FALLBACK = [
+  { id:'restaurant', label:'🍽 식당', order:1, active:true },
+  { id:'cafe',       label:'☕ 카페', order:2, active:true },
+  { id:'stay',       label:'🏡 숙박', order:3, active:true },
+  { id:'mart',       label:'🛒 마트', order:4, active:true },
+  { id:'craft',      label:'🎨 공방', order:5, active:true },
+];
+
+async function renderGenreTabs() {
+  const wrap = document.getElementById('genre-tabs');
+  if (!wrap) return;
+  let cats = [];
+  try {
+    if (window._fbDB) {
+      const snap = await window._fbDB.collection('landing_cats').orderBy('order','asc').get()
+        .catch(() => window._fbDB.collection('landing_cats').get());
+      cats = snap.docs.map(d=>({...d.data(),__id:d.id})).filter(c=>c.active!==false).sort((a,b)=>(a.order||99)-(b.order||99));
+    }
+  } catch(e) { console.warn('landing_cats 로드 실패:', e.message); }
+  if (!cats.length) cats = CATS_FALLBACK;
+
+  const mapBtn = wrap.querySelector('.genre-tab--map');
+  wrap.querySelectorAll('.genre-tab:not(.genre-tab--map)').forEach(b => {
+    if (b.getAttribute('onclick') !== "filterCoop('all')") b.remove();
+  });
+  cats.forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = 'genre-tab';
+    btn.setAttribute('onclick', "filterCoop('" + c.id + "')");
+    btn.textContent = c.label || c.id;
+    wrap.insertBefore(btn, mapBtn);
+  });
+  cats.forEach(c => {
+    if (!COOP_BADGE[c.id]) COOP_BADGE[c.id] = { bg:'#f0f0f0', color:'#444', label:(c.label||c.id).replace(/^\S+\s/,'') };
+  });
+}
+
 const COOP_BADGE = {
   restaurant: { bg:'#f5e8dd', color:'#7a3d10', label:'식당' },
   cafe:        { bg:'#ddeee5', color:'#1a5c35', label:'카페' },
@@ -2925,6 +2543,102 @@ function _renderMapStoreList() {
   }).join('');
 }
 
+// ── 체험 프로그램 렌더링 (landing_exp) ──
+async function renderExpCards() {
+  const grid = document.getElementById('exp-grid');
+  if (!grid) return;
+
+  let waited = 0;
+  while (!window._fbDB && waited < 50) { await new Promise(r=>setTimeout(r,100)); waited++; }
+
+  // 폴백 하드코딩
+  const EXP_FALLBACK = [
+    { name:'먹다 · 잣 체험', en:'Pine Nut Cooking', desc:'힐링숲에서 직접 수확한 잣으로 쿠키, 전병, 아이스크림을 만들어 보는 요리 프로그램.', img:'images/img_02.jpg', tags:'잣 쿠키 · 20,000원,잣 전병 · 15,000원,잣 아이스크림 · 10,000원', reserve:'먹다 · 잣 체험', order:1 },
+    { name:'만들다 · 공예',   en:'Forest Craft',    desc:'힐링숲을 테마로 나만의 작품을 만드는 공예 프로그램. 다육아트, 테라리움, 비누, 레진아트 등.', img:'images/img_03.jpg', tags:'다육아트 · 25,000원,테라리움 · 25,000원,비누 · 캔들 · 20,000원', reserve:'만들다 · 공예', order:2 },
+    { name:'느끼다 · 힐링숲', en:'Forest Healing',  desc:'잣나무와 전나무 가득한 숲 속에서 에코티어링, 밧줄놀이, 잣줍기 등 자연 생태체험을 경험하세요.', img:'images/img_04.jpg', tags:'에코티어링 · 15,000원,자연 생태체험 · 20,000원', reserve:'느끼다 · 힐링숲', order:3 },
+  ];
+
+  let items = [];
+  try {
+    if (window._fbDB) {
+      const snap = await window._fbDB.collection('landing_exp').orderBy('order','asc').get()
+        .catch(() => window._fbDB.collection('landing_exp').get());
+      items = snap.docs.map(d=>d.data()).filter(s=>s.active!==false).sort((a,b)=>(a.order||99)-(b.order||99));
+    }
+  } catch(e) { console.warn('landing_exp 로드 실패:', e.message); }
+  if (!items.length) items = EXP_FALLBACK;
+
+  // 기존 로딩 표시 제거 + 카드 렌더
+  const loading = document.getElementById('exp-cards-loading');
+  if (loading) loading.remove();
+
+  const delayClasses = ['reveal-d1','reveal-d2','reveal-d3','reveal-d4'];
+  items.forEach((s, idx) => {
+    const tags = (s.tags||'').split(',').map(t=>t.trim()).filter(Boolean);
+    const card = document.createElement('div');
+    card.className = 'exp-card reveal ' + (delayClasses[idx] || 'reveal-d1');
+    card.innerHTML =
+      '<img class="exp-card-img" src="' + (s.img||'images/img_02.jpg') + '" alt="' + s.name + '" onerror="this.src=\'images/img_02.jpg\'">' +
+      '<div class="exp-card-inner exp-card-body">' +
+        '<span class="exp-num" style="font-family:\'DM Sans\',sans-serif;font-size:0.72rem;letter-spacing:0.18em;color:var(--gold);margin-bottom:6px;display:block;">0' + (idx+1) + '</span>' +
+        '<span class="exp-name">' + s.name + '</span>' +
+        '<span class="exp-en">' + (s.en||'') + '</span>' +
+        '<p class="exp-desc">' + (s.desc||'') + '</p>' +
+        (tags.length ? '<div class="exp-tags">' + tags.map(t=>'<span class="exp-tag">' + t + '</span>').join('') + '</div>' : '') +
+        '<button class="btn-exp-reserve" onclick="startBookingFrom(\'' + (s.reserve||s.name).replace(/'/g,"\\'") + '\', this)">예약 신청하기</button>' +
+      '</div>';
+    grid.appendChild(card);
+  });
+}
+
+// ── 수목원·동물원 렌더링 (landing_suwon) ──
+async function renderSuwonCards() {
+  const grid = document.getElementById('suwon-card-grid');
+  if (!grid) return;
+
+  let waited = 0;
+  while (!window._fbDB && waited < 50) { await new Promise(r=>setTimeout(r,100)); waited++; }
+
+  const SUWON_FALLBACK = [
+    { name:'아침고요수목원', en:'GARDEN', desc:'축령산 자락 5,000여 평, 20개 이상의 테마 정원. 계절마다 달라지는 꽃과 나무의 향연.\n온마을 스테이패스 제시 시 입장 할인 (MOU 협약 예정)', img:'images/img_suwon_garden.jpg', link:'https://www.morningcalm.co.kr', linkText:'공식 홈페이지 →', order:1 },
+    { name:'아침고요 동물원', en:'ZOO', desc:'수목원 인근 가족 친화형 동물원. 어린이와 함께하는 자연 체험의 완성.\n온마을 패키지 연계 방문 가능', img:'images/img_suwon_zoo.png', link:'http://pf.kakao.com/_FVxjZX/chat', linkText:'패키지 문의하기', order:2 },
+  ];
+
+  let items = [];
+  try {
+    if (window._fbDB) {
+      const snap = await window._fbDB.collection('landing_suwon').orderBy('order','asc').get()
+        .catch(() => window._fbDB.collection('landing_suwon').get());
+      items = snap.docs.map(d=>d.data()).filter(s=>s.active!==false).sort((a,b)=>(a.order||99)-(b.order||99));
+    }
+  } catch(e) { console.warn('landing_suwon 로드 실패:', e.message); }
+  if (!items.length) items = SUWON_FALLBACK;
+
+  const loading = document.getElementById('suwon-cards-loading');
+  if (loading) loading.remove();
+
+  const isKakao = url => url && url.includes('kakao');
+  items.forEach(s => {
+    const card = document.createElement('div');
+    card.className = 'coop-card';
+    const descHtml = (s.desc||'').replace(/\n/g,'<br>');
+    const btnHtml = isKakao(s.link)
+      ? '<a href="' + s.link + '" target="_blank" class="coop-card-btn">' +
+          '<svg width="16" height="16" viewBox="0 0 18 18" fill="none"><ellipse cx="9" cy="8" rx="8" ry="7" fill="#3A1D1D"/><path d="M9 3.5C5.96 3.5 3.5 5.46 3.5 7.88c0 1.5 1 2.82 2.56 3.62l-.6 2.2c-.04.17.13.31.28.22l2.75-1.83c.32.05.66.08 1.01.08 3.04 0 5.5-1.96 5.5-4.38S12.04 3.5 9 3.5z" fill="#FEE500"/></svg> ' +
+          (s.linkText||'문의하기') + '</a>'
+      : '<a href="' + (s.link||'#') + '" target="_blank" rel="noopener" class="coop-card-btn">' + (s.linkText||'자세히 보기') + '</a>';
+    card.innerHTML =
+      '<img class="coop-card-img" src="' + (s.img||'images/img_cat_coop.jpg') + '" alt="' + s.name + '" onerror="this.src=\'images/img_cat_coop.jpg\'">' +
+      '<div class="coop-card-body">' +
+        '<span class="coop-card-en">' + (s.en||'') + '</span>' +
+        '<div class="coop-card-name">' + s.name + '</div>' +
+        '<p class="coop-card-desc">' + descHtml + '</p>' +
+        btnHtml +
+      '</div>';
+    grid.appendChild(card);
+  });
+}
+
 // 폴백 하드코딩 (Firestore 불가 시)
 const _COOP_FALLBACK = [
   { name:'마을 다이닝',   en:'DINING',    cat:'restaurant', desc:'가평 향토 요리 · 예약제 운영', img:'images/img_cat_coop.jpg', lat:37.8318, lng:127.5078, color:'#c06a2a', kakao:'http://pf.kakao.com/_FVxjZX/chat' },
@@ -2937,61 +2651,105 @@ const _COOP_FALLBACK = [
 
 // Leaflet 지도 초기화 — _coopStores 기반으로 마커 그림
 function _initCoopMap() {
-  if (_coopMap) { setTimeout(() => _coopMap.invalidateSize(), 100); return; }
   const mapEl = document.getElementById('coop-leaflet-map');
-  if (!mapEl || typeof L === 'undefined') return;
+  if (!mapEl) return;
+
+  // Leaflet 미로드 시 재시도
+  if (typeof L === 'undefined') {
+    setTimeout(_initCoopMap, 300);
+    return;
+  }
+
+  // 이미 초기화된 경우: 크기 재계산만
+  if (_coopMap) {
+    setTimeout(() => {
+      _coopMap.invalidateSize();
+      _coopMap.fitBounds(_coopMap.getBounds(), { padding:[30,30] });
+    }, 150);
+    return;
+  }
+
+  // display:none 상태에서 초기화 시 크기가 0이 되므로
+  // 부모 패널이 실제로 보이는지 확인 후 진행
+  const panel = document.getElementById('coop-map-panel');
+  if (panel && panel.offsetHeight === 0) {
+    setTimeout(_initCoopMap, 150);
+    return;
+  }
 
   _coopMap = L.map('coop-leaflet-map', {
     center: [37.8322, 127.5081],
     zoom: 16,
     zoomControl: true,
     scrollWheelZoom: false,
+    preferCanvas: false,
   });
 
+  // OpenStreetMap 타일
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>',
     maxZoom: 19,
   }).addTo(_coopMap);
 
-  // 본부 마커
+  // 본부 마커 (별도 색상)
   const hqIcon = L.divIcon({
-    className: '',
-    html: `<div style="width:36px;height:36px;border-radius:50%;background:#1a4028;border:3px solid #fff;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,0.35);font-size:16px;">🏢</div>`,
-    iconSize:[36,36], iconAnchor:[18,18], popupAnchor:[0,-20],
+    className: 'coop-map-hq-icon',
+    html: '<div style="width:36px;height:36px;border-radius:50%;background:#1a4028;border:3px solid #fff;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,0.35);font-size:16px;line-height:1;">🏢</div>',
+    iconSize:[36,36], iconAnchor:[18,18], popupAnchor:[0,-22],
   });
   L.marker([37.8322, 127.5081], { icon: hqIcon })
-    .bindPopup(`<div style="font-size:13px;line-height:1.7;min-width:160px;"><strong style="color:#1a4028;">아침고요상생연대 협동조합</strong><br><span style="color:#666;font-size:11px;">경기도 가평군 상면 수목원로 313-15</span></div>`)
+    .bindPopup(
+      '<div style="font-size:13px;line-height:1.7;min-width:170px;">' +
+      '<strong style="color:#1a4028;font-size:14px;">아침고요상생연대 협동조합</strong><br>' +
+      '<span style="color:#666;font-size:11px;">경기도 가평군 상면 수목원로 313-15</span>' +
+      '</div>',
+      { maxWidth: 240 }
+    )
     .addTo(_coopMap);
 
-  // 가맹점 마커 — _coopStores 기반
-  const stores = _coopStores.length ? _coopStores : _COOP_FALLBACK;
+  // 가맹점 마커 — _coopStores 우선, 없으면 폴백
+  const stores = (_coopStores && _coopStores.length > 0) ? _coopStores : _COOP_FALLBACK;
   const bounds = [[37.8322, 127.5081]];
-  stores.forEach(s => {
+
+  stores.forEach(function(s) {
     if (!s.lat || !s.lng) return;
-    const icon = L.divIcon({
-      className: '',
-      html: `<div style="width:30px;height:30px;border-radius:50%;background:${s.color||'#888'};border:2.5px solid #fff;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.3);cursor:pointer;"><div style="width:10px;height:10px;background:#fff;border-radius:50%;opacity:0.9;"></div></div>`,
+
+    const dotColor = s.color || '#888';
+    const storeIcon = L.divIcon({
+      className: 'coop-map-store-icon',
+      html: '<div style="width:30px;height:30px;border-radius:50%;background:' + dotColor + ';border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.3);cursor:pointer;"></div>',
       iconSize:[30,30], iconAnchor:[15,15], popupAnchor:[0,-18],
     });
-    const b = COOP_BADGE[s.cat] || { bg:'#eee', color:'#555', label:'' };
-    const addrLine = s.address ? `<br><span style="font-size:11px;color:#888;">📍 ${s.address}</span>` : '';
-    const telLine  = s.phone   ? `<br><span style="font-size:11px;color:#888;">📞 ${s.phone}</span>`   : '';
-    L.marker([s.lat, s.lng], { icon })
-      .bindPopup(`<div style="font-size:13px;line-height:1.7;min-width:160px;">
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
-          <span style="width:10px;height:10px;border-radius:50%;background:${s.color||'#888'};display:inline-block;"></span>
-          <strong style="font-size:14px;">${s.name}</strong>
-        </div>
-        <span style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:12px;background:${b.bg};color:${b.color};">${s.en||b.label}</span>
-        ${addrLine}${telLine}
-        <br><span style="color:#555;font-size:12px;">${s.desc||''}</span>
-      </div>`, { maxWidth: 230 })
+
+    const b = COOP_BADGE[s.cat] || { bg:'#eee', color:'#555', label: s.cat || '' };
+    const addrLine = s.address ? '<br><span style="font-size:11px;color:#777;">📍 ' + s.address + '</span>' : '';
+    const telLine  = s.phone   ? '<br><span style="font-size:11px;color:#777;">📞 ' + s.phone   + '</span>' : '';
+    const descLine = s.desc    ? '<br><span style="color:#555;font-size:12px;">' + s.desc + '</span>' : '';
+
+    const popupHtml =
+      '<div style="font-size:13px;line-height:1.8;min-width:160px;max-width:220px;">' +
+      '<div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;">' +
+      '<span style="width:11px;height:11px;border-radius:50%;background:' + dotColor + ';flex-shrink:0;display:inline-block;"></span>' +
+      '<strong style="font-size:14px;color:#1a1714;">' + (s.name || '') + '</strong>' +
+      '</div>' +
+      '<span style="font-size:10px;font-weight:700;padding:2px 9px;border-radius:12px;background:' + b.bg + ';color:' + b.color + ';">' + (s.en || b.label) + '</span>' +
+      addrLine + telLine + descLine +
+      '</div>';
+
+    L.marker([s.lat, s.lng], { icon: storeIcon })
+      .bindPopup(popupHtml, { maxWidth: 240 })
       .addTo(_coopMap);
+
     bounds.push([s.lat, s.lng]);
   });
 
-  if (bounds.length > 1) _coopMap.fitBounds(L.latLngBounds(bounds), { padding:[40,40] });
-  setTimeout(() => _coopMap.invalidateSize(), 200);
+  // 모든 마커가 보이도록 범위 자동 조정
+  if (bounds.length > 1) {
+    _coopMap.fitBounds(L.latLngBounds(bounds), { padding: [48, 48] });
+  }
+
+  // 패널 표시 직후 크기 재계산 (타일 깨짐 방지)
+  setTimeout(function() { _coopMap.invalidateSize(); }, 300);
 }
 
 function filterCoop(cat) {
@@ -3005,7 +2763,9 @@ function filterCoop(cat) {
     if (cardGrid) cardGrid.style.display = 'none';
     if (mapPanel) {
       mapPanel.style.display = 'block';
-      requestAnimationFrame(() => _initCoopMap());
+      // display:block 반영 → 브라우저 레이아웃 계산 → Leaflet 초기화
+      // requestAnimationFrame 한 번으로는 높이 계산이 완료 안 될 수 있어 100ms 지연
+      setTimeout(_initCoopMap, 100);
     }
     return;
   }
