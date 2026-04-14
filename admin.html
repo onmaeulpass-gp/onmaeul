@@ -1645,6 +1645,7 @@ body.role-viewer .perm-write { display: none !important; }
             <option value="exp">exp (체험 프로그램)</option>
             <option value="coop">coop (온마을 가맹점)</option>
             <option value="suwon">suwon (아침고요 수목원·동물원)</option>
+            <option value="stamp">stamp (체험하다 스탬프투어)</option>
           </select>
           <div style="font-size:11px;color:#E65100;margin-top:4px;line-height:1.6;">⚠️ 탭 ID가 틀리면 클릭해도 내용이 안 보입니다<br>랜딩 패널 cat-<b>exp</b>, cat-<b>coop</b>, cat-<b>suwon</b> 중 하나를 선택하세요</div>
         </div>
@@ -6035,7 +6036,7 @@ async function saveLandingSection(){
   const label=document.getElementById('lsec-label').value.trim();
   if(!id){ alert('탭 ID를 선택하세요.\n\nexp(체험) / coop(가맹점) / suwon(수목원) 중 하나를 선택해야 합니다.'); return; }
   if(!label){ alert('한글명을 입력하세요.'); return; }
-  if(!['exp','coop','suwon'].includes(id)){ alert('탭 ID는 exp / coop / suwon 중 하나여야 합니다.\n현재 입력값: '+id); return; }
+  if(!['exp','coop','suwon','stamp'].includes(id)){ alert('탭 ID는 exp / coop / suwon / stamp 중 하나여야 합니다.\n현재 입력값: '+id); return; }
   showLoading('저장 중...');
   try{
     const data={

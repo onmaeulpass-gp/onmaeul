@@ -1993,6 +1993,7 @@ async function saveToFirebase(payload) {
             if (typeof renderCoopCards   === 'function') renderCoopCards();
             if (typeof renderExpCards    === 'function') renderExpCards();
             if (typeof renderSuwonCards  === 'function') renderSuwonCards();
+            if (typeof renderStampCards  === 'function') renderStampCards();
           })
           .catch(function(e) {
             console.warn('⚠️ 익명 로그인 실패:', e.message);
@@ -2001,6 +2002,7 @@ async function saveToFirebase(payload) {
             if (typeof renderCoopCards   === 'function') renderCoopCards();
             if (typeof renderExpCards    === 'function') renderExpCards();
             if (typeof renderSuwonCards  === 'function') renderSuwonCards();
+            if (typeof renderStampCards  === 'function') renderStampCards();
           });
       }
     } catch(e) { console.warn('⚠️ Firebase 초기화 실패:', e.message); }
@@ -2222,6 +2224,23 @@ async function saveToFirebase(payload) {
     </div><!-- /cat-panel-inner -->
     </div><!-- /cat-suwon -->
 
+    <!-- ══ 카테고리 04: 체험하다 스탬프투어 ══ -->
+    <div class="cat-panel" id="cat-stamp">
+    <div class="cat-panel-inner">
+      <p class="sec-sub reveal" style="margin-bottom:24px;color:#2e2a26;">
+        온마을 스탬프 투어 — 마을 곳곳을 돌아다니며 스탬프를 모으면 특별한 혜택이 기다립니다.<br>
+        <span style="font-size:12px;color:rgba(107,102,96,0.7);">Collect stamps across the village and earn special rewards.</span>
+      </p>
+      <div class="coop-card-grid reveal" id="stamp-card-grid">
+        <div id="stamp-cards-loading" style="grid-column:1/-1;text-align:center;padding:48px 0;color:#888;font-size:14px;">
+          <div style="font-size:28px;margin-bottom:10px;">🗺️</div>
+          스탬프투어 정보를 불러오는 중...
+        </div>
+      </div>
+    </div><!-- /cat-panel-inner -->
+    </div><!-- /cat-stamp -->
+
+
   </div>
 </section>
 
@@ -2367,9 +2386,10 @@ let _coopStores = [];      // Firestore에서 받아온 가맹점 데이터
 // ── 배지 스타일 매핑 ──
 // ── 섹션 탭(cat-tabs) 동적 렌더링 ──
 const SECTIONS_FALLBACK = [
-  { id:'exp',   num:'01', label:'체험 프로그램',           en:'EXPERIENCES', badge:'추천', bg:'images/img_cat_exp.png',  active:true, order:1 },
-  { id:'coop',  num:'02', label:'온마을 가맹점',            en:'VILLAGE SHOPS', badge:'', bg:'images/img_cat_coop.jpg', active:true, order:2 },
-  { id:'suwon', num:'03', label:'아침고요\n수목원 & 동물원', en:'MORNINGCALM', badge:'', bg:'images/img_cat_suwon.png', active:true, order:3 },
+  { id:'exp',   num:'01', label:'체험 프로그램',           en:'EXPERIENCES',   badge:'추천', bg:'images/img_cat_exp.png',   active:true, order:1 },
+  { id:'coop',  num:'02', label:'온마을 가맹점',            en:'VILLAGE SHOPS', badge:'',    bg:'images/img_cat_coop.jpg',  active:true, order:2 },
+  { id:'suwon', num:'03', label:'아침고요\n수목원 & 동물원', en:'MORNINGCALM',   badge:'',    bg:'images/img_cat_suwon.png', active:true, order:3 },
+  { id:'stamp', num:'04', label:'체험하다\n스탬프투어',      en:'STAMP TOUR',    badge:'NEW', bg:'images/img_cat_exp.png',   active:true, order:4 },
 ];
 
 async function renderSectionTabs() {
@@ -2406,13 +2426,22 @@ async function renderSectionTabs() {
     return {...s, id: realId};
   });
 
-  // ID 보정 후에도 유효한 패널이 하나도 없으면 FALLBACK 강제 사용
+  // ID 보정 후 유효한 패널만 추림
   const validSections = sections.filter(s => !!document.getElementById('cat-' + s.id));
+
   if (validSections.length === 0) {
-    console.warn('landing_sections: 유효한 패널 없음 → FALLBACK 사용');
+    // 유효 섹션 없음 → FALLBACK 전체 사용
+    console.warn('landing_sections: 유효 패널 없음 → FALLBACK 전체 사용');
     sections = SECTIONS_FALLBACK;
   } else {
-    sections = validSections;
+    // 유효 섹션이 있더라도 FALLBACK 항목 중 누락된 것 보완
+    const foundIds = new Set(validSections.map(s => s.id));
+    const missing  = SECTIONS_FALLBACK.filter(f => !foundIds.has(f.id));
+    if (missing.length > 0) {
+      console.warn('landing_sections: 누락 탭 보완 →', missing.map(m=>m.id));
+    }
+    // 기존 Firestore 항목 + 누락된 FALLBACK 항목 합치고 order 기준 정렬
+    sections = [...validSections, ...missing].sort((a,b)=>(a.order||99)-(b.order||99));
   }
 
   const loading = document.getElementById('cat-tabs-loading');
@@ -2590,11 +2619,10 @@ async function renderExpCards() {
   let waited = 0;
   while (!window._fbDB && waited < 50) { await new Promise(r=>setTimeout(r,100)); waited++; }
 
-  // 폴백 하드코딩
   const EXP_FALLBACK = [
-    { name:'먹다 · 잣 체험', en:'Pine Nut Cooking', desc:'힐링숲에서 직접 수확한 잣으로 쿠키, 전병, 아이스크림을 만들어 보는 요리 프로그램.', img:'images/img_02.jpg', tags:'잣 쿠키 · 20,000원,잣 전병 · 15,000원,잣 아이스크림 · 10,000원', reserve:'먹다 · 잣 체험', order:1 },
-    { name:'만들다 · 공예',   en:'Forest Craft',    desc:'힐링숲을 테마로 나만의 작품을 만드는 공예 프로그램. 다육아트, 테라리움, 비누, 레진아트 등.', img:'images/img_03.jpg', tags:'다육아트 · 25,000원,테라리움 · 25,000원,비누 · 캔들 · 20,000원', reserve:'만들다 · 공예', order:2 },
-    { name:'느끼다 · 힐링숲', en:'Forest Healing',  desc:'잣나무와 전나무 가득한 숲 속에서 에코티어링, 밧줄놀이, 잣줍기 등 자연 생태체험을 경험하세요.', img:'images/img_04.jpg', tags:'에코티어링 · 15,000원,자연 생태체험 · 20,000원', reserve:'느끼다 · 힐링숲', order:3 },
+    { name:'먹다 · 잣 체험',  en:'Pine Nut Cooking', desc:'힐링숲에서 직접 수확한 잣으로 쿠키, 전병, 아이스크림을 만들어 보는 요리 프로그램.', img:'images/img_02.jpg', tags:'잣 쿠키 · 20,000원,잣 전병 · 15,000원,잣 아이스크림 · 10,000원', reserve:'먹다 · 잣 체험', order:1 },
+    { name:'만들다 · 공예',    en:'Forest Craft',    desc:'힐링숲을 테마로 나만의 작품을 만드는 공예 프로그램.', img:'images/img_03.jpg', tags:'다육아트 · 25,000원,테라리움 · 25,000원', reserve:'만들다 · 공예', order:2 },
+    { name:'느끼다 · 힐링숲',  en:'Forest Healing',  desc:'잣나무와 전나무 가득한 숲 속에서 자연 생태체험을 경험하세요.', img:'images/img_04.jpg', tags:'에코티어링 · 15,000원,자연 생태체험 · 20,000원', reserve:'느끼다 · 힐링숲', order:3 },
   ];
 
   let items = [];
@@ -2607,7 +2635,6 @@ async function renderExpCards() {
   } catch(e) { console.warn('landing_exp 로드 실패:', e.message); }
   if (!items.length) items = EXP_FALLBACK;
 
-  // 기존 로딩 표시 제거 + 카드 렌더
   const loading = document.getElementById('exp-cards-loading');
   if (loading) loading.remove();
 
@@ -2615,29 +2642,22 @@ async function renderExpCards() {
   items.forEach((s, idx) => {
     const tags = (s.tags||'').split(',').map(t=>t.trim()).filter(Boolean);
     const card = document.createElement('div');
-    card.className = 'exp-card reveal ' + (delayClasses[idx] || 'reveal-d1');
+    // reveal 없이 바로 visible — 패널 display:none 안에서 reveal 타이밍 문제 방지
+    card.className = 'exp-card';
     card.innerHTML =
-      '<img class="exp-card-img" src="' + (s.img||'images/img_02.jpg') + '" alt="' + s.name + '" onerror="this.src=\'images/img_02.jpg\'">' +
+      '<img class="exp-card-img" src="' + (s.img||'images/img_02.jpg') + '" alt="' + s.name + '" onerror="this.src='images/img_02.jpg'">' +
       '<div class="exp-card-inner exp-card-body">' +
-        '<span class="exp-num" style="font-family:\'DM Sans\',sans-serif;font-size:0.72rem;letter-spacing:0.18em;color:var(--gold);margin-bottom:6px;display:block;">0' + (idx+1) + '</span>' +
+        '<span class="exp-num" style="font-family:'DM Sans',sans-serif;font-size:0.72rem;letter-spacing:0.18em;color:var(--gold);margin-bottom:6px;display:block;">0' + (idx+1) + '</span>' +
         '<span class="exp-name">' + s.name + '</span>' +
         '<span class="exp-en">' + (s.en||'') + '</span>' +
         '<p class="exp-desc">' + (s.desc||'') + '</p>' +
         (tags.length ? '<div class="exp-tags">' + tags.map(t=>'<span class="exp-tag">' + t + '</span>').join('') + '</div>' : '') +
-        '<button class="btn-exp-reserve" onclick="startBookingFrom(\'' + (s.reserve||s.name).replace(/'/g,"\\'") + '\', this)">예약 신청하기</button>' +
+        '<button class="btn-exp-reserve" onclick="startBookingFrom('' + (s.reserve||s.name).replace(/'/g,"\'") + '', this)">예약 신청하기</button>' +
       '</div>';
     grid.appendChild(card);
-    // 동적 추가 카드는 observer에 재등록해야 reveal 동작
-    if (typeof observer !== 'undefined') observer.observe(card);
   });
+}
 
-  // cat-panel이 display:none 상태에서 추가된 카드는 isIntersecting이 false
-  // — 패널 열릴 때 강제로 visible 처리하는 폴백
-  if (!document.getElementById('cat-exp')?.classList.contains('open')) {
-    grid.querySelectorAll('.exp-card.reveal').forEach(c => {
-      c.classList.add('_pending-reveal');
-    });
-  }
 
 // ── 수목원·동물원 렌더링 (landing_suwon) ──
 async function renderSuwonCards() {
@@ -2689,6 +2709,52 @@ async function renderSuwonCards() {
 }
 
 // 폴백 하드코딩 (Firestore 불가 시)
+// ── 스탬프투어 카드 렌더링 (landing_stamp) ──
+async function renderStampCards() {
+  const grid = document.getElementById('stamp-card-grid');
+  if (!grid) return;
+
+  let waited = 0;
+  while (!window._fbDB && waited < 50) { await new Promise(r=>setTimeout(r,100)); waited++; }
+
+  const STAMP_TOUR_FALLBACK = [
+    { name:'온마을 데일리 코스', en:'DAILY COURSE', desc:'카페 · 식당 · 체험 · 마트 · 수목원 6곳 방문 시 완성. 당일 15% 추가 할인 쿠폰 즉시 발급.', img:'images/img_cat_exp.png', link:'', linkText:'스탬프 패스 받기', order:1 },
+    { name:'스테이 코스',        en:'STAY COURSE',  desc:'1박 2일 10스탬프 완성 시 협약 펜션 1박 무료 또는 굿즈세트. 숙박 체크인 시 보너스 스탬프 +2.', img:'images/img_cat_coop.jpg', link:'', linkText:'스테이패스 신청', order:2 },
+  ];
+
+  let items = [];
+  try {
+    if (window._fbDB) {
+      const snap = await window._fbDB.collection('landing_stamp').orderBy('order','asc').get()
+        .catch(() => window._fbDB.collection('landing_stamp').get());
+      items = snap.docs.map(d=>d.data()).filter(s=>s.active!==false).sort((a,b)=>(a.order||99)-(b.order||99));
+    }
+  } catch(e) { console.warn('landing_stamp 로드 실패:', e.message); }
+  if (!items.length) items = STAMP_TOUR_FALLBACK;
+
+  const loading = document.getElementById('stamp-cards-loading');
+  if (loading) loading.remove();
+
+  items.forEach(s => {
+    const card = document.createElement('div');
+    card.className = 'coop-card';
+    const descHtml = (s.desc||'').replace(/\n/g,'<br>');
+    const btnHtml = s.link
+      ? '<a href="' + s.link + '" target="_blank" rel="noopener" class="coop-card-btn">' + (s.linkText||'자세히 보기') + '</a>'
+      : '<button class="coop-card-btn" onclick="alert('스테이패스 QR을 제시하세요')">' + (s.linkText||'안내 보기') + '</button>';
+    card.innerHTML =
+      '<img class="coop-card-img" src="' + (s.img||'images/img_cat_exp.png') + '" alt="' + s.name + '" onerror="this.src='images/img_cat_exp.png'">' +
+      '<div class="coop-card-body">' +
+        '<span class="coop-card-en">' + (s.en||'') + '</span>' +
+        '<div class="coop-card-name">' + s.name + '</div>' +
+        '<p class="coop-card-desc">' + descHtml + '</p>' +
+        btnHtml +
+      '</div>';
+    grid.appendChild(card);
+  });
+}
+
+
 const _COOP_FALLBACK = [
   { name:'마을 다이닝',   en:'DINING',    cat:'restaurant', desc:'가평 향토 요리 · 예약제 운영', img:'images/img_cat_coop.jpg', lat:37.8318, lng:127.5078, color:'#c06a2a', kakao:'http://pf.kakao.com/_FVxjZX/chat' },
   { name:'자카란다 카페', en:'CAFE',      cat:'cafe',       desc:'스페셜티 커피 · 잣 디저트',     img:'images/img_02.jpg',       lat:37.8330, lng:127.5090, color:'#4a90a4', kakao:'http://pf.kakao.com/_FVxjZX/chat' },
@@ -2827,50 +2893,40 @@ function filterCoop(cat) {
 
 
 // ── 카테고리 탭 전환 (토글 + 스크롤) ──
-const CAT_IDS = ['exp','coop','suwon'];  // 확장 시 여기에만 추가
+const CAT_IDS = ['exp','coop','suwon','stamp'];  // 확장 시 여기에만 추가
 
 function switchCat(cat) {
   const isAlreadyOpen = document.getElementById('cat-' + cat)?.classList.contains('open');
 
   // 모든 탭 + 패널 닫기
   CAT_IDS.forEach(id => {
-    const btn = document.getElementById('tab-btn-' + id);
+    const btn   = document.getElementById('tab-btn-' + id);
     const panel = document.getElementById('cat-' + id);
     if(btn)   btn.classList.remove('open');
     if(panel) panel.classList.remove('open');
   });
 
-  // 같은 탭 다시 클릭 → 닫기 (토글)
+  // 같은 탭 재클릭 → 닫기
   if(isAlreadyOpen) return;
 
-  // 선택 탭 열기
   const activeBtn   = document.getElementById('tab-btn-' + cat);
   const activePanel = document.getElementById('cat-' + cat);
   if(activeBtn)   activeBtn.classList.add('open');
-  if(activePanel) activePanel.classList.add('open');
-
-  // 패널 열릴 때 _pending-reveal 카드를 visible로 전환
-  // (display:none 상태에서 추가된 카드는 IntersectionObserver가 감지 못함)
   if(activePanel) {
-    requestAnimationFrame(() => {
-      activePanel.querySelectorAll('._pending-reveal').forEach((el, i) => {
-        setTimeout(() => {
-          el.classList.add('visible');
-          el.classList.remove('_pending-reveal');
-        }, i * 80);
+    activePanel.classList.add('open');
+    // 패널 안 모든 .reveal 요소에 즉시 visible 부여 (display:none 안에서 observer 미동작 방지)
+    setTimeout(function() {
+      activePanel.querySelectorAll('.reveal').forEach(function(el) {
+        el.classList.add('visible');
       });
-      // observer에 미등록된 reveal 카드도 재등록
-      activePanel.querySelectorAll('.reveal:not(.visible)').forEach(el => {
-        if (typeof observer !== 'undefined') observer.observe(el);
-      });
-    });
+    }, 50);
   }
 
-  // 패널 영역으로 부드럽게 스크롤
+  // 스크롤
   if(activePanel) {
-    setTimeout(() => {
+    setTimeout(function() {
       activePanel.scrollIntoView({ behavior:'smooth', block:'nearest' });
-    }, 50);
+    }, 80);
   }
 }
 
