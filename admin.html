@@ -3168,59 +3168,7 @@ async function submitChangePw(){
 }
 
 async function doLogin() {
-  // 구형 로그인 → 관리자 탭으로 리다이렉트 (하위 호환)
   switchLoginTab('admin');
-  return;
-  // --- 아래는 레거시 코드 (사용 안 함) ---
-  const id = document.getElementById('login-id').value.trim();
-  const pw = document.getElementById('login-pw').value;
-  if (!id || !pw) { document.getElementById('login-error').textContent = '아이디와 비밀번호를 입력하세요.'; return; }
-  showLoading('로그인 중...');
-  try {
-    const users = await getUsers();
-    let user = users.find(u => u.id === id);
-
-    if (!user && db && db.collection) {
-      try {
-        const snap = await db.collection('users').doc(id).get();
-        if (snap.exists) user = snap.data();
-      } catch (e) {
-        console.warn('개별 사용자 조회 실패:', e.message);
-      }
-    }
-
-    if (!user || user.pw !== pw) {
-      document.getElementById('login-error').textContent = '아이디 또는 비밀번호가 올바르지 않습니다.';
-      hideLoading();
-      return;
-    }
-
-    if (db && db.collection) {
-      try {
-        await db.collection('users').doc(id).set({ ...user, lastLogin: new Date().toLocaleString('ko-KR') }, { merge: true });
-      } catch (e) {
-        console.warn('lastLogin 저장 실패:', e.message);
-      }
-    }
-
-    setSession({
-      id: user.id, name: user.name, role: user.role,
-      permissions: user.permissions||[],
-      coopId:      user.coopId   || null,
-      coopName:    user.coopName || null,
-      discountRate: user.discountRate != null ? Number(user.discountRate) : null
-    });
-    applySession();
-    const ls = document.getElementById('login-screen');
-    ls.classList.add('hidden'); ls.style.display = 'none';
-    document.getElementById('login-error').textContent='';
-    document.getElementById('login-id').value='';
-    document.getElementById('login-pw').value='';
-    showModule('dashboard');
-  } catch(e) {
-    document.getElementById('login-error').textContent = '오류: ' + (e.message||'다시 시도해 주세요.');
-    console.error(e);
-  } finally { hideLoading(); }
 }
 
 function doLogout() {
@@ -3243,10 +3191,10 @@ function doLogout() {
     const el=document.getElementById(id);
     if(el) el.classList.toggle('active', i===0);
   });
-  document.getElementById('topbar-user').style.display = 'none';
-  document.getElementById('login-id').value = '';
-  document.getElementById('login-pw').value = '';
-  document.getElementById('login-error').textContent = '';
+  const _tu=document.getElementById('topbar-user'); if(_tu) _tu.style.display='none';
+  const _li=document.getElementById('login-id');    if(_li) _li.value='';
+  const _lp=document.getElementById('login-pw');    if(_lp) _lp.value='';
+  const _le=document.getElementById('login-error'); if(_le) _le.textContent='';
   closeSidebar();
 }
 
@@ -4185,7 +4133,7 @@ async function populateM03Selects() {
   document.getElementById('m03-program').innerHTML='<option value="">선택</option>'+items.programs.map(p=>`<option value="${p.name}">${p.name}</option>`).join('');
   document.getElementById('m03-status').innerHTML='<option value="">선택</option>'+items.statuses.map(s=>`<option value="${s.name}">${s.name}</option>`).join('');
   document.getElementById('m03-filter-status').innerHTML='<option value="">전체 상태</option>'+items.statuses.map(s=>`<option value="${s.name}">${s.name}</option>`).join('');
-  document.getElementById('m03-staff').innerHTML='<option value="">선택</option>'+employees.map(e=>`<option value="${e.name}">${e.name} (${e.position||''})</option>`).join('');
+  const _m3s=document.getElementById('m03-staff'); if(_m3s) _m3s.innerHTML='<option value="">선택</option>'+employees.map(e=>`<option value="${e.name}">${e.name} (${e.position||''})</option>`).join('');
   const custSel=document.getElementById('m03-customer');
   if(custSel) custSel.innerHTML='<option value="">-- 고객 미연결 --</option>'+
     [...customers].sort((a,b)=>b.id-a.id).map(c=>`<option value="${c.id}">${c.name} (${c.phone||'-'})${c.program?' · '+c.program:''}</option>`).join('');
@@ -4319,7 +4267,7 @@ async function saveM03() {
   try {
     const approvalStatus = document.getElementById('m03-approval')?.value || '대기';
     const payStatus = document.getElementById('m03-pay-status')?.value || '미입금';
-    const staffSel = document.getElementById('m03-staff').value;
+    const staffSel = (document.getElementById('m03-staff')||{value:''}).value;
     const custSel = document.getElementById('m03-customer');
     const customerId = custSel ? (custSel.value ? Number(custSel.value) : null) : null;
     const customerName = custSel && custSel.value ? custSel.options[custSel.selectedIndex].text.split(' (')[0] : '';
@@ -6583,8 +6531,8 @@ function closeDiaryNotice() {
 // M03 담당직원 SMS 알림
 // ═══════════════════════════════════════════════════════════
 function onM03StaffChange() {
-  const v = document.getElementById('m03-staff').value;
-  document.getElementById('m03-sms-btn').style.display = v ? 'inline-flex' : 'none';
+  const v = (document.getElementById('m03-staff')||{value:''}).value;
+  const _msb=document.getElementById('m03-sms-btn'); if(_msb) _msb.style.display = v ? 'inline-flex' : 'none';
 }
 
 async function openM03StaffSMSByName(staffName, prog, date, startTime) {
@@ -6598,7 +6546,7 @@ async function openM03StaffSMSByName(staffName, prog, date, startTime) {
 }
 
 async function openM03StaffSMS() {
-  const staffVal = document.getElementById('m03-staff').value;
+  const staffVal = (document.getElementById('m03-staff')||{value:''}).value;
   if (!staffVal) return;
   showLoading();
   try {
