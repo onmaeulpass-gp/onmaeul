@@ -1660,6 +1660,131 @@ body.role-viewer .perm-write { display: none !important; }
   </div>
 </div>
 
+<!-- 랜딩 가맹점 편집 Modal -->
+<div class="modal-overlay" id="landing-store-modal">
+  <div class="modal" style="max-width:600px;">
+    <div class="modal-header">
+      <h3 id="landing-store-modal-title">가맹점 정보 편집</h3>
+      <button class="modal-close" onclick="closeModal('landing-store-modal')">✕</button>
+    </div>
+    <div class="modal-body" style="max-height:75vh;overflow-y:auto;">
+      <div class="form-grid" style="grid-template-columns:1fr 1fr;">
+        <div class="form-group" style="grid-column:1/-1;"><label>업체명 (한글) *</label><input id="ls-name" placeholder="예: 마을 다이닝"></div>
+        <div class="form-group"><label>업체명 (영문) *</label><input id="ls-en" placeholder="DINING"></div>
+        <div class="form-group"><label>업종 *</label>
+          <select id="ls-cat" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;">
+            <option value="restaurant">🍽 식당</option><option value="cafe">☕ 카페</option>
+            <option value="stay">🏡 숙박</option><option value="mart">🛒 마트</option><option value="craft">🎨 공방</option>
+          </select>
+        </div>
+        <div class="form-group" style="grid-column:1/-1;"><label>업체 설명</label>
+          <textarea id="ls-desc" rows="2" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;resize:vertical;"></textarea>
+        </div>
+        <div class="form-group" style="grid-column:1/-1;"><label>주소</label><input id="ls-address" placeholder="경기도 가평군 상면 수목원로 313-xx"></div>
+        <div class="form-group"><label>전화번호</label><input id="ls-phone" placeholder="031-000-0000" oninput="formatPhone(this)"></div>
+        <div class="form-group"><label>카카오 채널 링크</label><input id="ls-kakao" placeholder="http://pf.kakao.com/..."></div>
+        <div class="form-group" style="grid-column:1/-1;"><label>대표 이미지 URL</label>
+          <input id="ls-img" placeholder="images/img_01.jpg  또는  https://...">
+          <div id="ls-img-preview" style="display:none;margin-top:8px;"><img id="ls-img-preview-img" style="width:100%;max-height:140px;object-fit:cover;border-radius:8px;border:1px solid var(--border);"></div>
+        </div>
+        <div class="form-group"><label>지도 위도 (lat)</label><input id="ls-lat" type="number" step="0.0001" placeholder="37.8322"></div>
+        <div class="form-group"><label>지도 경도 (lng)</label><input id="ls-lng" type="number" step="0.0001" placeholder="127.5081"></div>
+        <div class="form-group"><label>마커 색상</label>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input id="ls-color" type="color" value="#225536" style="width:48px;height:36px;border:none;border-radius:6px;cursor:pointer;padding:2px;">
+            <span id="ls-color-val" style="font-size:12px;color:var(--text-muted);">#225536</span>
+          </div>
+        </div>
+        <div class="form-group"><label>노출 순서</label><input id="ls-order" type="number" min="1" placeholder="1" style="width:100%;"></div>
+        <div class="form-group"><label>공개 여부</label>
+          <select id="ls-active" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;">
+            <option value="true">✅ 공개</option><option value="false">🔒 비공개</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('landing-store-modal')">취소</button>
+      <button class="btn btn-primary" onclick="saveLandingStore()">💾 저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 랜딩 체험프로그램 편집 Modal -->
+<div class="modal-overlay" id="landing-exp-modal">
+  <div class="modal" style="max-width:560px;">
+    <div class="modal-header">
+      <h3 id="landing-exp-modal-title">체험 프로그램 편집</h3>
+      <button class="modal-close" onclick="closeModal('landing-exp-modal')">✕</button>
+    </div>
+    <div class="modal-body" style="max-height:75vh;overflow-y:auto;">
+      <div class="form-grid" style="grid-template-columns:1fr 1fr;">
+        <div class="form-group" style="grid-column:1/-1;"><label>프로그램명 (한글) *</label><input id="le-name" placeholder="예: 먹다 · 잣 체험"></div>
+        <div class="form-group"><label>프로그램명 (영문)</label><input id="le-en" placeholder="Pine Nut Cooking"></div>
+        <div class="form-group"><label>예약 버튼 표시 이름</label><input id="le-reserve" placeholder="먹다 · 잣 체험"></div>
+        <div class="form-group" style="grid-column:1/-1;"><label>프로그램 설명</label>
+          <textarea id="le-desc" rows="3" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;resize:vertical;"></textarea>
+        </div>
+        <div class="form-group" style="grid-column:1/-1;">
+          <label>가격 태그 <span style="font-size:10px;color:var(--text-muted);">쉼표(,)로 구분 — 예: 잣 쿠키 · 20,000원,잣 전병 · 15,000원</span></label>
+          <textarea id="le-tags" rows="2" placeholder="태그1,태그2,태그3" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;resize:vertical;font-family:inherit;"></textarea>
+        </div>
+        <div class="form-group" style="grid-column:1/-1;"><label>대표 이미지 URL</label>
+          <input id="le-img" placeholder="images/img_02.jpg  또는  https://...">
+          <div id="le-img-preview" style="display:none;margin-top:8px;"><img id="le-img-preview-img" style="width:100%;max-height:130px;object-fit:cover;border-radius:8px;border:1px solid var(--border);"></div>
+        </div>
+        <div class="form-group"><label>노출 순서</label><input id="le-order" type="number" min="1" placeholder="1" style="width:100%;"></div>
+        <div class="form-group"><label>공개 여부</label>
+          <select id="le-active" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;">
+            <option value="true">✅ 공개</option><option value="false">🔒 비공개</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('landing-exp-modal')">취소</button>
+      <button class="btn btn-primary" onclick="saveLandingExp()">💾 저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 랜딩 수목원·동물원 편집 Modal -->
+<div class="modal-overlay" id="landing-suwon-modal">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-header">
+      <h3 id="landing-suwon-modal-title">수목원·동물원 카드 편집</h3>
+      <button class="modal-close" onclick="closeModal('landing-suwon-modal')">✕</button>
+    </div>
+    <div class="modal-body" style="max-height:75vh;overflow-y:auto;">
+      <div class="form-grid" style="grid-template-columns:1fr 1fr;">
+        <div class="form-group" style="grid-column:1/-1;"><label>시설명 (한글) *</label><input id="lw-name" placeholder="예: 아침고요수목원"></div>
+        <div class="form-group"><label>시설명 (영문)</label><input id="lw-en" placeholder="GARDEN"></div>
+        <div class="form-group"><label>링크 버튼 텍스트</label><input id="lw-link-text" placeholder="공식 홈페이지 →"></div>
+        <div class="form-group" style="grid-column:1/-1;"><label>설명</label>
+          <textarea id="lw-desc" rows="3" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;resize:vertical;"></textarea>
+        </div>
+        <div class="form-group" style="grid-column:1/-1;"><label>링크 URL</label>
+          <input id="lw-link" placeholder="https://www.morningcalm.co.kr  또는  http://pf.kakao.com/...">
+        </div>
+        <div class="form-group" style="grid-column:1/-1;"><label>대표 이미지 URL</label>
+          <input id="lw-img" placeholder="images/img_suwon_garden.jpg  또는  https://...">
+          <div id="lw-img-preview" style="display:none;margin-top:8px;"><img id="lw-img-preview-img" style="width:100%;max-height:130px;object-fit:cover;border-radius:8px;border:1px solid var(--border);"></div>
+        </div>
+        <div class="form-group"><label>노출 순서</label><input id="lw-order" type="number" min="1" placeholder="1" style="width:100%;"></div>
+        <div class="form-group"><label>공개 여부</label>
+          <select id="lw-active" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;">
+            <option value="true">✅ 공개</option><option value="false">🔒 비공개</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('landing-suwon-modal')">취소</button>
+      <button class="btn btn-primary" onclick="saveLandingSuwon()">💾 저장</button>
+    </div>
+  </div>
+</div>
+
 <!-- M01 고객 Modal -->
 <div class="modal-overlay" id="m01-modal">
   <div class="modal">
@@ -5536,6 +5661,9 @@ let _landingEditId = null;
 let _landingCurrentTab = 'coop'; // 현재 활성 탭
 
 // ── 탭 전환 ──
+// null-safe textContent 설정 헬퍼
+function _safeText(id, val){ const el=document.getElementById(id); if(el) el.textContent=val; }
+
 function switchLandingTab(tab) {
   _landingCurrentTab = tab;
   ['coop','exp','suwon','sections','cats'].forEach(t => {
@@ -5798,7 +5926,7 @@ async function _renderLandingSections(){
 let _landingSectionEditId = null;
 function openLandingSectionAdd(){
   _landingSectionEditId = null;
-  document.getElementById('landing-section-modal-title').textContent = '섹션탭 추가';
+  _safeText('landing-section-modal-title', '섹션탭 추가');
   ['lsec-id','lsec-num','lsec-label','lsec-en','lsec-badge','lsec-bg'].forEach(id=>{
     const el=document.getElementById(id); if(el) el.value='';
   });
@@ -5814,7 +5942,7 @@ async function openLandingSectionEdit(docId){
     if(!doc.exists){ alert('항목을 찾을 수 없습니다.'); return; }
     const s=doc.data();
     _landingSectionEditId=docId;
-    document.getElementById('landing-section-modal-title').textContent=`수정 — ${(s.label||'').replace(/\n/g,' ')}`;
+    _safeText('landing-section-modal-title', `수정 — ${(s.label||')').replace(/\n/g,' ')}`;
     document.getElementById('lsec-id').value    =s.id||'';
     document.getElementById('lsec-num').value   =s.num||'';
     document.getElementById('lsec-label').value =s.label||'';
@@ -5904,7 +6032,7 @@ async function _renderLandingCats(){
 let _landingCatEditId=null;
 function openLandingCatAdd(){
   _landingCatEditId=null;
-  document.getElementById('landing-cat-modal-title').textContent='업종 카테고리 추가';
+  _safeText('landing-cat-modal-title', '업종 카테고리 추가');
   ['lcat-id','lcat-label'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('lcat-active').value='true';
   document.getElementById('lcat-order').value='';
@@ -5917,7 +6045,7 @@ async function openLandingCatEdit(docId){
     if(!doc.exists){ alert('항목을 찾을 수 없습니다.'); return; }
     const c=doc.data();
     _landingCatEditId=docId;
-    document.getElementById('landing-cat-modal-title').textContent=`수정 — ${c.label||''}`;
+    _safeText('landing-cat-modal-title', `수정 — ${c.label||')'}`;
     document.getElementById('lcat-id').value    =c.id||'';
     document.getElementById('lcat-label').value =c.label||'';
     document.getElementById('lcat-active').value=String(c.active!==false);
@@ -5961,7 +6089,7 @@ let _landingExpEditId = null;
 
 function openLandingExpAdd(){
   _landingExpEditId = null;
-  document.getElementById('landing-exp-modal-title').textContent = '체험 프로그램 추가';
+  _safeText('landing-exp-modal-title', '체험 프로그램 추가');
   ['le-name','le-en','le-desc','le-tags','le-img','le-reserve'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   document.getElementById('le-active').value='true';
   document.getElementById('le-order').value='';
@@ -5975,7 +6103,7 @@ async function openLandingExpEdit(docId){
     if(!doc.exists){ alert('항목을 찾을 수 없습니다.'); return; }
     const s = doc.data();
     _landingExpEditId = docId;
-    document.getElementById('landing-exp-modal-title').textContent = `수정 — ${s.name||''}`;
+    _safeText('landing-exp-modal-title', `수정 — ${s.name||')'}`;
     document.getElementById('le-name').value    = s.name||'';
     document.getElementById('le-en').value      = s.en||'';
     document.getElementById('le-desc').value    = s.desc||'';
@@ -6019,7 +6147,7 @@ let _landingSuwonEditId = null;
 
 function openLandingSuwonAdd(){
   _landingSuwonEditId = null;
-  document.getElementById('landing-suwon-modal-title').textContent = '카드 추가';
+  _safeText('landing-suwon-modal-title', '카드 추가');
   ['lw-name','lw-en','lw-desc','lw-link','lw-link-text','lw-img'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   document.getElementById('lw-active').value='true';
   document.getElementById('lw-order').value='';
@@ -6033,7 +6161,7 @@ async function openLandingSuwonEdit(docId){
     if(!doc.exists){ alert('항목을 찾을 수 없습니다.'); return; }
     const s = doc.data();
     _landingSuwonEditId = docId;
-    document.getElementById('landing-suwon-modal-title').textContent = `수정 — ${s.name||''}`;
+    _safeText('landing-suwon-modal-title', `수정 — ${s.name||')'}`;
     document.getElementById('lw-name').value      = s.name||'';
     document.getElementById('lw-en').value        = s.en||'';
     document.getElementById('lw-desc').value      = s.desc||'';
@@ -6072,7 +6200,21 @@ async function saveLandingSuwon(){
   finally{ hideLoading(); }
 }
 
-// ── 가맹점 CRUD (기존 유지) ──
+// ── 가맹점 CRUD ──
+
+function openLandingAdd(){
+  _landingEditId = null;
+  const titleEl=document.getElementById('landing-store-modal-title'); if(titleEl) titleEl.textContent='가맹점 추가';
+  ['ls-name','ls-en','ls-desc','ls-address','ls-phone','ls-kakao','ls-img','ls-lat','ls-lng','ls-order'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  const cat=document.getElementById('ls-cat'); if(cat) cat.value='restaurant';
+  const act=document.getElementById('ls-active'); if(act) act.value='true';
+  const col=document.getElementById('ls-color'); if(col) col.value='#225536';
+  const colv=document.getElementById('ls-color-val'); if(colv) colv.textContent='#225536';
+  const prev=document.getElementById('ls-img-preview'); if(prev) prev.style.display='none';
+  openModal('landing-store-modal');
+}
 
 async function openLandingEdit(docId){
   showLoading();
@@ -6081,7 +6223,7 @@ async function openLandingEdit(docId){
     if(!doc.exists){ alert('데이터를 찾을 수 없습니다.'); return; }
     const s = doc.data();
     _landingEditId = docId;
-    document.getElementById('landing-store-modal-title').textContent = `수정 — ${s.name||''}`;
+    _safeText('landing-store-modal-title', `수정 — ${s.name||')'}`;
     document.getElementById('ls-name').value   = s.name||'';
     document.getElementById('ls-en').value     = s.en||'';
     document.getElementById('ls-desc').value   = s.desc||'';
