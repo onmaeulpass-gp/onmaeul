@@ -2737,7 +2737,23 @@ async function renderExpCards() {
 
     /* 날짜 + 인원 (2컬럼 행) */
     var row2 = document.createElement('div'); row2.className='drawer-field-row';
-    row2.appendChild(makeField('희망 날짜 *','DATE','input','d-date','date',''));
+
+    /* 날짜 필드 — 달력 이모지 앞에 배치 */
+    var dateFld = makeField('희망 날짜 *','DATE','input','d-date','date','');
+    var dateInp = dateFld.querySelector('.d-date');
+    var dateWrap = document.createElement('div');
+    dateWrap.style.cssText = 'position:relative;display:flex;align-items:center;';
+    var calIcon = document.createElement('span');
+    calIcon.textContent = '📅';
+    calIcon.style.cssText = 'position:absolute;left:12px;font-size:15px;pointer-events:none;z-index:1;';
+    dateInp.style.paddingLeft = '36px';
+    dateWrap.appendChild(calIcon);
+    dateWrap.appendChild(dateInp);
+    /* err 요소는 wrap 밖으로 이동 */
+    var dateErr = dateFld.querySelector('.form-error');
+    dateFld.replaceChild(dateWrap, dateInp);
+    dateFld.appendChild(dateErr);
+    row2.appendChild(dateFld);
 
     var peopleFld = document.createElement('div'); peopleFld.className='drawer-field';
     var pLbl = document.createElement('label');
