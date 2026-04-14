@@ -2386,24 +2386,34 @@ async function renderSectionTabs() {
   if (!sections.length) sections = SECTIONS_FALLBACK;
 
   // ── ID 유효성 보정 ──
-  // Firestore에 잘못 저장된 ID를 실제 DOM 패널과 매핑
   const VALID_PANEL_IDS = ['exp','coop','suwon'];
   const ID_ALIASES = {
-    // 흔한 오입력 → 정규 ID
     'experience':'exp','experiences':'exp','체험':'exp','체험프로그램':'exp','01':'exp',
+    'experience program':'exp','program':'exp',
     'shop':'coop','shops':'coop','store':'coop','가맹점':'coop','온마을가맹점':'coop','02':'coop',
     'garden':'suwon','zoo':'suwon','수목원':'suwon','동물원':'suwon','아침고요':'suwon','03':'suwon',
   };
   sections = sections.map(s => {
-    let realId = s.id || '';
-    // 소문자·공백제거 후 별칭 조회
+    let realId = (s.id || '').trim();
     const normalized = realId.toLowerCase().replace(/\s/g,'');
-    if (!VALID_PANEL_IDS.includes(realId) && ID_ALIASES[normalized]) {
-      console.warn(`landing_sections: id "${realId}" → "${ID_ALIASES[normalized]}" 자동 보정`);
-      realId = ID_ALIASES[normalized];
+    if (!VALID_PANEL_IDS.includes(realId)) {
+      const aliased = ID_ALIASES[normalized] || ID_ALIASES[realId.toLowerCase()];
+      if (aliased) {
+        console.warn('landing_sections id 보정:', realId, '→', aliased);
+        realId = aliased;
+      }
     }
     return {...s, id: realId};
   });
+
+  // ID 보정 후에도 유효한 패널이 하나도 없으면 FALLBACK 강제 사용
+  const validSections = sections.filter(s => !!document.getElementById('cat-' + s.id));
+  if (validSections.length === 0) {
+    console.warn('landing_sections: 유효한 패널 없음 → FALLBACK 사용');
+    sections = SECTIONS_FALLBACK;
+  } else {
+    sections = validSections;
+  }
 
   const loading = document.getElementById('cat-tabs-loading');
   if (loading) loading.remove();
@@ -2529,6 +2539,7 @@ async function renderCoopCards() {
           </a>
         </div>`;
       grid.appendChild(card);
+      if (typeof observer !== 'undefined') observer.observe(card);
     });
 
     // 지도 목록 렌더링
@@ -2551,6 +2562,7 @@ async function renderCoopCards() {
           <a href="${s.kakao}" target="_blank" class="coop-card-btn">${KAKAO_SVG} 카카오톡으로 문의하기</a>
         </div>`;
       grid.appendChild(card);
+      if (typeof observer !== 'undefined') observer.observe(card);
     });
     _renderMapStoreList();
   }
@@ -2615,8 +2627,17 @@ async function renderExpCards() {
         '<button class="btn-exp-reserve" onclick="startBookingFrom(\'' + (s.reserve||s.name).replace(/'/g,"\\'") + '\', this)">예약 신청하기</button>' +
       '</div>';
     grid.appendChild(card);
+    // 동적 추가 카드는 observer에 재등록해야 reveal 동작
+    if (typeof observer !== 'undefined') observer.observe(card);
   });
-}
+
+  // cat-panel이 display:none 상태에서 추가된 카드는 isIntersecting이 false
+  // — 패널 열릴 때 강제로 visible 처리하는 폴백
+  if (!document.getElementById('cat-exp')?.classList.contains('open')) {
+    grid.querySelectorAll('.exp-card.reveal').forEach(c => {
+      c.classList.add('_pending-reveal');
+    });
+  }
 
 // ── 수목원·동물원 렌더링 (landing_suwon) ──
 async function renderSuwonCards() {
@@ -2663,6 +2684,7 @@ async function renderSuwonCards() {
         btnHtml +
       '</div>';
     grid.appendChild(card);
+    if (typeof observer !== 'undefined') observer.observe(card);
   });
 }
 
@@ -2826,6 +2848,23 @@ function switchCat(cat) {
   const activePanel = document.getElementById('cat-' + cat);
   if(activeBtn)   activeBtn.classList.add('open');
   if(activePanel) activePanel.classList.add('open');
+
+  // 패널 열릴 때 _pending-reveal 카드를 visible로 전환
+  // (display:none 상태에서 추가된 카드는 IntersectionObserver가 감지 못함)
+  if(activePanel) {
+    requestAnimationFrame(() => {
+      activePanel.querySelectorAll('._pending-reveal').forEach((el, i) => {
+        setTimeout(() => {
+          el.classList.add('visible');
+          el.classList.remove('_pending-reveal');
+        }, i * 80);
+      });
+      // observer에 미등록된 reveal 카드도 재등록
+      activePanel.querySelectorAll('.reveal:not(.visible)').forEach(el => {
+        if (typeof observer !== 'undefined') observer.observe(el);
+      });
+    });
+  }
 
   // 패널 영역으로 부드럽게 스크롤
   if(activePanel) {
@@ -3118,6 +3157,27 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
   // admin 페이지의 showPublicPass로 리다이렉트 (검증된 QR 사용)
   location.replace('https://onmaeulpass-gp.github.io/onmaeul/pass.html?pass=' + encodeURIComponent(passToken));
 })();
+
+// ── 온마을 디버그 헬퍼 — 콘솔에서 온마을디버그() 실행 ──
+window.온마을디버그 = function() {
+  console.group('🌿 온마을 랜딩 디버그');
+  console.log('CAT_IDS:', CAT_IDS);
+  ['exp','coop','suwon'].forEach(id => {
+    const panel = document.getElementById('cat-' + id);
+    const btn   = document.getElementById('tab-btn-' + id);
+    console.log(
+      'cat-' + id + ':',
+      panel ? '패널있음 open=' + panel.classList.contains('open') : '❌패널없음',
+      ' | btn-' + id + ':',
+      btn ? '버튼있음' : '❌버튼없음'
+    );
+  });
+  console.log('cat-tabs-wrap 자식 버튼 수:', document.getElementById('cat-tabs-wrap')?.children.length);
+  console.log('_fbDB:', window._fbDB ? '연결됨' : '없음');
+  console.groupEnd();
+};
+console.log('온마을디버그() 함수 준비됨 — 콘솔에서 실행하세요');
+
 </script>
 
 </body>
