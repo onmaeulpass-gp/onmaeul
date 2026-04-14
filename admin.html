@@ -1418,6 +1418,44 @@ body.role-viewer .perm-write { display: none !important; }
       </div>
     </div>
 
+    <!-- ===== COUPON 쿠폰 관리 ===== -->
+    <div id="module-coupon" class="module perm-admin">
+      <div class="card">
+        <div class="card-header">
+          <h3>🎫 쿠폰 발급 현황</h3>
+          <button class="btn btn-ghost btn-sm" onclick="renderCouponDashboard()">🔄 새로고침</button>
+        </div>
+        <div class="card-body">
+          <div id="coupon-dashboard"><div style="text-align:center;padding:40px;color:var(--text-muted);">불러오는 중...</div></div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:16px;">
+        <div class="card-header"><h3>⚙️ 스탬프 미션 기준</h3></div>
+        <div class="card-body">
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+            <div style="background:var(--bg2);border-radius:10px;padding:14px;text-align:center;">
+              <div style="font-size:22px;font-weight:700;color:var(--primary);">6칸</div>
+              <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">데일리 코스 완성</div>
+              <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">당일 15% 추가 할인 쿠폰</div>
+            </div>
+            <div style="background:var(--bg2);border-radius:10px;padding:14px;text-align:center;">
+              <div style="font-size:22px;font-weight:700;color:var(--primary);">10칸</div>
+              <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">스테이 코스 완성</div>
+              <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">숙박 1박 무료 쿠폰</div>
+            </div>
+            <div style="background:var(--bg2);border-radius:10px;padding:14px;text-align:center;">
+              <div style="font-size:22px;font-weight:700;color:var(--primary);">+2</div>
+              <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">숙박 체크인 보너스</div>
+              <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">동일 업소 당일 재방문 = 스탬프 불인정</div>
+            </div>
+          </div>
+          <div style="margin-top:12px;background:#FFF8E1;border-radius:8px;padding:10px 14px;font-size:12px;color:#E65100;line-height:1.8;">
+            등급 — 🌱 새싹(0~4개, 5%) · 🌿 초록(5~24개, 10%) · 🌳 숲 Gold(25개↑, 20%)
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- ===== ADMIN-MONITOR 관리자 업체 모니터링 ===== -->
     <div id="module-admin-monitor" class="module perm-admin">
       <div class="card">
@@ -1601,9 +1639,14 @@ body.role-viewer .perm-write { display: none !important; }
     <div class="modal-body">
       <div class="form-grid" style="grid-template-columns:1fr 1fr;">
         <div class="form-group">
-          <label>탭 ID * <span style="font-size:10px;color:var(--text-muted);">패널과 일치</span></label>
-          <input id="lsec-id" placeholder="exp / coop / suwon">
-          <div style="font-size:11px;color:var(--text-muted);margin-top:3px;">랜딩 패널 id="cat-exp" → exp</div>
+          <label>탭 ID * <span style="font-size:10px;color:var(--primary);font-weight:600;">패널 id="cat-[ID]"와 반드시 일치</span></label>
+          <select id="lsec-id" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;background:#fff;">
+            <option value="">-- 선택 --</option>
+            <option value="exp">exp (체험 프로그램)</option>
+            <option value="coop">coop (온마을 가맹점)</option>
+            <option value="suwon">suwon (아침고요 수목원·동물원)</option>
+          </select>
+          <div style="font-size:11px;color:#E65100;margin-top:4px;line-height:1.6;">⚠️ 탭 ID가 틀리면 클릭해도 내용이 안 보입니다<br>랜딩 패널 cat-<b>exp</b>, cat-<b>coop</b>, cat-<b>suwon</b> 중 하나를 선택하세요</div>
         </div>
         <div class="form-group">
           <label>번호 표시</label>
@@ -3303,7 +3346,7 @@ function applySession() {
       .forEach(el => { el.style.display='none'; el.setAttribute('data-biz-hidden','1'); });
     document.body.classList.add('biz-mode');
     const bizShowNav = ['nav-dashboard','nav-m03','nav-m07','nav-m09','nav-biz-settings'];
-    const bizHideNav = ['nav-m01','nav-m02','nav-m04','nav-m05','nav-m06','nav-users','nav-m08','nav-report','nav-admin-monitor','nav-backup','nav-landing'];
+    const bizHideNav = ['nav-m01','nav-m02','nav-m04','nav-m05','nav-m06','nav-users','nav-m08','nav-report','nav-coupon','nav-admin-monitor','nav-backup','nav-landing'];
     bizShowNav.forEach(id => { const n=document.getElementById(id); if(n) n.style.display=''; });
     bizHideNav.forEach(id => { const n=document.getElementById(id); if(n) n.style.display='none'; });
     loadBizSettings();
@@ -3507,6 +3550,7 @@ function showModule(mod) {
   if(mod==='report') initReport();
   if(mod==='m09') initM09();
   if(mod==='biz-settings') loadBizSettings();
+  if(mod==='coupon') renderCouponDashboard();
   if(mod==='admin-monitor') renderAdminMonitor();
   if(mod==='backup') renderBackupDashboard();
   if(mod==='landing') renderLandingManager();
@@ -5933,7 +5977,7 @@ async function _renderLandingSections(){
         <thead><tr><th>#</th><th>탭 ID</th><th>번호</th><th>한글명</th><th>영문명</th><th>배지</th><th>배경이미지</th><th>공개</th><th style="width:120px;">작업</th></tr></thead>
         <tbody>${items.map(s=>`<tr style="${!s.active?'opacity:0.45;':''}">
           <td><span style="font-size:11px;color:var(--text-muted);">${s.order||'-'}</span></td>
-          <td><code style="font-size:11px;background:#f0f0f0;padding:2px 6px;border-radius:4px;">${s.id||'-'}</code></td>
+          <td><code style="font-size:11px;background:${['exp','coop','suwon'].includes(s.id)?'#e3ede7':'#FFEBEE'};padding:2px 6px;border-radius:4px;color:${['exp','coop','suwon'].includes(s.id)?'#085041':'#C62828'}">${s.id||'-'}${['exp','coop','suwon'].includes(s.id)?'':'⚠️'}</code></td>
           <td style="font-size:13px;font-weight:700;color:var(--primary);">${s.num||'-'}</td>
           <td style="font-size:13px;font-weight:600;">${(s.label||'').replace(/\n/g,' ')}</td>
           <td style="font-size:12px;color:var(--text-muted);">${s.en||'-'}</td>
@@ -5954,9 +5998,10 @@ let _landingSectionEditId = null;
 function openLandingSectionAdd(){
   _landingSectionEditId = null;
   _safeText('landing-section-modal-title', '섹션탭 추가');
-  ['lsec-id','lsec-num','lsec-label','lsec-en','lsec-badge','lsec-bg'].forEach(id=>{
+  ['lsec-num','lsec-label','lsec-en','lsec-badge','lsec-bg'].forEach(id=>{
     const el=document.getElementById(id); if(el) el.value='';
   });
+  const secId=document.getElementById('lsec-id'); if(secId) secId.value='';
   document.getElementById('lsec-active').value='true';
   document.getElementById('lsec-order').value='';
   const prev=document.getElementById('lsec-bg-preview'); if(prev) prev.style.display='none';
@@ -5988,7 +6033,9 @@ async function openLandingSectionEdit(docId){
 async function saveLandingSection(){
   const id=document.getElementById('lsec-id').value.trim();
   const label=document.getElementById('lsec-label').value.trim();
-  if(!id||!label){ alert('탭 ID와 한글명을 입력하세요.'); return; }
+  if(!id){ alert('탭 ID를 선택하세요.\n\nexp(체험) / coop(가맹점) / suwon(수목원) 중 하나를 선택해야 합니다.'); return; }
+  if(!label){ alert('한글명을 입력하세요.'); return; }
+  if(!['exp','coop','suwon'].includes(id)){ alert('탭 ID는 exp / coop / suwon 중 하나여야 합니다.\n현재 입력값: '+id); return; }
   showLoading('저장 중...');
   try{
     const data={
@@ -7912,12 +7959,19 @@ async function recordVisit(){
     };
     const id=await genId('visits');
     await upsert('visits',{...data,id}); invalidateCache('visits');
+    // ── 스탬프 + 쿠폰 자동 처리 ──────────────────
+    let _stampResult=null;
+    try{ _stampResult=await _processStampAndCoupon({...data,id},freshVisits); }
+    catch(e){ console.warn('스탬프 처리 오류:',e.message); }
     _pendingVisit=null;
     closeModal('visit-confirm-modal');
-    alert(`✅ 방문이 기록되었습니다.
-
-${data.customerName} → ${data.coopName}
-${data.discountRate}% 할인 적용`);
+    const _sm=_stampResult
+      ? '\n\n🌿 스탬프 +'+ _stampResult.stampAdded +' (누적 '+_stampResult.finalTotal+'개)'
+        +(_stampResult.coupon==='daily'?'\n🎉 데일리 완성! 15% 추가 할인 쿠폰 발급':'')
+        +(_stampResult.coupon==='stay' ?'\n🏡 스테이 완성! 숙박권 쿠폰 발급':'')
+        +(_stampResult.revisitBonus   ?'\n🔄 재방문 보너스 스탬프 +3':'')
+      : '';
+    alert('✅ 방문이 기록되었습니다.\n\n'+data.customerName+' → '+data.coopName+'\n'+data.discountRate+'% 할인 적용'+_sm);
     // 통계 새로고침
     if(document.getElementById('module-m09').classList.contains('active')){
       await initM09();
@@ -8308,6 +8362,242 @@ async function renderM09Report() {
   } finally { hideLoading(); }
 }
 
+
+
+// ══════════════════════════════════════════════════════════
+// 🎫 온마을 스탬프 + 쿠폰 시스템
+// Firestore: coupons, customers(stampTotal/tier 추가)
+// ══════════════════════════════════════════════════════════
+
+const STAMP_CONFIG = {
+  daily_target: 6,   // 데일리 코스 완성 기준 업체 수
+  stay_target:  10,  // 스테이 코스 완성 기준 누적 스탬프
+  stay_bonus:   2,   // 숙박 체크인 보너스
+  revisit_bonus:3,   // 재방문 선 적립
+  revisit_days: 180, // 재방문 인정 기간
+  tiers:[
+    {name:'새싹',min:0, max:4,  rate:5,  label:'🌱'},
+    {name:'초록',min:5, max:24, rate:10, label:'🌿'},
+    {name:'숲',  min:25,max:999,rate:20, label:'🌳'},
+  ]
+};
+
+function _today(){ return new Date().toISOString().split('T')[0]; }
+function _getCustomerTier(total){
+  const t=STAMP_CONFIG.tiers;
+  for(let i=t.length-1;i>=0;i--) if(total>=t[i].min) return t[i];
+  return t[0];
+}
+async function _getCustomerStamps(custId){
+  try{
+    const doc=await db.collection('customers').doc(String(custId)).get();
+    return doc.exists?Number(doc.data().stampTotal||0):0;
+  }catch(e){return 0;}
+}
+async function _hasIssuedCouponToday(custId,type){
+  try{
+    const today=_today();
+    const snap=await db.collection('coupons')
+      .where('customerId','==',String(custId))
+      .where('type','==',type).get()
+      .catch(()=>db.collection('coupons').get());
+    return snap.docs.some(d=>{
+      const dd=d.data();
+      return dd.customerId===String(custId)&&dd.type===type&&(dd.issuedAt||'').startsWith(today);
+    });
+  }catch(e){return false;}
+}
+async function _issueCoupon(custId,custName,type,detail){
+  const expiry=detail.validUntil||
+    new Date(Date.now()+(detail.validDays||30)*86400000).toISOString().split('T')[0];
+  await db.collection('coupons').add({
+    couponId:'CP-'+Date.now()+'-'+type,
+    customerId:String(custId), customerName:custName||'',
+    type, title:detail.title||'', benefit:detail.benefit||'',
+    discountAdd:detail.discountAdd||0,
+    validUntil:expiry, note:detail.note||'',
+    issuedAt:new Date().toISOString(), used:false, usedAt:null,
+  });
+}
+
+// 방문 후 스탬프 + 쿠폰 자동 처리
+async function _processStampAndCoupon(visitData, allVisits){
+  const custId=String(visitData.customerId);
+  const coopId=String(visitData.coopId);
+  const today=_today();
+
+  // 당일 동일 업소 중복 → 스탬프 차단
+  const isDup=(allVisits||[]).some(v=>
+    String(v.customerId)===custId &&
+    String(v.coopId)===coopId &&
+    v.visitDate===today &&
+    v.visitType!=='sms_sent' &&
+    v.id!==visitData.id
+  );
+  if(isDup){ return {stampAdded:0,finalTotal:await _getCustomerStamps(custId),coupon:null}; }
+
+  // 숙박 여부
+  const isStay=!!(visitData.visitType||'').match(/숙박/)||
+    !!(visitData.coopName||'').match(/펜션|스테이|민박/i);
+  let stampAdd=1;
+  if(isStay) stampAdd+=STAMP_CONFIG.stay_bonus;
+
+  const currentTotal=await _getCustomerStamps(custId);
+  const todayVisits=(allVisits||[]).filter(v=>
+    String(v.customerId)===custId&&v.visitDate===today&&v.visitType!=='sms_sent'
+  );
+
+  // 재방문 보너스
+  const pastVisits=(allVisits||[]).filter(v=>
+    String(v.customerId)===custId&&v.visitDate<today&&v.visitType!=='sms_sent'
+  ).sort((a,b)=>b.visitDate>a.visitDate?1:-1);
+  const lastDate=pastVisits[0]?.visitDate;
+  const daysSince=lastDate?Math.floor((new Date(today)-new Date(lastDate))/86400000):999;
+  const isRevisit=pastVisits.length>0&&daysSince<=STAMP_CONFIG.revisit_days&&todayVisits.length===0;
+
+  let finalTotal=currentTotal+stampAdd;
+  if(isRevisit) finalTotal+=STAMP_CONFIG.revisit_bonus;
+
+  // customers 업데이트
+  await db.collection('customers').doc(custId).set({
+    stampTotal:finalTotal,
+    stampUpdated:new Date().toISOString(),
+    tier:_getCustomerTier(finalTotal).name,
+  },{merge:true});
+
+  if(isRevisit){
+    await _issueCoupon(custId,visitData.customerName,'revisit',{
+      title:'재방문 감사합니다!',
+      benefit:'스탬프 '+STAMP_CONFIG.revisit_bonus+'개 선 적립',
+      validDays:14,note:daysSince+'일 만의 재방문'
+    });
+  }
+
+  // 데일리 코스 완성
+  let couponIssued=null;
+  const todayCoops=new Set([...(todayVisits.map(v=>String(v.coopId))),coopId]);
+  if(todayCoops.size>=STAMP_CONFIG.daily_target){
+    const already=await _hasIssuedCouponToday(custId,'daily');
+    if(!already){
+      await _issueCoupon(custId,visitData.customerName,'daily',{
+        title:'🌅 데일리 코스 완성!',
+        benefit:'당일 전 가맹점 15% 추가 할인',
+        validUntil:today+'T23:59:59',discountAdd:15,
+        note:todayCoops.size+'곳 방문 완성'
+      });
+      couponIssued='daily';
+    }
+  }
+
+  // 스테이 코스 완성
+  if(!couponIssued&&currentTotal<STAMP_CONFIG.stay_target&&finalTotal>=STAMP_CONFIG.stay_target){
+    await _issueCoupon(custId,visitData.customerName,'stay',{
+      title:'🌳 스테이 코스 완성!',
+      benefit:'협약 펜션 1박 무료 또는 굿즈세트',
+      validDays:180,note:STAMP_CONFIG.stay_target+'스탬프 달성'
+    });
+    couponIssued='stay';
+  }
+
+  return {stampAdded:stampAdd,finalTotal,coupon:couponIssued,revisitBonus:isRevisit};
+}
+
+// ── 쿠폰 관리 대시보드 ──────────────────────────────────────
+async function renderCouponDashboard(){
+  const wrap=document.getElementById('coupon-dashboard');
+  if(!wrap) return;
+  showLoading('쿠폰 현황 불러오는 중...');
+  try{
+    const snap=await db.collection('coupons').orderBy('issuedAt','desc').get()
+      .catch(()=>db.collection('coupons').get());
+    const coupons=snap.docs.map(d=>({...d.data(),__docId:d.id}))
+      .sort((a,b)=>b.issuedAt>a.issuedAt?1:-1);
+    const today=_today();
+    const total=coupons.length;
+    const unused=coupons.filter(c=>!c.used).length;
+    const used=coupons.filter(c=>c.used).length;
+    const expired=coupons.filter(c=>!c.used&&(c.validUntil||'').slice(0,10)<today).length;
+    const TLAB={daily:'🌅 데일리',stay:'🌳 스테이',revisit:'🔄 재방문',season:'🌸 시즌'};
+    const TCOL={daily:'#e3ede7',stay:'#fdf0d5',revisit:'#e6f1fb',season:'#eeedfe'};
+
+    const summaryHtml=[
+      ['발급 합계',total,'var(--primary)'],
+      ['미사용',unused,'#185fa5'],
+      ['사용완료',used,'#888'],
+      ['만료 예정',expired,'#E24B4A'],
+    ].map(function(x){ return '<div style="background:var(--bg2);border-radius:10px;padding:14px;text-align:center;"><div style="font-size:22px;font-weight:700;color:'+x[2]+';">'+x[1]+'</div><div style="font-size:11px;color:var(--text-muted);margin-top:3px;">'+x[0]+'</div></div>'; }).join('');
+
+    const rowsHtml=coupons.slice(0,60).map(function(c){
+      const exp=(c.validUntil||'').slice(0,10);
+      const isExp=!c.used&&exp&&exp<today;
+      const statusHtml=c.used?'<span style="color:#888;font-size:11px;">완료</span>':
+        isExp?'<span style="color:#E24B4A;font-size:11px;">만료</span>':
+        '<span style="color:#1D9E75;font-weight:700;font-size:11px;">유효</span>';
+      const actionHtml=(!c.used&&!isExp)?
+        '<button class="btn btn-ghost btn-sm" onclick="useCoupon(\''+c.__docId+'\')">사용처리</button>':'-';
+      return '<tr style="'+(c.used?'opacity:.45;':'')+'">'+
+        '<td style="font-weight:600;font-size:13px;">'+(c.customerName||'-')+'</td>'+
+        '<td><span style="font-size:11px;padding:2px 8px;border-radius:10px;background:'+(TCOL[c.type]||'#f0f0f0')+'">'+(TLAB[c.type]||c.type)+'</span></td>'+
+        '<td style="font-size:12px;">'+(c.benefit||'-')+'</td>'+
+        '<td style="font-size:12px;color:var(--text-muted);">'+(c.issuedAt||'').slice(0,10)+'</td>'+
+        '<td style="font-size:12px;color:'+(isExp?'#E24B4A':'var(--text-muted)')+';">'+exp+'</td>'+
+        '<td style="text-align:center;">'+statusHtml+'</td>'+
+        '<td>'+actionHtml+'</td></tr>';
+    }).join('');
+
+    wrap.innerHTML=
+      '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px;">'+summaryHtml+'</div>'+
+      (coupons.length===0
+        ? '<div style="text-align:center;padding:48px;color:var(--text-muted);">발급된 쿠폰이 없습니다.<br><span style="font-size:12px;">방문 기록 시 자동 발급됩니다.</span></div>'
+        : '<table class="table" style="width:100%;"><thead><tr><th>고객명</th><th>유형</th><th>혜택</th><th>발급일</th><th>만료</th><th>상태</th><th style="width:90px;">작업</th></tr></thead><tbody>'+rowsHtml+'</tbody></table>'
+          +(coupons.length>60?'<div style="text-align:center;padding:8px;font-size:12px;color:var(--text-muted);">총 '+coupons.length+'개 중 최근 60개 표시</div>':'')
+      );
+  }catch(e){
+    wrap.innerHTML='<div style="color:#e53935;padding:20px;">오류: '+e.message+'</div>';
+  }finally{hideLoading();}
+}
+
+async function useCoupon(docId){
+  if(!confirm('이 쿠폰을 사용 처리하시겠습니까?')) return;
+  showLoading('처리 중...');
+  try{
+    await db.collection('coupons').doc(docId).update({
+      used:true, usedAt:new Date().toISOString(),
+      usedBy:(getSession()||{}).name||'관리자'
+    });
+    await renderCouponDashboard();
+    showToast('✅ 쿠폰 사용 처리 완료','success');
+  }catch(e){alert('오류: '+e.message);}
+  finally{hideLoading();}
+}
+
+async function showCustomerStamps(custId, custName){
+  showLoading();
+  try{
+    const doc=await db.collection('customers').doc(String(custId)).get();
+    const cSnap=await db.collection('coupons')
+      .where('customerId','==',String(custId)).get()
+      .catch(()=>db.collection('coupons').get());
+    const cust=doc.exists?doc.data():{};
+    const stamps=Number(cust.stampTotal||0);
+    const tier=_getCustomerTier(stamps);
+    const TLAB={daily:'🌅 데일리',stay:'🌳 스테이',revisit:'🔄 재방문',season:'🌸 시즌'};
+    const valid=cSnap.docs.map(d=>d.data())
+      .filter(c=>c.customerId===String(custId)&&!c.used).slice(0,5);
+    const couponLines=valid.length
+      ? valid.map(c=>'  · '+(TLAB[c.type]||c.type)+': '+c.benefit).join('\n')
+      : '  없음';
+    alert(
+      '📊 '+custName+' 스탬프 현황\n\n'+
+      '등급: '+tier.label+' '+tier.name+' (누적 '+stamps+'개)\n'+
+      '할인율: '+tier.rate+'%\n\n'+
+      '데일리 진행: '+Math.min(stamps%STAMP_CONFIG.daily_target||stamps,STAMP_CONFIG.daily_target)+'/'+STAMP_CONFIG.daily_target+'\n'+
+      '스테이 진행: '+Math.min(stamps,STAMP_CONFIG.stay_target)+'/'+STAMP_CONFIG.stay_target+'\n\n'+
+      '유효 쿠폰 '+valid.length+'매:\n'+couponLines
+    );
+  }catch(e){alert('조회 실패: '+e.message);}
+  finally{hideLoading();}
+}
 
 </script>
 </body>

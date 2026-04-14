@@ -2139,8 +2139,6 @@ async function saveToFirebase(payload) {
     </div>
     </div><!-- /cat-panel-inner -->
     </div><!-- /cat-exp -->
-    </div><!-- /cat-panel-inner -->
-    </div><!-- /cat-exp -->
 
     <!-- ══ 카테고리 02: 온마을 가맹점 ══ -->
     <div class="cat-panel" id="cat-coop">
@@ -2387,11 +2385,40 @@ async function renderSectionTabs() {
   } catch(e) { console.warn('landing_sections 로드 실패:', e.message); }
   if (!sections.length) sections = SECTIONS_FALLBACK;
 
+  // ── ID 유효성 보정 ──
+  // Firestore에 잘못 저장된 ID를 실제 DOM 패널과 매핑
+  const VALID_PANEL_IDS = ['exp','coop','suwon'];
+  const ID_ALIASES = {
+    // 흔한 오입력 → 정규 ID
+    'experience':'exp','experiences':'exp','체험':'exp','체험프로그램':'exp','01':'exp',
+    'shop':'coop','shops':'coop','store':'coop','가맹점':'coop','온마을가맹점':'coop','02':'coop',
+    'garden':'suwon','zoo':'suwon','수목원':'suwon','동물원':'suwon','아침고요':'suwon','03':'suwon',
+  };
+  sections = sections.map(s => {
+    let realId = s.id || '';
+    // 소문자·공백제거 후 별칭 조회
+    const normalized = realId.toLowerCase().replace(/\s/g,'');
+    if (!VALID_PANEL_IDS.includes(realId) && ID_ALIASES[normalized]) {
+      console.warn(`landing_sections: id "${realId}" → "${ID_ALIASES[normalized]}" 자동 보정`);
+      realId = ID_ALIASES[normalized];
+    }
+    return {...s, id: realId};
+  });
+
   const loading = document.getElementById('cat-tabs-loading');
   if (loading) loading.remove();
   wrap.className = 'cat-tabs reveal has-' + Math.min(sections.length, 5);
 
+  // CAT_IDS 동기화
+  sections.forEach(s => { if(!CAT_IDS.includes(s.id)) CAT_IDS.push(s.id); });
+
   sections.forEach(s => {
+    // 패널 존재 여부 확인
+    const panelExists = !!document.getElementById('cat-' + s.id);
+    if (!panelExists) {
+      console.warn(`landing_sections: cat-${s.id} 패널 없음 — 탭 버튼 생성 스킵`);
+      return;
+    }
     const labelHtml = (s.label||'').replace(/\\n/g,'<br>').replace(/\n/g,'<br>');
     const btn = document.createElement('button');
     btn.className = 'cat-tab';
