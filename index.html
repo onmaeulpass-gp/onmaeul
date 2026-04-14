@@ -2639,62 +2639,117 @@ async function renderExpCards() {
   if (loading) loading.remove();
 
   items.forEach(function(s, idx) {
+    const rn   = s.reserve || s.name;
     const tags = (s.tags||'').split(',').map(function(t){ return t.trim(); }).filter(Boolean);
-    const card = document.createElement('div');
+
+    // 카드
+    const card  = document.createElement('div');
     card.className = 'exp-card';
-
-    const img = document.createElement('img');
+    const img   = document.createElement('img');
     img.className = 'exp-card-img';
-    img.src = s.img || 'images/img_02.jpg';
-    img.alt = s.name;
+    img.src   = s.img || 'images/img_02.jpg';
+    img.alt   = s.name;
     img.onerror = function(){ this.src = 'images/img_02.jpg'; };
-
-    const body = document.createElement('div');
+    const body  = document.createElement('div');
     body.className = 'exp-card-inner exp-card-body';
-
-    const num = document.createElement('span');
-    num.className = 'exp-num';
-    num.setAttribute('style','font-family:"DM Sans",sans-serif;font-size:0.72rem;letter-spacing:0.18em;color:var(--gold);margin-bottom:6px;display:block;');
-    num.textContent = '0' + (idx + 1);
-
-    const name = document.createElement('span');
-    name.className = 'exp-name';
-    name.textContent = s.name;
-
-    const en = document.createElement('span');
-    en.className = 'exp-en';
-    en.textContent = s.en || '';
-
-    const desc = document.createElement('p');
-    desc.className = 'exp-desc';
-    desc.textContent = s.desc || '';
-
-    body.appendChild(num);
-    body.appendChild(name);
-    body.appendChild(en);
-    body.appendChild(desc);
-
+    const numEl = document.createElement('span');
+    numEl.className = 'exp-num';
+    numEl.style.cssText = 'font-family:"DM Sans",sans-serif;font-size:0.72rem;letter-spacing:0.18em;color:var(--gold);margin-bottom:6px;display:block;';
+    numEl.textContent = '0' + (idx + 1);
+    const nameEl = document.createElement('span');
+    nameEl.className = 'exp-name';  nameEl.textContent = s.name;
+    const enEl   = document.createElement('span');
+    enEl.className = 'exp-en';    enEl.textContent = s.en || '';
+    const descEl = document.createElement('p');
+    descEl.className = 'exp-desc'; descEl.textContent = s.desc || '';
+    body.append(numEl, nameEl, enEl, descEl);
     if (tags.length) {
-      const tagsWrap = document.createElement('div');
-      tagsWrap.className = 'exp-tags';
-      tags.forEach(function(t) {
-        const span = document.createElement('span');
-        span.className = 'exp-tag';
-        span.textContent = t;
-        tagsWrap.appendChild(span);
-      });
-      body.appendChild(tagsWrap);
+      const tw = document.createElement('div');
+      tw.className = 'exp-tags';
+      tags.forEach(function(t){ const sp=document.createElement('span'); sp.className='exp-tag'; sp.textContent=t; tw.appendChild(sp); });
+      body.appendChild(tw);
+    }
+    const btn = document.createElement('button');
+    btn.className   = 'btn-exp-reserve';
+    btn.textContent = '예약 신청하기';
+    btn.addEventListener('click', (function(r){ return function(){ if(window.startBookingFrom) window.startBookingFrom(r); }; })(rn));
+    body.appendChild(btn);
+    card.append(img, body);
+    grid.appendChild(card);
+
+    // 인라인 드로어 — DOM API로 생성 (따옴표 충돌 없음)
+    const drawer = document.createElement('div');
+    drawer.className  = 'exp-inline-drawer';
+    drawer.dataset.prog = rn;
+    const inner = document.createElement('div');
+    inner.className = 'drawer-inner';
+
+    // 스텝 인디케이터
+    const steps = document.createElement('div');
+    steps.className = 'drawer-steps';
+    const s1 = document.createElement('span'); s1.className='drawer-step-ind active'; s1.textContent='01 정보입력';
+    const sep= document.createElement('span'); sep.className='drawer-step-sep';       sep.textContent='—';
+    const s2 = document.createElement('span'); s2.className='drawer-step-ind';        s2.textContent='02 신청완료';
+    const closeBtn = document.createElement('button');
+    closeBtn.className   = 'drawer-close-btn';
+    closeBtn.textContent = '✕';
+    closeBtn.addEventListener('click', (function(r){ return function(){ if(window.closeDrawer) window.closeDrawer(r); }; })(rn));
+    steps.append(s1, sep, s2, closeBtn);
+    inner.appendChild(steps);
+
+    // 패널 1 — 입력 폼
+    const p1 = document.createElement('div');
+    p1.className = 'drawer-panel active';
+    const fg = document.createElement('div');
+    fg.className = 'booking-form-grid';
+
+    function makeRow(label, inputTag, cls, type, placeholder, errCls) {
+      const row  = document.createElement('div'); row.className = 'booking-form-row';
+      const lbl  = document.createElement('label'); lbl.className='booking-label'; lbl.textContent=label;
+      const inp  = document.createElement(inputTag); inp.className='form-input '+cls;
+      if(type)        inp.type=type;
+      if(placeholder) inp.placeholder=placeholder;
+      const err  = document.createElement('div'); err.className='form-error '+errCls; err.textContent=label+'을(를) 입력해주세요';
+      row.append(lbl, inp, err);
+      return row;
     }
 
-    const btn = document.createElement('button');
-    btn.className = 'btn-exp-reserve';
-    btn.textContent = '예약 신청하기';
-    (function(reserve){ btn.onclick = function(){ startBookingFrom(reserve, btn); }; })(s.reserve || s.name);
-    body.appendChild(btn);
+    const rowName   = makeRow('예약자 이름 *','input','d-name','text','홍길동','d-err-name');
+    const rowPhone  = makeRow('연락처 *','input','d-phone','tel','010-0000-0000','d-err-phone');
+    const rowDate   = makeRow('희망 날짜 *','input','d-date','date','','d-err-date');
 
-    card.appendChild(img);
-    card.appendChild(body);
-    grid.appendChild(card);
+    const rowPeople = document.createElement('div'); rowPeople.className='booking-form-row';
+    const pLbl = document.createElement('label'); pLbl.className='booking-label'; pLbl.textContent='인원 *';
+    const pSel = document.createElement('select'); pSel.className='form-select d-people';
+    ['','1명','2명','3명','4명','5명','6명 이상'].forEach(function(v,i){
+      const o=document.createElement('option'); o.value=i===0?'':v; o.textContent=i===0?'인원 선택':v; pSel.appendChild(o);
+    });
+    const pErr = document.createElement('div'); pErr.className='form-error d-err-people'; pErr.textContent='인원을 선택해주세요';
+    rowPeople.append(pLbl, pSel, pErr);
+
+    const rowMemo = makeRow('메모 (선택)','textarea','d-memo','','알레르기, 요청사항 등','');
+
+    fg.append(rowName, rowPhone, rowDate, rowPeople, rowMemo);
+    const subBtn = document.createElement('button');
+    subBtn.className   = 'd-submit-btn';
+    subBtn.textContent = '신청 완료하기';
+    subBtn.addEventListener('click', (function(r){ return function(){ if(window.submitDrawer) window.submitDrawer(r); }; })(rn));
+    p1.append(fg, subBtn);
+    inner.appendChild(p1);
+
+    // 패널 2 — 완료
+    const p2 = document.createElement('div');
+    p2.className = 'drawer-panel';
+    const doneH = document.createElement('div'); doneH.className='booking-done-header'; doneH.textContent='✅ 예약 신청이 완료되었습니다';
+    const doneInfo = document.createElement('div'); doneInfo.className='d-done-info';
+    const doneClose = document.createElement('button');
+    doneClose.className='drawer-close-btn-done'; doneClose.textContent='닫기';
+    doneClose.addEventListener('click', (function(r){ return function(){ if(window.closeDrawer) window.closeDrawer(r); }; })(rn));
+    p2.append(doneH, doneInfo, doneClose);
+    inner.appendChild(p2);
+
+    drawer.appendChild(inner);
+    grid.appendChild(drawer);
   });
 }
 
@@ -3000,6 +3055,117 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
   const WEBHOOK_URL = 'https://hook.us2.make.com/p8te4g4zvs9h62afae8094kvn9pk9fdm';
 
   // ── 드로어 열기/닫기 ──────────────────────────────
+// ── 체험 예약 드로어 생성 헬퍼 ───────────────────────────────
+function _makeExpDrawer(reserveName) {
+  var dr = document.createElement('div');
+  dr.className = 'exp-inline-drawer';
+  dr.dataset.prog = reserveName;
+
+  var inner = document.createElement('div');
+  inner.className = 'drawer-inner';
+
+  // 단계 표시
+  var steps = document.createElement('div');
+  steps.className = 'drawer-steps';
+  steps.innerHTML =
+    '<span class="drawer-step-ind active">01 정보입력</span>' +
+    '<span class="drawer-step-sep">—</span>' +
+    '<span class="drawer-step-ind">02 신청완료</span>';
+  var closeBtn = document.createElement('button');
+  closeBtn.className = 'drawer-close-btn';
+  closeBtn.textContent = '✕';
+  closeBtn.onclick = function(){ if(window.closeDrawer) window.closeDrawer(reserveName); };
+  steps.appendChild(closeBtn);
+  inner.appendChild(steps);
+
+  // 패널1: 폼 입력
+  var panel1 = document.createElement('div');
+  panel1.className = 'drawer-panel active';
+
+  var grid = document.createElement('div');
+  grid.className = 'booking-form-grid';
+
+  function makeRow(label, inputEl, errClass) {
+    var row = document.createElement('div');
+    row.className = 'booking-form-row';
+    var lbl = document.createElement('label');
+    lbl.className = 'booking-label';
+    lbl.textContent = label;
+    var err = document.createElement('div');
+    err.className = 'form-error ' + errClass;
+    err.textContent = label.replace(' *','') + '을(를) 입력해주세요';
+    row.appendChild(lbl);
+    row.appendChild(inputEl);
+    row.appendChild(err);
+    return row;
+  }
+
+  var nameInput = document.createElement('input');
+  nameInput.className = 'form-input d-name';
+  nameInput.type = 'text'; nameInput.placeholder = '홍길동';
+
+  var phoneInput = document.createElement('input');
+  phoneInput.className = 'form-input d-phone';
+  phoneInput.type = 'tel'; phoneInput.placeholder = '010-0000-0000';
+
+  var dateInput = document.createElement('input');
+  dateInput.className = 'form-input d-date';
+  dateInput.type = 'date';
+
+  var peopleSelect = document.createElement('select');
+  peopleSelect.className = 'form-select d-people';
+  ['', '1', '2', '3', '4', '5', '6명이상'].forEach(function(v, i) {
+    var opt = document.createElement('option');
+    opt.value = v; opt.textContent = i === 0 ? '인원 선택' : (i < 6 ? v + '명' : v);
+    peopleSelect.appendChild(opt);
+  });
+
+  var memoRow = document.createElement('div');
+  memoRow.className = 'booking-form-row';
+  memoRow.style.gridColumn = '1/-1';
+  var memoLbl = document.createElement('label');
+  memoLbl.className = 'booking-label'; memoLbl.textContent = '메모 (선택)';
+  var memo = document.createElement('textarea');
+  memo.className = 'form-input d-memo'; memo.rows = 2;
+  memo.placeholder = '알레르기, 요청사항 등';
+  memoRow.appendChild(memoLbl); memoRow.appendChild(memo);
+
+  grid.appendChild(makeRow('예약자 이름 *', nameInput, 'd-err-name'));
+  grid.appendChild(makeRow('연락처 *', phoneInput, 'd-err-phone'));
+  grid.appendChild(makeRow('희망 날짜 *', dateInput, 'd-err-date'));
+  grid.appendChild(makeRow('인원 *', peopleSelect, 'd-err-people'));
+  grid.appendChild(memoRow);
+  panel1.appendChild(grid);
+
+  var submitBtn = document.createElement('button');
+  submitBtn.className = 'd-submit-btn';
+  submitBtn.textContent = '신청 완료하기';
+  submitBtn.onclick = function(){ if(window.submitDrawer) window.submitDrawer(reserveName); };
+  panel1.appendChild(submitBtn);
+  inner.appendChild(panel1);
+
+  // 패널2: 완료
+  var panel2 = document.createElement('div');
+  panel2.className = 'drawer-panel';
+  var doneHeader = document.createElement('div');
+  doneHeader.className = 'booking-done-header';
+  doneHeader.textContent = '✅ 예약 신청이 완료되었습니다';
+  var doneInfo = document.createElement('div');
+  doneInfo.className = 'd-done-info';
+  var doneClose = document.createElement('button');
+  doneClose.className = 'drawer-close-btn-done';
+  doneClose.textContent = '닫기';
+  doneClose.onclick = function(){ if(window.closeDrawer) window.closeDrawer(reserveName); };
+  panel2.appendChild(doneHeader);
+  panel2.appendChild(doneInfo);
+  panel2.appendChild(doneClose);
+  inner.appendChild(panel2);
+
+  dr.appendChild(inner);
+  return dr;
+}
+
+
   window.startBookingFrom = function(progName) {
     // 다른 드로어 먼저 닫기
     document.querySelectorAll('.exp-inline-drawer').forEach(function(d) {

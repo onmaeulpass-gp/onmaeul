@@ -1572,48 +1572,51 @@ body.role-viewer .perm-write { display: none !important; }
           <div style="background:#E8F5E9;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:12px;color:#2E7D32;line-height:1.7;">
             💡 저장하면 <b>랜딩페이지에 자동 반영</b>됩니다. 이미지는 GitHub <code>images/</code> 경로 또는 외부 URL을 사용하세요.
           </div>
-          <!-- 섹션 탭 (5개) -->
+          <!-- 섹션 탭: 대형섹션탭 → 체험 → 가맹점 → 수목원 → 업종 -->
           <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:20px;border-bottom:2px solid var(--border);padding-bottom:0;">
-            <button id="ltab-coop" class="landing-sec-tab active" onclick="switchLandingTab('coop')"
+            <button id="ltab-sections" class="landing-sec-tab active" onclick="switchLandingTab('sections')"
               style="padding:7px 14px;border:none;border-radius:8px 8px 0 0;cursor:pointer;font-size:12px;font-weight:600;background:var(--primary);color:#fff;margin-bottom:-2px;border-bottom:2px solid var(--primary);">
-              🏪 가맹점
+              📌 대형 섹션탭
             </button>
             <button id="ltab-exp" class="landing-sec-tab" onclick="switchLandingTab('exp')"
               style="padding:7px 14px;border:none;border-radius:8px 8px 0 0;cursor:pointer;font-size:12px;font-weight:600;background:#f0f0f0;color:#666;margin-bottom:-2px;border-bottom:2px solid transparent;">
               🌿 체험프로그램
             </button>
+            <button id="ltab-coop" class="landing-sec-tab" onclick="switchLandingTab('coop')"
+              style="padding:7px 14px;border:none;border-radius:8px 8px 0 0;cursor:pointer;font-size:12px;font-weight:600;background:#f0f0f0;color:#666;margin-bottom:-2px;border-bottom:2px solid transparent;">
+              🏪 가맹점
+            </button>
             <button id="ltab-suwon" class="landing-sec-tab" onclick="switchLandingTab('suwon')"
               style="padding:7px 14px;border:none;border-radius:8px 8px 0 0;cursor:pointer;font-size:12px;font-weight:600;background:#f0f0f0;color:#666;margin-bottom:-2px;border-bottom:2px solid transparent;">
               🌸 수목원·동물원
-            </button>
-            <button id="ltab-sections" class="landing-sec-tab" onclick="switchLandingTab('sections')"
-              style="padding:7px 14px;border:none;border-radius:8px 8px 0 0;cursor:pointer;font-size:12px;font-weight:600;background:#f0f0f0;color:#666;margin-bottom:-2px;border-bottom:2px solid transparent;">
-              📌 대형 섹션탭
             </button>
             <button id="ltab-cats" class="landing-sec-tab" onclick="switchLandingTab('cats')"
               style="padding:7px 14px;border:none;border-radius:8px 8px 0 0;cursor:pointer;font-size:12px;font-weight:600;background:#f0f0f0;color:#666;margin-bottom:-2px;border-bottom:2px solid transparent;">
               🏷️ 업종 카테고리
             </button>
           </div>
-          <!-- 패널: 가맹점 -->
-          <div id="lpanel-coop">
-            <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">관리 항목: 업체명, 영문명, 업종, 설명, 주소, 전화번호, 이미지, 지도좌표, 카카오링크, 순서, 공개여부</div>
-            <div id="landing-store-list"></div>
+          <!-- 패널: 대형 섹션탭 (기본 표시) -->
+          <div id="lpanel-sections">
+            <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;line-height:1.7;">
+              랜딩페이지 대형 탭 4개 관리 — 탭 ID는 반드시 <code>exp / coop / suwon / stamp</code> 중 하나<br>
+              <span style="color:var(--primary);font-weight:600;">탭 ID가 틀리면 클릭해도 내용이 열리지 않습니다.</span>
+            </div>
+            <div id="landing-sections-list"></div>
           </div>
-          <!-- 패널: 체험 -->
+          <!-- 패널: 체험프로그램 -->
           <div id="lpanel-exp" style="display:none;">
             <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">관리 항목: 프로그램명, 영문명, 설명, 이미지, 가격태그(쉼표 구분), 예약명, 순서, 공개여부</div>
             <div id="landing-exp-list"></div>
           </div>
-          <!-- 패널: 수목원 -->
+          <!-- 패널: 가맹점 -->
+          <div id="lpanel-coop" style="display:none;">
+            <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">관리 항목: 업체명, 영문명, 업종, 설명, 주소, 전화번호, 이미지, 지도좌표, 카카오링크, 순서, 공개여부</div>
+            <div id="landing-store-list"></div>
+          </div>
+          <!-- 패널: 수목원·동물원 -->
           <div id="lpanel-suwon" style="display:none;">
             <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">관리 항목: 시설명, 영문명, 설명, 이미지, 링크 URL, 링크 버튼 텍스트, 순서, 공개여부</div>
             <div id="landing-suwon-list"></div>
-          </div>
-          <!-- 패널: 대형 섹션탭 -->
-          <div id="lpanel-sections" style="display:none;">
-            <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">관리 항목: 탭 번호, 한글명, 영문명, 배지텍스트, 배경이미지, 연결 패널 ID(exp/coop/suwon), 순서, 공개여부</div>
-            <div id="landing-sections-list"></div>
           </div>
           <!-- 패널: 업종 카테고리 -->
           <div id="lpanel-cats" style="display:none;">
@@ -1647,7 +1650,7 @@ body.role-viewer .perm-write { display: none !important; }
             <option value="suwon">suwon (아침고요 수목원·동물원)</option>
             <option value="stamp">stamp (체험하다 스탬프투어)</option>
           </select>
-          <div style="font-size:11px;color:#E65100;margin-top:4px;line-height:1.6;">⚠️ 탭 ID가 틀리면 클릭해도 내용이 안 보입니다<br>랜딩 패널 cat-<b>exp</b>, cat-<b>coop</b>, cat-<b>suwon</b> 중 하나를 선택하세요</div>
+          <div style="font-size:11px;color:#E65100;margin-top:4px;line-height:1.6;">⚠️ 탭 ID가 틀리면 클릭해도 내용이 안 보입니다<br>cat-<b>exp</b> · cat-<b>coop</b> · cat-<b>suwon</b> · cat-<b>stamp</b> 중 하나를 선택하세요</div>
         </div>
         <div class="form-group">
           <label>번호 표시</label>
@@ -5730,7 +5733,7 @@ async function saveBizSettings() {
 
 const CAT_LABELS = { restaurant:'🍽 식당', cafe:'☕ 카페', stay:'🏡 숙박', mart:'🛒 마트', craft:'🎨 공방' };
 let _landingEditId = null;
-let _landingCurrentTab = 'coop'; // 현재 활성 탭
+let _landingCurrentTab = 'sections'; // 현재 활성 탭
 
 // ── 탭 전환 ──
 // null-safe textContent 설정 헬퍼
@@ -5738,7 +5741,7 @@ function _safeText(id, val){ const el=document.getElementById(id); if(el) el.tex
 
 function switchLandingTab(tab) {
   _landingCurrentTab = tab;
-  ['coop','exp','suwon','sections','cats'].forEach(t => {
+  ['sections','exp','coop','suwon','cats'].forEach(t => {
     const panel = document.getElementById('lpanel-' + t);
     const btn   = document.getElementById('ltab-' + t);
     if(panel) panel.style.display = t===tab ? 'block' : 'none';
@@ -5749,8 +5752,8 @@ function switchLandingTab(tab) {
     }
   });
   const labels = {
-    coop:'+ 가맹점 추가', exp:'+ 체험 추가', suwon:'+ 카드 추가',
-    sections:'+ 섹션탭 추가', cats:'+ 업종 추가'
+    sections:'+ 섹션탭 추가', exp:'+ 체험 추가', coop:'+ 가맹점 추가',
+    suwon:'+ 카드 추가', cats:'+ 업종 추가'
   };
   const addBtn = document.getElementById('landing-add-btn');
   if(addBtn) addBtn.textContent = labels[tab] || '+ 추가';
@@ -5758,11 +5761,11 @@ function switchLandingTab(tab) {
 
 // 현재 탭 기준으로 추가 열기
 function openLandingAddCurrent() {
-  if(_landingCurrentTab==='coop')     openLandingAdd();
-  else if(_landingCurrentTab==='exp')      openLandingExpAdd();
-  else if(_landingCurrentTab==='suwon')    openLandingSuwonAdd();
-  else if(_landingCurrentTab==='sections') openLandingSectionAdd();
-  else if(_landingCurrentTab==='cats')     openLandingCatAdd();
+  if(_landingCurrentTab==='sections')  openLandingSectionAdd();
+  else if(_landingCurrentTab==='exp')  openLandingExpAdd();
+  else if(_landingCurrentTab==='coop') openLandingAdd();
+  else if(_landingCurrentTab==='suwon')openLandingSuwonAdd();
+  else if(_landingCurrentTab==='cats') openLandingCatAdd();
 }
 
 // 이미지 입력 미리보기 공통
@@ -5822,10 +5825,10 @@ async function renderLandingManager(){
   showLoading('콘텐츠 불러오는 중...');
   try{
     await Promise.all([
-      _renderLandingCoops(),
-      _renderLandingExp(),
-      _renderLandingSuwon(),
       _renderLandingSections(),
+      _renderLandingExp(),
+      _renderLandingCoops(),
+      _renderLandingSuwon(),
       _renderLandingCats(),
     ]);
     switchLandingTab(_landingCurrentTab);
@@ -5952,9 +5955,10 @@ async function _renderLandingSuwon(){
 
 // ── 대형 섹션탭(landing_sections) 렌더 ──
 const LANDING_DEFAULT_SECTIONS = [
-  { id:'exp',   num:'01', label:'체험 프로그램',             en:'EXPERIENCES', badge:'추천', bg:'images/img_cat_exp.png',  order:1, active:true },
-  { id:'coop',  num:'02', label:'온마을 가맹점',              en:'VILLAGE SHOPS', badge:'',  bg:'images/img_cat_coop.jpg', order:2, active:true },
-  { id:'suwon', num:'03', label:'아침고요\n수목원 & 동물원', en:'MORNINGCALM',   badge:'',  bg:'images/img_cat_suwon.png', order:3, active:true },
+  { id:'exp',   num:'01', label:'체험 프로그램',              en:'EXPERIENCES',  badge:'추천', bg:'images/img_cat_exp.png',  order:1, active:true },
+  { id:'coop',  num:'02', label:'온마을 가맹점',               en:'VILLAGE SHOPS', badge:'',   bg:'images/img_cat_coop.jpg', order:2, active:true },
+  { id:'suwon', num:'03', label:'아침고요\n수목원 & 동물원',  en:'MORNINGCALM',  badge:'',    bg:'images/img_cat_suwon.png', order:3, active:true },
+  { id:'stamp', num:'04', label:'체험하다\n스탬프투어',        en:'STAMP TOUR',   badge:'NEW', bg:'images/img_cat_exp.png',   order:4, active:true },
 ];
 
 async function _renderLandingSections(){
