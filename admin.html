@@ -5890,7 +5890,7 @@ async function openLandingSectionEdit(docId){
     if(!doc.exists){ alert('항목을 찾을 수 없습니다.'); return; }
     const s=doc.data();
     _landingSectionEditId=docId;
-    _safeText('landing-section-modal-title', `수정 — ${(s.label||')').replace(/\n/g,' ')}`;
+    _safeText('landing-section-modal-title', `수정 — ${(s.label||'').replace(/\n/g,' ')}`);
     document.getElementById('lsec-id').value    =s.id||'';
     document.getElementById('lsec-num').value   =s.num||'';
     document.getElementById('lsec-label').value =s.label||'';
@@ -5993,7 +5993,7 @@ async function openLandingCatEdit(docId){
     if(!doc.exists){ alert('항목을 찾을 수 없습니다.'); return; }
     const c=doc.data();
     _landingCatEditId=docId;
-    _safeText('landing-cat-modal-title', `수정 — ${c.label||')'}`;
+    _safeText('landing-cat-modal-title', `수정 — ${c.label||''}`  );
     document.getElementById('lcat-id').value    =c.id||'';
     document.getElementById('lcat-label').value =c.label||'';
     document.getElementById('lcat-active').value=String(c.active!==false);
@@ -6051,7 +6051,7 @@ async function openLandingExpEdit(docId){
     if(!doc.exists){ alert('항목을 찾을 수 없습니다.'); return; }
     const s = doc.data();
     _landingExpEditId = docId;
-    _safeText('landing-exp-modal-title', `수정 — ${s.name||')'}`;
+    _safeText('landing-exp-modal-title', `수정 — ${s.name||''}`);
     document.getElementById('le-name').value    = s.name||'';
     document.getElementById('le-en').value      = s.en||'';
     document.getElementById('le-desc').value    = s.desc||'';
@@ -6109,7 +6109,7 @@ async function openLandingSuwonEdit(docId){
     if(!doc.exists){ alert('항목을 찾을 수 없습니다.'); return; }
     const s = doc.data();
     _landingSuwonEditId = docId;
-    _safeText('landing-suwon-modal-title', `수정 — ${s.name||')'}`;
+    _safeText('landing-suwon-modal-title', `수정 — ${s.name||''}`);
     document.getElementById('lw-name').value      = s.name||'';
     document.getElementById('lw-en').value        = s.en||'';
     document.getElementById('lw-desc').value      = s.desc||'';
@@ -6171,7 +6171,7 @@ async function openLandingEdit(docId){
     if(!doc.exists){ alert('데이터를 찾을 수 없습니다.'); return; }
     const s = doc.data();
     _landingEditId = docId;
-    _safeText('landing-store-modal-title', `수정 — ${s.name||')'}`;
+    _safeText('landing-store-modal-title', `수정 — ${s.name||''}`);
     document.getElementById('ls-name').value   = s.name||'';
     document.getElementById('ls-en').value     = s.en||'';
     document.getElementById('ls-desc').value   = s.desc||'';
