@@ -2638,26 +2638,65 @@ async function renderExpCards() {
   const loading = document.getElementById('exp-cards-loading');
   if (loading) loading.remove();
 
-  const delayClasses = ['reveal-d1','reveal-d2','reveal-d3','reveal-d4'];
-  items.forEach((s, idx) => {
-    const tags = (s.tags||'').split(',').map(t=>t.trim()).filter(Boolean);
+  items.forEach(function(s, idx) {
+    const tags = (s.tags||'').split(',').map(function(t){ return t.trim(); }).filter(Boolean);
     const card = document.createElement('div');
-    // reveal 없이 바로 visible — 패널 display:none 안에서 reveal 타이밍 문제 방지
     card.className = 'exp-card';
-    card.innerHTML =
-      '<img class="exp-card-img" src="' + (s.img||'images/img_02.jpg') + '" alt="' + s.name + '" onerror="this.src='images/img_02.jpg'">' +
-      '<div class="exp-card-inner exp-card-body">' +
-        '<span class="exp-num" style="font-family:'DM Sans',sans-serif;font-size:0.72rem;letter-spacing:0.18em;color:var(--gold);margin-bottom:6px;display:block;">0' + (idx+1) + '</span>' +
-        '<span class="exp-name">' + s.name + '</span>' +
-        '<span class="exp-en">' + (s.en||'') + '</span>' +
-        '<p class="exp-desc">' + (s.desc||'') + '</p>' +
-        (tags.length ? '<div class="exp-tags">' + tags.map(t=>'<span class="exp-tag">' + t + '</span>').join('') + '</div>' : '') +
-        '<button class="btn-exp-reserve" onclick="startBookingFrom('' + (s.reserve||s.name).replace(/'/g,"\'") + '', this)">예약 신청하기</button>' +
-      '</div>';
+
+    const img = document.createElement('img');
+    img.className = 'exp-card-img';
+    img.src = s.img || 'images/img_02.jpg';
+    img.alt = s.name;
+    img.onerror = function(){ this.src = 'images/img_02.jpg'; };
+
+    const body = document.createElement('div');
+    body.className = 'exp-card-inner exp-card-body';
+
+    const num = document.createElement('span');
+    num.className = 'exp-num';
+    num.setAttribute('style','font-family:"DM Sans",sans-serif;font-size:0.72rem;letter-spacing:0.18em;color:var(--gold);margin-bottom:6px;display:block;');
+    num.textContent = '0' + (idx + 1);
+
+    const name = document.createElement('span');
+    name.className = 'exp-name';
+    name.textContent = s.name;
+
+    const en = document.createElement('span');
+    en.className = 'exp-en';
+    en.textContent = s.en || '';
+
+    const desc = document.createElement('p');
+    desc.className = 'exp-desc';
+    desc.textContent = s.desc || '';
+
+    body.appendChild(num);
+    body.appendChild(name);
+    body.appendChild(en);
+    body.appendChild(desc);
+
+    if (tags.length) {
+      const tagsWrap = document.createElement('div');
+      tagsWrap.className = 'exp-tags';
+      tags.forEach(function(t) {
+        const span = document.createElement('span');
+        span.className = 'exp-tag';
+        span.textContent = t;
+        tagsWrap.appendChild(span);
+      });
+      body.appendChild(tagsWrap);
+    }
+
+    const btn = document.createElement('button');
+    btn.className = 'btn-exp-reserve';
+    btn.textContent = '예약 신청하기';
+    (function(reserve){ btn.onclick = function(){ startBookingFrom(reserve, btn); }; })(s.reserve || s.name);
+    body.appendChild(btn);
+
+    card.appendChild(img);
+    card.appendChild(body);
     grid.appendChild(card);
   });
 }
-
 
 // ── 수목원·동물원 렌더링 (landing_suwon) ──
 async function renderSuwonCards() {
