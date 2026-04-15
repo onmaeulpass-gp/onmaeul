@@ -1605,7 +1605,7 @@ body.role-viewer .perm-write { display: none !important; }
           </div>
           <!-- 패널: 체험프로그램 -->
           <div id="lpanel-exp" style="display:none;">
-            <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">관리 항목: 프로그램명, 영문명, 설명, 이미지, 가격태그(쉼표 구분), 예약명, 순서, 공개여부</div>
+            <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">관리 항목: 프로그램명, 영문명, 설명, 이미지, 가격태그(| 구분 — 20,000원처럼 숫자 콤마 포함 시 반드시 | 사용), 예약명, 순서, 공개여부</div>
             <div id="landing-exp-list"></div>
           </div>
           <!-- 패널: 가맹점 -->
@@ -1800,7 +1800,7 @@ body.role-viewer .perm-write { display: none !important; }
         </div>
         <div class="form-group" style="grid-column:1/-1;">
           <label>가격 태그 <span style="font-size:10px;color:var(--text-muted);">쉼표(,)로 구분 — 예: 잣 쿠키 · 20,000원,잣 전병 · 15,000원</span></label>
-          <textarea id="le-tags" rows="2" placeholder="태그1,태그2,태그3" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;resize:vertical;font-family:inherit;"></textarea>
+          <textarea id="le-tags" rows="2" placeholder="잣 쿠키 · 20,000원|잣 전병 · 15,000원|잣 아이스크림 · 10,000원" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;resize:vertical;font-family:inherit;"></textarea>
         </div>
         <div class="form-group" style="grid-column:1/-1;"><label>대표 이미지 URL</label>
           <input id="le-img" placeholder="images/img_02.jpg  또는  https://...">

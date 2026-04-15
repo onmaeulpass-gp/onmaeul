@@ -1160,6 +1160,7 @@ body.has-weather .hero-content { padding-top: 136px; }
 .exp-header { margin-bottom:72px; }
 .exp-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:3px; }
 .exp-grid .exp-inline-drawer { grid-column: 1 / -1; }
+.exp-card-wrap { display:contents; }
 
 /* ── 카테고리 탭 (카드형 선택 UI) ── */
 .cat-tabs {
@@ -1841,10 +1842,11 @@ body.has-weather .hero-content { padding-top: 136px; }
 .exp-card:hover { border-bottom-color:var(--gold); }
 .exp-card-inner { position:relative; z-index:1; }
 .exp-card:hover .exp-name { color:var(--white); }
-.exp-card:hover .exp-desc { color:rgba(250,247,242,.45); }
+.exp-card:hover .exp-num { color:rgba(184,150,90,.85); }
+.exp-card:hover .exp-desc { color:rgba(250,247,242,.88); }
 .exp-card:hover .exp-en { color:var(--gold); }
 .exp-card:hover .exp-arrow { color:var(--gold); transform:translateX(6px); }
-.exp-card:hover .exp-tag { border-color:rgba(184,150,90,.3); color:var(--gold); }
+.exp-card:hover .exp-tag { border-color:rgba(184,150,90,.5); color:var(--gold); background:rgba(184,150,90,.12); }
 .exp-icon { font-size:30px; margin-bottom:22px; display:block; }
 .exp-name { font-family:'Noto Serif KR',serif; font-size:22px; font-weight:300; color:var(--ink); margin-bottom:4px; transition:color .35s; }
 .exp-en { font-family:'Cormorant Garamond',serif; font-style:italic; font-size:13px; color:var(--gold); letter-spacing:2px; display:block; margin-bottom:18px; transition:color .35s; }
@@ -2652,7 +2654,12 @@ async function renderExpCards() {
 
   items.forEach(function(s, idx) {
     const rn   = (s.reserve || s.name || '').trim();
-    const tags = (s.tags || '').split(',').map(t => t.trim()).filter(Boolean);
+    // 구분자: | 우선, 없으면 콤마 fallback (20,000원 같은 숫자 콤마 오인식 방지)
+    const _rawTags = s.tags || '';
+    const tags = (_rawTags.includes('|')
+      ? _rawTags.split('|')
+      : _rawTags.split(',')
+    ).map(t => t.trim()).filter(Boolean);
     const num  = '0' + (idx + 1);
     const safeRn = rn.replace(/"/g, '&quot;');
 
@@ -2677,7 +2684,10 @@ async function renderExpCards() {
       return function(){ if(window.startBookingFrom) window.startBookingFrom(r); };
     })(rn));
 
-    grid.appendChild(card);
+    // 카드+드로어를 래퍼로 묶기 (display:contents → 그리드에 직접 배치)
+    const wrap = document.createElement('div');
+    wrap.className = 'exp-card-wrap';
+    wrap.appendChild(card);
 
     /* ── 인라인 드로어 ── */
     const today = new Date();
@@ -2734,7 +2744,8 @@ async function renderExpCards() {
       })(rn, btn.dataset.action));
     });
 
-    grid.appendChild(drawer);
+    wrap.appendChild(drawer);
+    grid.appendChild(wrap);
   });
 }
 
