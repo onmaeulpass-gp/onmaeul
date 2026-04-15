@@ -1590,6 +1590,10 @@ body.role-viewer .perm-write { display: none !important; }
               style="padding:7px 14px;border:none;border-radius:8px 8px 0 0;cursor:pointer;font-size:12px;font-weight:600;background:#f0f0f0;color:#666;margin-bottom:-2px;border-bottom:2px solid transparent;">
               🌸 수목원·동물원
             </button>
+            <button id="ltab-stamp" class="landing-sec-tab" onclick="switchLandingTab('stamp')"
+              style="padding:7px 14px;border:none;border-radius:8px 8px 0 0;cursor:pointer;font-size:12px;font-weight:600;background:#f0f0f0;color:#666;margin-bottom:-2px;border-bottom:2px solid transparent;">
+              🗺️ 스탬프투어
+            </button>
             <button id="ltab-cats" class="landing-sec-tab" onclick="switchLandingTab('cats')"
               style="padding:7px 14px;border:none;border-radius:8px 8px 0 0;cursor:pointer;font-size:12px;font-weight:600;background:#f0f0f0;color:#666;margin-bottom:-2px;border-bottom:2px solid transparent;">
               🏷️ 업종 카테고리
@@ -1617,6 +1621,11 @@ body.role-viewer .perm-write { display: none !important; }
           <div id="lpanel-suwon" style="display:none;">
             <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">관리 항목: 시설명, 영문명, 설명, 이미지, 링크 URL, 링크 버튼 텍스트, 순서, 공개여부</div>
             <div id="landing-suwon-list"></div>
+          </div>
+          <!-- 패널: 스탬프투어 -->
+          <div id="lpanel-stamp" style="display:none;">
+            <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">관리 항목: 코스명, 영문명, 설명, 이미지, 링크 URL, 버튼 텍스트, 순서, 공개여부</div>
+            <div id="landing-stamp-list"></div>
           </div>
           <!-- 패널: 업종 카테고리 -->
           <div id="lpanel-cats" style="display:none;">
@@ -1859,6 +1868,42 @@ body.role-viewer .perm-write { display: none !important; }
 </div>
 
 <!-- M01 고객 Modal -->
+  <!-- ===== LANDING STAMP MODAL 스탬프투어 편집 ===== -->
+  <div class="modal-overlay" id="landing-stamp-modal" style="display:none;" onclick="if(event.target===this)closeModal('landing-stamp-modal')">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-header">
+      <h3 id="landing-stamp-modal-title">스탬프 코스 추가</h3>
+      <button class="modal-close" onclick="closeModal('landing-stamp-modal')">✕</button>
+    </div>
+    <div class="modal-body" style="max-height:75vh;overflow-y:auto;">
+      <div class="form-grid" style="grid-template-columns:1fr 1fr;">
+        <div class="form-group" style="grid-column:1/-1;"><label>코스명 (한글) *</label><input id="lst-name" placeholder="예: 온마을 데일리 코스"></div>
+        <div class="form-group"><label>코스명 (영문)</label><input id="lst-en" placeholder="DAILY COURSE"></div>
+        <div class="form-group"><label>링크 버튼 텍스트</label><input id="lst-link-text" placeholder="스탬프 패스 받기"></div>
+        <div class="form-group" style="grid-column:1/-1;"><label>설명</label>
+          <textarea id="lst-desc" rows="3" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;resize:vertical;" placeholder="카페·식당·체험·마트·수목원 6곳 방문 시 완성."></textarea>
+        </div>
+        <div class="form-group" style="grid-column:1/-1;"><label>링크 URL</label><input id="lst-link" placeholder="https://... 또는 빈칸"></div>
+        <div class="form-group" style="grid-column:1/-1;"><label>대표 이미지 URL</label>
+          <input id="lst-img" placeholder="images/img_cat_exp.png"
+            oninput="var p=document.getElementById('lst-img-preview'),i=document.getElementById('lst-img-preview-img');if(this.value){i.src=this.value;p.style.display='block';}else{p.style.display='none';}">
+          <div id="lst-img-preview" style="display:none;margin-top:8px;"><img id="lst-img-preview-img" style="width:100%;max-height:130px;object-fit:cover;border-radius:8px;border:1px solid var(--border);"></div>
+        </div>
+        <div class="form-group"><label>노출 순서</label><input id="lst-order" type="number" min="1" placeholder="1" style="width:100%;"></div>
+        <div class="form-group"><label>공개 여부</label>
+          <select id="lst-active" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;background:#fff;">
+            <option value="true">✅ 공개</option><option value="false">⬜ 비공개</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('landing-stamp-modal')">취소</button>
+      <button class="btn btn-primary" onclick="saveLandingStamp()">저장</button>
+    </div>
+  </div>
+  </div>
+
 <div class="modal-overlay" id="m01-modal">
   <div class="modal">
     <div class="modal-header">
@@ -5741,7 +5786,7 @@ function _safeText(id, val){ const el=document.getElementById(id); if(el) el.tex
 
 function switchLandingTab(tab) {
   _landingCurrentTab = tab;
-  ['sections','exp','coop','suwon','cats'].forEach(t => {
+  ['sections','exp','coop','suwon','stamp','cats'].forEach(t => {
     const panel = document.getElementById('lpanel-' + t);
     const btn   = document.getElementById('ltab-' + t);
     if(panel) panel.style.display = t===tab ? 'block' : 'none';
@@ -5753,7 +5798,7 @@ function switchLandingTab(tab) {
   });
   const labels = {
     sections:'+ 섹션탭 추가', exp:'+ 체험 추가', coop:'+ 가맹점 추가',
-    suwon:'+ 카드 추가', cats:'+ 업종 추가'
+    suwon:'+ 카드 추가', stamp:'+ 코스 추가', cats:'+ 업종 추가'
   };
   const addBtn = document.getElementById('landing-add-btn');
   if(addBtn) addBtn.textContent = labels[tab] || '+ 추가';
@@ -5765,6 +5810,7 @@ function openLandingAddCurrent() {
   else if(_landingCurrentTab==='exp')  openLandingExpAdd();
   else if(_landingCurrentTab==='coop') openLandingAdd();
   else if(_landingCurrentTab==='suwon')openLandingSuwonAdd();
+  else if(_landingCurrentTab==='stamp')openLandingStampAdd();
   else if(_landingCurrentTab==='cats') openLandingCatAdd();
 }
 
@@ -5829,6 +5875,7 @@ async function renderLandingManager(){
       _renderLandingExp(),
       _renderLandingCoops(),
       _renderLandingSuwon(),
+      _renderLandingStamp(),
       _renderLandingCats(),
     ]);
     switchLandingTab(_landingCurrentTab);
@@ -5952,6 +5999,106 @@ async function _renderLandingSuwon(){
       <div style="text-align:center;padding:10px;font-size:12px;color:var(--text-muted);">총 ${items.length}개</div>`;
   }catch(e){ if(listEl) listEl.innerHTML=`<div style="color:#e53935;padding:20px;">오류: ${e.message}</div>`; }
 }
+
+// ══ 스탬프투어 목록 렌더 ════════════════════════════════
+async function _renderLandingStamp(){
+  const listEl = document.getElementById('landing-stamp-list');
+  if(!listEl) return;
+  showLoading('스탬프투어 불러오는 중...');
+  try{
+    const snap = await db.collection('landing_stamp').orderBy('order','asc').get()
+      .catch(()=>db.collection('landing_stamp').get());
+    const items = snap.docs.map(d=>({...d.data(),__id:d.id}))
+      .sort((a,b)=>(a.order||99)-(b.order||99));
+    if(!items.length){
+      listEl.innerHTML='<div style="text-align:center;padding:32px;color:var(--text-muted);">등록된 스탬프 코스가 없습니다.<br><span style="font-size:12px;">+ 코스 추가 버튼을 눌러 등록하세요.</span></div>';
+      return;
+    }
+    listEl.innerHTML=`<table class="table" style="width:100%;"><thead><tr>
+      <th>#</th><th>코스명</th><th>영문명</th><th>설명</th><th>버튼텍스트</th><th>순서</th><th>공개</th><th style="width:110px;">작업</th>
+    </tr></thead><tbody>${items.map(s=>`
+      <tr>
+        <td style="font-size:12px;color:var(--text-muted);">${s.order||'-'}</td>
+        <td style="font-weight:600;">${s.name||'-'}</td>
+        <td style="font-size:12px;color:var(--text-muted);">${s.en||'-'}</td>
+        <td style="font-size:12px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.desc||'-'}</td>
+        <td style="font-size:12px;">${s.linkText||'-'}</td>
+        <td style="text-align:center;">${s.order||'-'}</td>
+        <td style="text-align:center;">${s.active!==false?'✅':'⬜'}</td>
+        <td>
+          <button class="btn btn-ghost btn-sm" onclick="openLandingStampEdit('${s.__id}')">수정</button>
+          <button class="btn btn-sm" style="background:#e53935;color:#fff;border:none;border-radius:6px;padding:4px 10px;cursor:pointer;" onclick="deleteLandingStamp('${s.__id}','${(s.name||'').replace(/'/g,'\'')}')">삭제</button>
+        </td>
+      </tr>
+    `).join('')}</tbody></table>
+    <div style="text-align:center;padding:8px;font-size:12px;color:var(--text-muted);">총 ${items.length}개 · landing_stamp 컬렉션 관리</div>`;
+  }catch(e){
+    listEl.innerHTML=`<div style="color:#e53935;padding:20px;">오류: ${e.message}</div>`;
+  }finally{ hideLoading(); }
+}
+
+let _landingStampEditId = null;
+function openLandingStampAdd(){
+  _landingStampEditId = null;
+  _safeText('landing-stamp-modal-title','스탬프 코스 추가');
+  ['lst-name','lst-en','lst-desc','lst-img','lst-link','lst-link-text','lst-order'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  const act=document.getElementById('lst-active'); if(act) act.value='true';
+  const prev=document.getElementById('lst-img-preview'); if(prev) prev.style.display='none';
+  openModal('landing-stamp-modal');
+}
+function openLandingStampEdit(docId){
+  db.collection('landing_stamp').doc(docId).get().then(doc=>{
+    if(!doc.exists) return;
+    const s=doc.data();
+    _landingStampEditId=docId;
+    _safeText('landing-stamp-modal-title','스탬프 코스 수정');
+    const set=(id,v)=>{const el=document.getElementById(id);if(el)el.value=v||'';};
+    set('lst-name',s.name); set('lst-en',s.en); set('lst-desc',s.desc);
+    set('lst-img',s.img);   set('lst-link',s.link); set('lst-link-text',s.linkText);
+    set('lst-order',s.order||'');
+    const act=document.getElementById('lst-active'); if(act) act.value=s.active===false?'false':'true';
+    const prev=document.getElementById('lst-img-preview');
+    const prevImg=document.getElementById('lst-img-preview-img');
+    if(prev&&prevImg&&s.img){prevImg.src=s.img;prev.style.display='block';}
+    openModal('landing-stamp-modal');
+  });
+}
+async function saveLandingStamp(){
+  const name=document.getElementById('lst-name').value.trim();
+  if(!name){alert('코스명을 입력하세요.');return;}
+  showLoading('저장 중...');
+  try{
+    const data={
+      name, en:document.getElementById('lst-en').value.trim(),
+      desc:document.getElementById('lst-desc').value.trim(),
+      img:document.getElementById('lst-img').value.trim(),
+      link:document.getElementById('lst-link').value.trim(),
+      linkText:document.getElementById('lst-link-text').value.trim()||'자세히 보기',
+      order:parseInt(document.getElementById('lst-order').value)||99,
+      active:document.getElementById('lst-active').value==='true',
+      updatedAt:new Date().toISOString(),
+    };
+    if(_landingStampEditId){ await db.collection('landing_stamp').doc(_landingStampEditId).update(data); }
+    else{ data.createdAt=new Date().toISOString(); await db.collection('landing_stamp').add(data); }
+    closeModal('landing-stamp-modal');
+    await _renderLandingStamp();
+    showToast(`✅ "${name}" 저장 완료!`,'success');
+  }catch(e){alert('저장 실패: '+e.message);}
+  finally{hideLoading();}
+}
+async function deleteLandingStamp(docId, name){
+  if(!confirm(`"${name}" 코스를 삭제하시겠습니까?`)) return;
+  showLoading('삭제 중...');
+  try{
+    await db.collection('landing_stamp').doc(docId).delete();
+    await _renderLandingStamp();
+    showToast('삭제 완료','success');
+  }catch(e){alert('삭제 실패: '+e.message);}
+  finally{hideLoading();}
+}
+
 
 // ── 대형 섹션탭(landing_sections) 렌더 ──
 const LANDING_DEFAULT_SECTIONS = [
