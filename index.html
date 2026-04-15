@@ -2633,7 +2633,18 @@ async function renderExpCards() {
       items = snap.docs.map(d=>d.data()).filter(s=>s.active!==false).sort((a,b)=>(a.order||99)-(b.order||99));
     }
   } catch(e) { console.warn('landing_exp 로드 실패:', e.message); }
-  if (!items.length) items = EXP_FALLBACK;
+  // Firestore 데이터와 FALLBACK 병합 — Firestore에 없는 항목은 FALLBACK으로 보완
+  if (!items.length) {
+    items = EXP_FALLBACK;
+  } else {
+    // Firestore에 있는 reserve명 목록
+    var existNames = new Set(items.map(function(i){ return (i.reserve||i.name); }));
+    // FALLBACK에서 누락된 항목 보완
+    EXP_FALLBACK.forEach(function(f){
+      if (!existNames.has(f.reserve||f.name)) items.push(f);
+    });
+    items.sort(function(a,b){ return (a.order||99)-(b.order||99); });
+  }
 
   const loading = document.getElementById('exp-cards-loading');
   if (loading) loading.remove();
@@ -2898,17 +2909,27 @@ async function renderStampCards() {
     const card = document.createElement('div');
     card.className = 'coop-card';
     const descHtml = (s.desc||'').replace(/\n/g,'<br>');
-    const btnHtml = s.link
-      ? '<a href="' + s.link + '" target="_blank" rel="noopener" class="coop-card-btn">' + (s.linkText||'자세히 보기') + '</a>'
-      : '<button class="coop-card-btn" onclick="alert(&quot;스테이패스 QR을 제시하세요&quot;)">' + (s.linkText||'안내 보기') + '</button>';
-    card.innerHTML =
-      '<img class="coop-card-img" src="' + (s.img||'images/img_cat_exp.png') + '" alt="' + s.name + '" onerror="this.src=&quot;images/img_cat_exp.png&quot;">' +
-      '<div class="coop-card-body">' +
-        '<span class="coop-card-en">' + (s.en||'') + '</span>' +
-        '<div class="coop-card-name">' + s.name + '</div>' +
-        '<p class="coop-card-desc">' + descHtml + '</p>' +
-        btnHtml +
-      '</div>';
+    const btn = document.createElement('button');
+    btn.className = 'btn-exp-reserve';
+    btn.textContent = s.linkText || (s.link ? '자세히 보기' : '스테이패스 신청');
+    if (s.link) {
+      btn.onclick = function(){ window.open(s.link, '_blank', 'noopener'); };
+    } else {
+      btn.onclick = function(){ if(window.startBookingFrom) window.startBookingFrom(s.name); };
+    }
+    const img = document.createElement('img');
+    img.className = 'coop-card-img';
+    img.src = s.img || 'images/img_cat_exp.png';
+    img.alt = s.name;
+    img.onerror = function(){ this.src='images/img_cat_exp.png'; };
+
+    const body = document.createElement('div');
+    body.className = 'coop-card-body';
+    const enEl = document.createElement('span'); enEl.className='coop-card-en'; enEl.textContent=s.en||'';
+    const nameEl = document.createElement('div'); nameEl.className='coop-card-name'; nameEl.textContent=s.name;
+    const descEl = document.createElement('p');   descEl.className='coop-card-desc'; descEl.innerHTML=descHtml;
+    body.appendChild(enEl); body.appendChild(nameEl); body.appendChild(descEl); body.appendChild(btn);
+    card.appendChild(img); card.appendChild(body);
     grid.appendChild(card);
   });
 }
