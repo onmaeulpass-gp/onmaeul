@@ -2621,8 +2621,8 @@ async function renderExpCards() {
 
   const EXP_FALLBACK = [
     { name:'먹다 · 잣 체험',  en:'Pine Nut Cooking', desc:'힐링숲에서 직접 수확한 잣으로 쿠키, 전병, 아이스크림을 만들어 보는 요리 프로그램.', img:'images/img_02.jpg', tags:'잣 쿠키 · 20,000원,잣 전병 · 15,000원,잣 아이스크림 · 10,000원', reserve:'먹다 · 잣 체험', order:1 },
-    { name:'만들다 · 공예',    en:'Forest Craft',    desc:'힐링숲을 테마로 나만의 작품을 만드는 공예 프로그램.', img:'images/img_03.jpg', tags:'다육아트 · 25,000원,테라리움 · 25,000원', reserve:'만들다 · 공예', order:2 },
-    { name:'느끼다 · 힐링숲',  en:'Forest Healing',  desc:'잣나무와 전나무 가득한 숲 속에서 자연 생태체험을 경험하세요.', img:'images/img_04.jpg', tags:'에코티어링 · 15,000원,자연 생태체험 · 20,000원', reserve:'느끼다 · 힐링숲', order:3 },
+    { name:'만들다 · 공예',   en:'Forest Craft',     desc:'힐링숲을 테마로 나만의 작품을 만드는 공예 프로그램. 다육아트, 테라리움, 비누 등.', img:'images/img_03.jpg', tags:'다육아트 · 25,000원,테라리움 · 25,000원', reserve:'만들다 · 공예', order:2 },
+    { name:'느끼다 · 힐링숲', en:'Forest Healing',   desc:'잣나무와 전나무 가득한 숲 속에서 에코티어링, 잣줍기 등 자연 생태체험을 경험하세요.', img:'images/img_04.jpg', tags:'에코티어링 · 15,000원,자연 생태체험 · 20,000원', reserve:'느끼다 · 힐링숲', order:3 },
   ];
 
   let items = [];
@@ -2630,201 +2630,110 @@ async function renderExpCards() {
     if (window._fbDB) {
       const snap = await window._fbDB.collection('landing_exp').orderBy('order','asc').get()
         .catch(() => window._fbDB.collection('landing_exp').get());
-      items = snap.docs.map(d=>d.data()).filter(s=>s.active!==false).sort((a,b)=>(a.order||99)-(b.order||99));
+      items = snap.docs.map(d => d.data()).filter(s => s.active !== false)
+                  .sort((a,b) => (a.order||99) - (b.order||99));
     }
   } catch(e) { console.warn('landing_exp 로드 실패:', e.message); }
-  // Firestore 데이터와 FALLBACK 병합 — Firestore에 없는 항목은 FALLBACK으로 보완
+
+  // Firestore + FALLBACK 병합 (중복 제거)
   if (!items.length) {
     items = EXP_FALLBACK;
   } else {
-    // Firestore에 있는 reserve명 목록
-    var existNames = new Set(items.map(function(i){ return (i.reserve||i.name); }));
-    // FALLBACK에서 누락된 항목 보완
-    EXP_FALLBACK.forEach(function(f){
-      if (!existNames.has(f.reserve||f.name)) items.push(f);
-    });
-    items.sort(function(a,b){ return (a.order||99)-(b.order||99); });
+    const existNames = new Set(items.map(i => i.reserve || i.name));
+    EXP_FALLBACK.forEach(f => { if (!existNames.has(f.reserve || f.name)) items.push(f); });
+    items.sort((a,b) => (a.order||99) - (b.order||99));
   }
 
   const loading = document.getElementById('exp-cards-loading');
   if (loading) loading.remove();
 
+  // 기존 카드/드로어 제거 (재렌더 시 중복 방지)
+  grid.querySelectorAll('.exp-card, .exp-inline-drawer').forEach(el => el.remove());
+
   items.forEach(function(s, idx) {
-    var rn   = s.reserve || s.name;
-    var tags = (s.tags||'').split(',').map(function(t){ return t.trim(); }).filter(Boolean);
+    const rn   = (s.reserve || s.name || '').trim();
+    const tags = (s.tags || '').split(',').map(t => t.trim()).filter(Boolean);
+    const num  = '0' + (idx + 1);
+    const safeRn = rn.replace(/"/g, '&quot;');
 
     /* ── 카드 ── */
-    var card = document.createElement('div');
+    const card = document.createElement('div');
     card.className = 'exp-card';
+    card.innerHTML =
+      `<img class="exp-card-img" src="${s.img || 'images/img_02.jpg'}" alt="${s.name || ''}">`+
+      `<div class="exp-card-inner exp-card-body">`+
+        `<span class="exp-num" style="font-family:'DM Sans',sans-serif;font-size:.72rem;letter-spacing:.18em;color:var(--gold);margin-bottom:6px;display:block;">${num}</span>`+
+        `<span class="exp-name">${s.name || ''}</span>`+
+        `<span class="exp-en">${s.en || ''}</span>`+
+        `<p class="exp-desc">${s.desc || ''}</p>`+
+        (tags.length ? `<div class="exp-tags">${tags.map(t=>`<span class="exp-tag">${t}</span>`).join('')}</div>` : '')+
+        `<button class="btn-exp-reserve" data-prog="${safeRn}">예약 신청하기</button>`+
+      `</div>`;
 
-    var img = document.createElement('img');
-    img.className = 'exp-card-img';
-    img.src = s.img || 'images/img_02.jpg';
-    img.alt = s.name;
-    img.onerror = function(){ this.src = 'images/img_02.jpg'; };
+    // onerror 이벤트 — DOM으로만 (innerHTML 충돌 방지)
+    card.querySelector('img').onerror = function(){ this.src='images/img_02.jpg'; };
+    // 예약 버튼 클릭
+    card.querySelector('.btn-exp-reserve').addEventListener('click', (function(r){
+      return function(){ if(window.startBookingFrom) window.startBookingFrom(r); };
+    })(rn));
 
-    var body = document.createElement('div');
-    body.className = 'exp-card-inner exp-card-body';
-
-    var numEl = document.createElement('span');
-    numEl.className = 'exp-num';
-    numEl.style.cssText = 'font-family:"DM Sans",sans-serif;font-size:0.72rem;letter-spacing:0.18em;color:var(--gold);margin-bottom:6px;display:block;';
-    numEl.textContent = '0' + (idx + 1);
-
-    var nameEl = document.createElement('span'); nameEl.className='exp-name'; nameEl.textContent=s.name;
-    var enEl   = document.createElement('span'); enEl.className='exp-en';   enEl.textContent=s.en||'';
-    var descEl = document.createElement('p');    descEl.className='exp-desc'; descEl.textContent=s.desc||'';
-
-    body.appendChild(numEl); body.appendChild(nameEl); body.appendChild(enEl); body.appendChild(descEl);
-
-    if (tags.length) {
-      var tw = document.createElement('div'); tw.className='exp-tags';
-      tags.forEach(function(t){ var sp=document.createElement('span'); sp.className='exp-tag'; sp.textContent=t; tw.appendChild(sp); });
-      body.appendChild(tw);
-    }
-
-    var reserveBtn = document.createElement('button');
-    reserveBtn.className = 'btn-exp-reserve';
-    reserveBtn.textContent = '예약 신청하기';
-    reserveBtn.addEventListener('click', (function(r){ return function(){ if(window.startBookingFrom) window.startBookingFrom(r); }; })(rn));
-    body.appendChild(reserveBtn);
-
-    card.appendChild(img); card.appendChild(body);
     grid.appendChild(card);
 
-    /* ── 인라인 드로어 — 원본 CSS 클래스 사용 ── */
-    var drawer = document.createElement('div');
+    /* ── 인라인 드로어 ── */
+    const today = new Date();
+    const todayStr = today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+
+    const drawer = document.createElement('div');
     drawer.className = 'exp-inline-drawer';
     drawer.dataset.prog = rn;
+    drawer.innerHTML =
+      `<div class="drawer-inner">`+
+        `<div class="drawer-steps">`+
+          `<span class="drawer-step-ind active">정보 입력</span>`+
+          `<span class="drawer-step-line"></span>`+
+          `<span class="drawer-step-ind">신청 완료</span>`+
+        `</div>`+
+        `<div class="drawer-panel active">`+
+          `<div class="drawer-selected-badge"><span style="color:var(--gold)">♦ </span>${s.name || ''}</div>`+
+          `<div class="drawer-fields">`+
+            `<div class="drawer-field-row">`+
+              `<div class="drawer-field"><label>예약자 이름 * <em style="font-family:'DM Sans',sans-serif;letter-spacing:.08em;opacity:.55;font-style:normal;font-size:.65rem;">NAME</em></label><input class="form-input d-name" type="text" placeholder="홍길동"><div class="form-error"></div></div>`+
+              `<div class="drawer-field"><label>연락처 * <em style="font-family:'DM Sans',sans-serif;letter-spacing:.08em;opacity:.55;font-style:normal;font-size:.65rem;">PHONE</em></label><input class="form-input d-phone" type="tel" placeholder="010-0000-0000"><div class="form-error"></div></div>`+
+            `</div>`+
+            `<div class="drawer-field-row">`+
+              `<div class="drawer-field"><label>희망 날짜 * <em style="font-family:'DM Sans',sans-serif;letter-spacing:.08em;opacity:.55;font-style:normal;font-size:.65rem;">DATE</em></label>`+
+                `<div style="position:relative;display:flex;align-items:center;"><span style="position:absolute;left:12px;font-size:15px;pointer-events:none;z-index:1;">📅</span><input class="form-input d-date" type="date" min="${todayStr}" style="padding-left:36px;"></div>`+
+                `<div class="form-error"></div></div>`+
+              `<div class="drawer-field"><label>인원 * <em style="font-family:'DM Sans',sans-serif;letter-spacing:.08em;opacity:.55;font-style:normal;font-size:.65rem;">GUESTS</em></label>`+
+                `<select class="form-select d-people"><option value="">선택</option><option>1명</option><option>2명</option><option>3명</option><option>4명</option><option>5명</option><option value="6명 이상">6명 이상</option></select>`+
+                `<div class="form-error"></div></div>`+
+            `</div>`+
+            `<div class="drawer-field"><label>메모 (선택) <em style="font-family:'DM Sans',sans-serif;letter-spacing:.08em;opacity:.55;font-style:normal;font-size:.65rem;">NOTE (OPTIONAL)</em></label><textarea class="form-input d-memo" rows="2" placeholder="알레르기, 특이사항 등"></textarea></div>`+
+          `</div>`+
+          `<div class="drawer-actions">`+
+            `<button class="btn-booking-cancel" data-action="cancel">취소</button>`+
+            `<button class="btn-booking-next d-submit-btn" data-action="submit">신청 완료하기</button>`+
+          `</div>`+
+        `</div>`+
+        `<div class="drawer-panel">`+
+          `<div class="booking-done-icon">✓</div>`+
+          `<div class="booking-done-title">예약 신청이 완료되었습니다</div>`+
+          `<div class="booking-done-sub">담당자 확인 후 연락드리겠습니다.</div>`+
+          `<div class="booking-done-info d-done-info"></div>`+
+          `<div class="drawer-actions"><button class="btn-booking-next" data-action="close">닫기</button></div>`+
+        `</div>`+
+      `</div>`;
 
-    var inner = document.createElement('div');
-    inner.className = 'drawer-inner';
-
-    /* 스텝 인디케이터 */
-    var stepsEl = document.createElement('div'); stepsEl.className='drawer-steps';
-    var si1 = document.createElement('span'); si1.className='drawer-step-ind active'; si1.textContent='정보 입력';
-    var sl  = document.createElement('span'); sl.className='drawer-step-line';
-    var si2 = document.createElement('span'); si2.className='drawer-step-ind'; si2.textContent='신청 완료';
-    stepsEl.appendChild(si1); stepsEl.appendChild(sl); stepsEl.appendChild(si2);
-    inner.appendChild(stepsEl);
-
-    /* 패널 1 — 입력폼 */
-    var p1 = document.createElement('div'); p1.className='drawer-panel active';
-
-    /* 선택 프로그램 배지 */
-    var badge = document.createElement('div'); badge.className='drawer-selected-badge';
-    var diamond = document.createElement('span'); diamond.textContent='♦ '; diamond.style.color='var(--gold)';
-    badge.appendChild(diamond); badge.appendChild(document.createTextNode(rn));
-
-    /* 필드 그리드 */
-    var fields = document.createElement('div'); fields.className='drawer-fields';
-
-    /* 이름 + 연락처 (2컬럼 행) */
-    var row1 = document.createElement('div'); row1.className='drawer-field-row';
-
-    function makeField(labelKo, labelEn, inputTag, cls, inputType, ph) {
-      var wrap = document.createElement('div'); wrap.className='drawer-field';
-      var lbl  = document.createElement('label');
-            lbl.textContent = labelKo + ' ';
-      var em = document.createElement('em');
-      em.textContent = labelEn;
-      em.style.fontFamily = '"DM Sans",sans-serif';
-      em.style.letterSpacing = '.08em';
-      em.style.opacity = '.55';
-      em.style.fontStyle = 'normal';
-      em.style.fontSize = '.65rem';
-      lbl.appendChild(em);
-      var el = document.createElement(inputTag);
-      el.className = 'form-input ' + cls;
-      if(inputType) el.type = inputType;
-      if(ph)        el.placeholder = ph;
-      var err = document.createElement('div'); err.className='form-error';
-      wrap.appendChild(lbl); wrap.appendChild(el); wrap.appendChild(err);
-      return wrap;
-    }
-
-    row1.appendChild(makeField('예약자 이름 *','NAME','input','d-name','text','홍길동'));
-    row1.appendChild(makeField('연락처 *','PHONE','input','d-phone','tel','010-0000-0000'));
-
-    /* 날짜 + 인원 (2컬럼 행) */
-    var row2 = document.createElement('div'); row2.className='drawer-field-row';
-
-    /* 날짜 필드 — 달력 이모지 앞에 배치 */
-    var dateFld = makeField('희망 날짜 *','DATE','input','d-date','date','');
-    var dateInp = dateFld.querySelector('.d-date');
-    var dateWrap = document.createElement('div');
-    dateWrap.style.cssText = 'position:relative;display:flex;align-items:center;';
-    var calIcon = document.createElement('span');
-    calIcon.textContent = '📅';
-    calIcon.style.cssText = 'position:absolute;left:12px;font-size:15px;pointer-events:none;z-index:1;';
-    dateInp.style.paddingLeft = '36px';
-    dateWrap.appendChild(calIcon);
-    dateWrap.appendChild(dateInp);
-    /* err 요소는 wrap 밖으로 이동 */
-    var dateErr = dateFld.querySelector('.form-error');
-    dateFld.replaceChild(dateWrap, dateInp);
-    dateFld.appendChild(dateErr);
-    row2.appendChild(dateFld);
-
-    var peopleFld = document.createElement('div'); peopleFld.className='drawer-field';
-    var pLbl = document.createElement('label');
-    pLbl.textContent = '인원 * ';
-    var _em_pLbl = document.createElement('em');
-    _em_pLbl.textContent = 'GUESTS';
-    _em_pLbl.style.cssText = 'font-family:"DM Sans",sans-serif;letter-spacing:.08em;opacity:.55;font-style:normal;font-size:.65rem;';
-    pLbl.appendChild(_em_pLbl)
-    var pSel = document.createElement('select'); pSel.className='form-select d-people';
-    ['선택','1명','2명','3명','4명','5명','6명 이상'].forEach(function(v,i){
-      var o=document.createElement('option'); o.value=i===0?'':v; o.textContent=v; pSel.appendChild(o);
+    // 버튼 이벤트 — data-action으로 처리 (따옴표 충돌 없음)
+    drawer.querySelectorAll('[data-action]').forEach(function(btn){
+      btn.addEventListener('click', (function(r, act){
+        return function(){
+          if(act==='cancel'||act==='close'){ if(window.closeDrawer) window.closeDrawer(r); }
+          else if(act==='submit'){ if(window.submitDrawer) window.submitDrawer(r); }
+        };
+      })(rn, btn.dataset.action));
     });
-    var pErr = document.createElement('div'); pErr.className='form-error';
-    peopleFld.appendChild(pLbl); peopleFld.appendChild(pSel); peopleFld.appendChild(pErr);
-    row2.appendChild(peopleFld);
 
-    /* 메모 (전체 폭) */
-    var memoFld = document.createElement('div'); memoFld.className='drawer-field';
-    var mLbl = document.createElement('label');
-    mLbl.textContent = '메모 (선택) ';
-    var _em_mLbl = document.createElement('em');
-    _em_mLbl.textContent = 'NOTE (OPTIONAL)';
-    _em_mLbl.style.cssText = 'font-family:"DM Sans",sans-serif;letter-spacing:.08em;opacity:.55;font-style:normal;font-size:.65rem;';
-    mLbl.appendChild(_em_mLbl)
-    var mTa = document.createElement('textarea'); mTa.className='form-input d-memo'; mTa.rows=2; mTa.placeholder='알레르기, 특이사항 등';
-    memoFld.appendChild(mLbl); memoFld.appendChild(mTa);
-
-    fields.appendChild(row1); fields.appendChild(row2); fields.appendChild(memoFld);
-
-    /* 액션 버튼 */
-    var actions = document.createElement('div'); actions.className='drawer-actions';
-    var cancelBtn = document.createElement('button');
-    cancelBtn.className = 'btn-booking-cancel';
-    cancelBtn.textContent = '취소';
-    cancelBtn.style.cssText = 'padding:12px 24px;background:transparent;border:1px solid rgba(184,150,90,0.3);color:rgba(250,247,242,0.6);font-family:"DM Sans",sans-serif;font-size:.8rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:2px;transition:all .2s;';
-    cancelBtn.addEventListener('click', (function(r){ return function(){ if(window.closeDrawer) window.closeDrawer(r); }; })(rn));
-    var submitBtn = document.createElement('button');
-    submitBtn.className = 'btn-booking-next d-submit-btn';
-    submitBtn.textContent = '신청 완료하기';
-    submitBtn.addEventListener('click', (function(r){ return function(){ if(window.submitDrawer) window.submitDrawer(r); }; })(rn));
-    actions.appendChild(cancelBtn); actions.appendChild(submitBtn);
-
-    p1.appendChild(badge); p1.appendChild(fields); p1.appendChild(actions);
-    inner.appendChild(p1);
-
-    /* 패널 2 — 완료 */
-    var p2 = document.createElement('div'); p2.className='drawer-panel';
-    var doneIcon  = document.createElement('div'); doneIcon.className='booking-done-icon'; doneIcon.textContent='✓';
-    var doneTitle = document.createElement('div'); doneTitle.className='booking-done-title'; doneTitle.textContent='예약 신청이 완료되었습니다';
-    var doneSub   = document.createElement('div'); doneSub.className='booking-done-sub'; doneSub.textContent='담당자 확인 후 연락드리겠습니다.';
-    var doneInfo  = document.createElement('div'); doneInfo.className='booking-done-info d-done-info';
-    var doneAct   = document.createElement('div'); doneAct.className='drawer-actions';
-    var closeBtn2 = document.createElement('button');
-    closeBtn2.className='btn-booking-next'; closeBtn2.textContent='닫기';
-    closeBtn2.addEventListener('click', (function(r){ return function(){ if(window.closeDrawer) window.closeDrawer(r); }; })(rn));
-    doneAct.appendChild(closeBtn2);
-    p2.appendChild(doneIcon); p2.appendChild(doneTitle); p2.appendChild(doneSub); p2.appendChild(doneInfo); p2.appendChild(doneAct);
-    inner.appendChild(p2);
-
-    drawer.appendChild(inner);
     grid.appendChild(drawer);
   });
 }
