@@ -1779,7 +1779,7 @@ body.has-weather .hero-content { padding-top: 136px; }
   background: transparent;
   border: none;
   color: var(--gold);
-  font-size: 1.1rem;
+  font-size: 2.75rem;
   font-weight: 700;
   line-height: 1;
   cursor: pointer;
@@ -2728,7 +2728,7 @@ async function renderExpCards() {
             `</div>`+
             `<div class="drawer-field-row">`+
               `<div class="drawer-field"><label>희망 날짜 * <em style="font-family:'DM Sans',sans-serif;letter-spacing:.08em;opacity:.55;font-style:normal;font-size:.65rem;">DATE</em></label>`+
-                `<div class="date-input-wrap"><button type="button" class="date-icon-btn" onclick="var inp=this.nextElementSibling;if(inp.showPicker)inp.showPicker();else inp.click();" title="달력 열기">📅</button><input class="form-input d-date" type="date" min="${todayStr}"></div>`+
+                `<div style="position:relative;display:flex;align-items:center;"><span style="position:absolute;left:12px;font-size:15px;pointer-events:none;z-index:1;">📅</span><input class="form-input d-date" type="date" min="${todayStr}" style="padding-left:36px;"></div>`+
                 `<div class="form-error"></div></div>`+
               `<div class="drawer-field"><label>인원 * <em style="font-family:'DM Sans',sans-serif;letter-spacing:.08em;opacity:.55;font-style:normal;font-size:.65rem;">GUESTS</em></label>`+
                 `<select class="form-select d-people"><option value="">선택</option><option>1명</option><option>2명</option><option>3명</option><option>4명</option><option>5명</option><option value="6명 이상">6명 이상</option></select>`+
