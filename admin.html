@@ -7689,29 +7689,150 @@ async function showPassDetail(custId){
   const body = document.getElementById('m09-detail-body');
   if(!panel||!body) return;
 
+  // ── 스탬프 데이터 계산 ──
+  const stampTotal = Number(c.stampTotal || cnt || 0);
+  const today      = new Date().toISOString().split('T')[0];
+  const todayCoops = new Set(myVisits.filter(v=>v.visitDate===today).map(v=>String(v.coopId)));
+  const dailyDone  = todayCoops.size;
+  const stayDone   = Math.min(stampTotal, STAMP_CONFIG.stay_target);
+  const tierInfo   = _getCustomerTier(stampTotal);
+
+  // 유효 쿠폰 조회
+  let validCoupons = [];
+  try {
+    const cSnap = await db.collection('coupons')
+      .where('customerId','==',String(c.id)).get()
+      .catch(()=>db.collection('coupons').get());
+    validCoupons = cSnap.docs.map(d=>d.data())
+      .filter(cp=>cp.customerId===String(c.id)&&!cp.used&&(cp.validUntil||'9999')>=today);
+  } catch(e){}
+
+  const TLAB  = {daily:'🌅 데일리',stay:'🌳 스테이',revisit:'🔄 재방문',season:'🌸 시즌'};
+  const TCOL  = {daily:'#e3ede7',stay:'#fdf0d5',revisit:'#e6f1fb',season:'#eeedfe'};
+
+  // ── 스탬프 칸 렌더 헬퍼 ──
+  function stampCells(done, total, milestones=[]) {
+    return Array.from({length:total}, (_,i)=>{
+      const filled  = i < done;
+      const msLabel = milestones.find(m=>m.at===i+1);
+      return `<div style="
+        width:32px;height:32px;border-radius:50%;
+        background:${filled?'var(--primary)':'var(--bg2)'};
+        border:2px solid ${filled?'var(--primary)':'var(--border)'};
+        display:flex;align-items:center;justify-content:center;
+        font-size:${filled?'14px':'11px'};
+        color:${filled?'#fff':'var(--text-muted)'};
+        position:relative;transition:all .2s;
+        box-shadow:${filled?'0 2px 6px rgba(34,85,54,.25)':'none'};
+      " title="${msLabel?msLabel.label:''}">${filled?'✓':i+1}${msLabel?`<span style="position:absolute;top:-6px;right:-6px;font-size:14px;">${msLabel.icon}</span>`:''}
+      </div>`;
+    }).join('');
+  }
+
+  // 다음 혜택까지 거리
+  const MILESTONES = [
+    {stamps:5,  icon:'🌱', label:'새싹 → 초록 (할인 5%→10%)'},
+    {stamps:6,  icon:'🎁', label:'데일리 코스 완성! 15% 추가 쿠폰'},
+    {stamps:10, icon:'🏡', label:'스테이 코스 완성! 숙박권 쿠폰'},
+    {stamps:25, icon:'🌳', label:'숲 Gold 등급 (할인 20%)'},
+  ];
+  const nextMs = MILESTONES.filter(m=>m.stamps>stampTotal).sort((a,b)=>a.stamps-b.stamps)[0];
+
   body.innerHTML = `
-    <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;">
-      <div id="m09-qr-box" style="width:160px;flex-shrink:0;"></div>
-      <div style="flex:1;">
-        <h3 style="margin:0 0 4px;">${c.name} <span class="pass-tier ${tier.cls}">${tier.label}</span></h3>
-        <div style="color:var(--text-muted);font-size:13px;">${c.phone||'-'} &nbsp;·&nbsp; ${c.program||'-'}</div>
-        <div style="margin-top:8px;"><b>총 방문:</b> ${cnt}회 &nbsp;
-          ${tier.next?`<span style="color:var(--text-muted);font-size:12px;">다음 등급까지 ${tier.next}</span>`:'<span style="color:gold;">최상위 등급!</span>'}
+    <!-- ①  고객 헤더 -->
+    <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;margin-bottom:16px;">
+      <div id="m09-qr-box" style="width:140px;flex-shrink:0;"></div>
+      <div style="flex:1;min-width:160px;">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <h3 style="margin:0;">${c.name}</h3>
+          <span style="background:${tierInfo.label==='🌳'?'#e8f5e9':tierInfo.label==='🌿'?'#f0f7f0':'#f9f9f9'};
+            color:var(--primary);font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;border:1px solid var(--border);">
+            ${tierInfo.label} ${tierInfo.name} · 할인 ${tierInfo.rate}%
+          </span>
         </div>
-        <div style="margin-top:4px;font-size:12px;color:var(--text-muted);">패스: <code>${c.qrToken}</code></div>
-        <div style="margin-top:4px;font-size:12px;color:var(--text-muted);">발급일: ${c.passIssuedAt||'-'}</div>
+        <div style="color:var(--text-muted);font-size:13px;margin-top:4px;">${c.phone||'-'} · ${c.program||'-'}</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:3px;">누적 스탬프 <b style="color:var(--primary);font-size:15px;">${stampTotal}</b>개 · 총 방문 ${cnt}회</div>
+        ${nextMs?`<div style="margin-top:6px;background:#F1F8F4;border-radius:8px;padding:6px 10px;font-size:12px;color:var(--primary);display:inline-block;">
+          🎯 다음 혜택까지 <b>${nextMs.stamps-stampTotal}스탬프</b> → ${nextMs.icon} ${nextMs.label}
+        </div>`:'<div style="margin-top:6px;font-size:12px;color:#f9a825;">🏆 모든 혜택 달성!</div>'}
         <button class="btn btn-ghost btn-sm" style="margin-top:8px;" onclick="openPassSMS(${c.id},'${c.name}','${c.phone||''}','${c.qrToken}')">📱 SMS 발송</button>
       </div>
     </div>
-    <hr style="margin:12px 0;">
-    <b style="font-size:13px;">최근 방문 기록</b>
-    <div style="margin-top:8px;">
-      ${myVisits.slice(0,10).map(v=>`
-        <div class="visit-item">
-          <div><b>${v.coopName||'-'}</b> <span class="disc-badge">${v.discountRate||0}% 할인</span></div>
-          <div style="font-size:12px;color:var(--text-muted);">${v.visitDate} ${v.visitTime||''} · ${v.staffName||'-'}</div>
+
+    <!-- ② 스탬프 진행 시각화 -->
+    <div style="background:var(--bg2);border-radius:12px;padding:16px;margin-bottom:14px;">
+      <div style="font-size:12px;font-weight:700;color:var(--text-muted);letter-spacing:.05em;margin-bottom:12px;">STAMP PROGRESS</div>
+
+      <!-- 데일리 6칸 -->
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <span style="font-size:12px;font-weight:600;">🌅 데일리 코스 <span style="color:var(--text-muted);font-weight:400;">(오늘 ${dailyDone}/${STAMP_CONFIG.daily_target}곳)</span></span>
+          ${dailyDone>=STAMP_CONFIG.daily_target?'<span style="background:#e3ede7;color:var(--primary);font-size:11px;padding:2px 8px;border-radius:10px;font-weight:700;">🎉 완성! 15% 쿠폰 발급</span>':
+            `<span style="font-size:11px;color:var(--text-muted);">완성 시 15% 추가 할인 쿠폰</span>`}
         </div>
-      `).join('')||'<div style="color:var(--text-muted);">방문 기록 없음</div>'}
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          ${stampCells(dailyDone, STAMP_CONFIG.daily_target, [{at:STAMP_CONFIG.daily_target, icon:'🎁', label:'데일리 완성!'}])}
+        </div>
+      </div>
+
+      <!-- 스테이 10칸 -->
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <span style="font-size:12px;font-weight:600;">🌳 스테이 코스 <span style="color:var(--text-muted);font-weight:400;">(누적 ${stayDone}/${STAMP_CONFIG.stay_target}개)</span></span>
+          ${stayDone>=STAMP_CONFIG.stay_target?'<span style="background:#fdf0d5;color:#c68c00;font-size:11px;padding:2px 8px;border-radius:10px;font-weight:700;">🏡 완성! 숙박권 쿠폰 발급</span>':
+            `<span style="font-size:11px;color:var(--text-muted);">완성 시 숙박 1박 무료</span>`}
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          ${stampCells(stayDone, STAMP_CONFIG.stay_target, [{at:STAMP_CONFIG.stay_target, icon:'🏡', label:'스테이 완성!'}])}
+        </div>
+      </div>
+    </div>
+
+    <!-- ③ 등급 마일스톤 바 -->
+    <div style="margin-bottom:14px;">
+      <div style="font-size:12px;font-weight:700;color:var(--text-muted);letter-spacing:.05em;margin-bottom:10px;">MEMBERSHIP TIER</div>
+      <div style="position:relative;height:8px;background:var(--bg2);border-radius:4px;margin-bottom:24px;">
+        <div style="position:absolute;left:0;top:0;height:100%;border-radius:4px;
+          background:linear-gradient(90deg,var(--primary),#52b788);
+          width:${Math.min((stampTotal/25)*100,100)}%;transition:width .6s;"></div>
+        ${[{s:0,icon:'🌱',label:'새싹'},{s:5,icon:'🌿',label:'초록'},{s:25,icon:'🌳',label:'숲 Gold'}].map(m=>`
+          <div style="position:absolute;left:${Math.min((m.s/25)*100,100)}%;top:-18px;transform:translateX(-50%);text-align:center;">
+            <div style="font-size:16px;">${stampTotal>=m.s?m.icon:'○'}</div>
+            <div style="position:absolute;top:26px;left:50%;transform:translateX(-50%);font-size:10px;color:var(--text-muted);white-space:nowrap;">${m.label}</div>
+          </div>
+          <div style="position:absolute;left:${Math.min((m.s/25)*100,100)}%;top:50%;transform:translate(-50%,-50%);width:12px;height:12px;border-radius:50%;
+            background:${stampTotal>=m.s?'var(--primary)':'var(--bg2)'};border:2px solid ${stampTotal>=m.s?'var(--primary)':'var(--border)'};">
+          </div>
+        `).join('')}
+      </div>
+    </div>
+
+    <!-- ④ 유효 쿠폰 -->
+    ${validCoupons.length?`
+    <div style="margin-bottom:14px;">
+      <div style="font-size:12px;font-weight:700;color:var(--text-muted);letter-spacing:.05em;margin-bottom:8px;">ACTIVE COUPONS (${validCoupons.length})</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;">
+        ${validCoupons.slice(0,5).map(cp=>`
+          <div style="background:${TCOL[cp.type]||'#f5f5f5'};border-radius:10px;padding:8px 12px;font-size:12px;min-width:120px;">
+            <div style="font-weight:700;margin-bottom:2px;">${TLAB[cp.type]||cp.type}</div>
+            <div style="color:#555;">${cp.benefit||''}</div>
+            <div style="font-size:10px;color:#888;margin-top:3px;">~${(cp.validUntil||'').slice(0,10)}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>`:''}
+
+    <!-- ⑤ 최근 방문 기록 -->
+    <div style="font-size:13px;font-weight:600;margin-bottom:8px;color:var(--text);">최근 방문 기록</div>
+    <div>
+      ${myVisits.slice(0,8).map(v=>`
+        <div class="visit-item">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div><b>${v.coopName||'-'}</b> <span class="disc-badge">${v.discountRate||0}% 할인</span></div>
+            <div style="font-size:11px;color:var(--text-muted);">${v.visitDate}</div>
+          </div>
+        </div>
+      `).join('')||'<div style="color:var(--text-muted);font-size:13px;">방문 기록 없음</div>'}
     </div>
   `;
   panel.style.display='block';
