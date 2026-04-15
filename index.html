@@ -1773,6 +1773,22 @@ body.has-weather .hero-content { padding-top: 136px; }
 .drawer-inner .btn-booking-next:hover { background: var(--gold-pale); transform: translateY(-1px); }
 .drawer-inner .btn-booking-next:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
+.btn-booking-cancel {
+  width: auto !important;
+  padding: 12px 16px;
+  background: transparent;
+  border: none;
+  color: var(--gold);
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  opacity: .7;
+  transition: opacity .2s, transform .2s;
+  border-radius: 2px;
+}
+.btn-booking-cancel:hover { opacity: 1; transform: scale(1.15); }
+
 @media (max-width: 600px) {
   /* ── 예약 드로어 ── */
   .drawer-field-row { grid-template-columns: 1fr; }
@@ -2712,7 +2728,7 @@ async function renderExpCards() {
             `</div>`+
             `<div class="drawer-field-row">`+
               `<div class="drawer-field"><label>희망 날짜 * <em style="font-family:'DM Sans',sans-serif;letter-spacing:.08em;opacity:.55;font-style:normal;font-size:.65rem;">DATE</em></label>`+
-                `<div style="position:relative;display:flex;align-items:center;"><span style="position:absolute;left:12px;font-size:15px;pointer-events:none;z-index:1;">📅</span><input class="form-input d-date" type="date" min="${todayStr}" style="padding-left:36px;"></div>`+
+                `<div class="date-input-wrap"><button type="button" class="date-icon-btn" onclick="var inp=this.nextElementSibling;if(inp.showPicker)inp.showPicker();else inp.click();" title="달력 열기">📅</button><input class="form-input d-date" type="date" min="${todayStr}"></div>`+
                 `<div class="form-error"></div></div>`+
               `<div class="drawer-field"><label>인원 * <em style="font-family:'DM Sans',sans-serif;letter-spacing:.08em;opacity:.55;font-style:normal;font-size:.65rem;">GUESTS</em></label>`+
                 `<select class="form-select d-people"><option value="">선택</option><option>1명</option><option>2명</option><option>3명</option><option>4명</option><option>5명</option><option value="6명 이상">6명 이상</option></select>`+
@@ -2721,7 +2737,7 @@ async function renderExpCards() {
             `<div class="drawer-field"><label>메모 (선택) <em style="font-family:'DM Sans',sans-serif;letter-spacing:.08em;opacity:.55;font-style:normal;font-size:.65rem;">NOTE (OPTIONAL)</em></label><textarea class="form-input d-memo" rows="2" placeholder="알레르기, 특이사항 등"></textarea></div>`+
           `</div>`+
           `<div class="drawer-actions">`+
-            `<button class="btn-booking-cancel" data-action="cancel">취소</button>`+
+            `<button class="btn-booking-cancel" data-action="cancel" title="취소">✕</button>`+
             `<button class="btn-booking-next d-submit-btn" data-action="submit">신청 완료하기</button>`+
           `</div>`+
         `</div>`+
