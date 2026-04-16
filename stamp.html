@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="theme-color" content="#1B5E20">
+<title>온마을 스탬프투어 인증 · Stamp Tour</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@200;300;400&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=DM+Sans:wght@200;300;400&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{min-height:100vh;background:#0A120C;color:#F2EDE6;font-family:'Noto Sans KR','DM Sans',sans-serif;overflow-x:hidden;}
+
+.bg{position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse 80% 60% at 50% -10%,rgba(46,125,91,.4) 0%,transparent 65%),radial-gradient(ellipse 60% 40% at 0% 100%,rgba(27,94,63,.3) 0%,transparent 60%),linear-gradient(180deg,#080F09 0%,#0A120C 50%,#080F09 100%);}
+.grain{position:fixed;inset:0;z-index:1;opacity:.04;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");pointer-events:none;}
+
+.page{position:relative;z-index:2;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:0 20px 80px;}
+
+/* Header */
+.hdr{width:100%;max-width:480px;padding:40px 0 0;text-align:center;margin-bottom:28px;}
+.logo{display:inline-flex;align-items:center;gap:10px;margin-bottom:12px;}
+.logo-icon{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#2E7D5B,#3D6B4A);display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 4px 20px rgba(46,125,91,.45);}
+.logo-name{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:300;letter-spacing:.1em;color:#F2EDE6;}
+.logo-name em{color:#B8965A;font-style:italic;}
+.pg-title{font-family:'Noto Serif KR',serif;font-size:clamp(20px,5vw,26px);font-weight:200;color:#F2EDE6;letter-spacing:.04em;margin-bottom:4px;}
+.pg-sub{font-family:'DM Sans',sans-serif;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:rgba(184,150,90,.65);}
+
+/* Steps */
+.steps{display:flex;width:100%;max-width:480px;margin-bottom:24px;}
+.step{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;position:relative;}
+.step::after{content:'';position:absolute;top:13px;left:50%;width:100%;height:1px;background:rgba(184,150,90,.18);z-index:0;}
+.step:last-child::after{display:none;}
+.s-circle{width:27px;height:27px;border-radius:50%;border:1.5px solid rgba(184,150,90,.2);background:rgba(255,255,255,.04);display:flex;align-items:center;justify-content:center;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:500;color:rgba(242,237,230,.35);z-index:1;position:relative;transition:all .3s;}
+.s-circle.active{background:linear-gradient(135deg,#2E7D5B,#3D9970);border-color:#2E7D5B;color:#fff;box-shadow:0 0 14px rgba(46,125,91,.55);}
+.s-circle.done{background:rgba(46,125,91,.25);border-color:rgba(46,125,91,.5);color:#4CAF85;}
+.s-label{font-family:'DM Sans',sans-serif;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:rgba(184,150,90,.4);white-space:nowrap;}
+.step.active .s-label{color:rgba(184,150,90,.85);}
+.step.done .s-label{color:rgba(76,175,133,.65);}
+
+/* Card */
+.card{width:100%;max-width:480px;background:rgba(255,255,255,.035);border:1px solid rgba(184,150,90,.13);border-radius:20px;backdrop-filter:blur(10px);margin-bottom:14px;animation:fadeUp .45s ease both;}
+.ci{padding:26px 22px;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+/* Typography */
+.sec-eyebrow{font-family:'DM Sans',sans-serif;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:rgba(184,150,90,.6);margin-bottom:5px;display:block;}
+.sec-title{font-family:'Noto Serif KR',serif;font-size:19px;font-weight:300;color:#F2EDE6;margin-bottom:4px;}
+.sec-desc{font-size:12px;color:rgba(242,237,230,.48);line-height:1.85;margin-bottom:22px;}
+
+/* Input */
+.fld{margin-bottom:16px;}
+.flbl{font-family:'DM Sans',sans-serif;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:rgba(184,150,90,.65);margin-bottom:7px;display:block;}
+.finp{width:100%;padding:14px 18px;background:rgba(255,255,255,.05);border:1px solid rgba(184,150,90,.18);border-radius:10px;color:#F2EDE6;font-family:'Noto Sans KR',sans-serif;font-size:16px;outline:none;transition:border-color .2s,box-shadow .2s;-webkit-appearance:none;}
+.finp:focus{border-color:rgba(184,150,90,.5);box-shadow:0 0 0 3px rgba(184,150,90,.07);}
+.finp::placeholder{color:rgba(242,237,230,.18);}
+.fmsg{font-size:12px;margin-top:6px;min-height:16px;line-height:1.6;}
+.fmsg.err{color:#EF9A9A;} .fmsg.ok{color:#81C784;} .fmsg.info{color:rgba(242,237,230,.4);}
+
+/* Customer badge */
+.cbadge{display:flex;align-items:center;gap:12px;background:rgba(46,125,91,.1);border:1px solid rgba(46,125,91,.28);border-radius:12px;padding:13px 15px;margin-bottom:20px;}
+.cavatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#2E7D5B,#4A5240);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.cname{font-weight:600;font-size:14px;color:#F2EDE6;}
+.cmeta{font-size:11px;color:rgba(242,237,230,.45);margin-top:2px;}
+.cstamp{margin-left:auto;text-align:center;}
+.csnum{font-family:'DM Sans',sans-serif;font-size:24px;font-weight:200;color:#4CAF85;line-height:1;}
+.cslbl{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:rgba(242,237,230,.35);}
+
+/* Photo grid */
+.pgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px;}
+.pslot{border-radius:14px;overflow:hidden;border:1.5px dashed rgba(184,150,90,.22);background:rgba(255,255,255,.025);cursor:pointer;position:relative;min-height:136px;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:border-color .2s;}
+.pslot:active{transform:scale(.97);}
+.pslot.filled{border-style:solid;border-color:rgba(46,125,91,.55);}
+.pslot input[type=file]{display:none;}
+.snum{position:absolute;top:7px;left:9px;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);color:rgba(184,150,90,.85);font-family:'DM Sans',sans-serif;font-size:9px;font-weight:600;letter-spacing:.12em;padding:2px 6px;border-radius:7px;z-index:2;}
+.sprev{width:100%;height:136px;object-fit:cover;display:none;border-radius:13px;}
+.sph{display:flex;flex-direction:column;align-items:center;gap:7px;padding:18px 10px;}
+.sicon{font-size:24px;opacity:.55;}
+.sname{font-family:'Noto Sans KR',sans-serif;font-size:11px;font-weight:500;color:rgba(242,237,230,.55);text-align:center;line-height:1.4;}
+.sts{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(0deg,rgba(0,0,0,.82),transparent);padding:18px 8px 6px;font-family:'DM Sans',sans-serif;font-size:9px;color:rgba(255,255,255,.65);line-height:1.6;border-radius:0 0 12px 12px;display:none;}
+.sts.show{display:block;}
+.schk{position:absolute;top:7px;right:7px;width:19px;height:19px;border-radius:50%;background:#2E7D5B;display:none;align-items:center;justify-content:center;font-size:10px;color:#fff;z-index:2;box-shadow:0 2px 8px rgba(46,125,91,.6);}
+.schk.show{display:flex;}
+
+/* Progress */
+.uprg{display:none;background:rgba(46,125,91,.09);border:1px solid rgba(46,125,91,.22);border-radius:10px;padding:13px 15px;margin-bottom:14px;font-family:'Noto Sans KR',sans-serif;font-size:13px;color:#81C784;}
+.pbar-wrap{height:3px;background:rgba(255,255,255,.08);border-radius:2px;margin-top:8px;}
+.pbar{height:100%;background:linear-gradient(90deg,#2E7D5B,#4CAF85);border-radius:2px;width:0%;transition:width .3s ease;}
+
+/* Buttons */
+.btn{width:100%;padding:16px;background:linear-gradient(135deg,#2E7D5B,#3D9970);color:#fff;font-family:'Noto Sans KR',sans-serif;font-size:15px;font-weight:600;border:none;border-radius:14px;cursor:pointer;position:relative;overflow:hidden;box-shadow:0 8px 28px rgba(46,125,91,.32);transition:opacity .2s,transform .15s;}
+.btn:disabled{opacity:.4;pointer-events:none;}
+.btn:not(:disabled):active{transform:scale(.98);}
+.btn::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.1),transparent);pointer-events:none;}
+.bcnt{display:inline-block;background:rgba(255,255,255,.2);border-radius:20px;padding:1px 8px;font-size:12px;margin-left:6px;}
+.btn-ghost{width:100%;padding:14px;background:transparent;color:rgba(242,237,230,.55);border:1px solid rgba(184,150,90,.18);border-radius:14px;font-family:'Noto Sans KR',sans-serif;font-size:13px;cursor:pointer;transition:all .2s;}
+.btn-ghost:active{border-color:rgba(184,150,90,.45);color:rgba(242,237,230,.85);}
+
+/* Done screen */
+.done-wrap{padding:32px 22px;text-align:center;}
+.done-ico{width:76px;height:76px;border-radius:50%;margin:0 auto 18px;background:linear-gradient(135deg,#2E7D5B,#3D9970);display:flex;align-items:center;justify-content:center;font-size:34px;box-shadow:0 0 36px rgba(46,125,91,.55),0 0 72px rgba(46,125,91,.2);animation:pop .5s cubic-bezier(.175,.885,.32,1.275) both;}
+@keyframes pop{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+.done-title{font-family:'Noto Serif KR',serif;font-size:22px;font-weight:300;color:#F2EDE6;margin-bottom:6px;}
+.done-sub{font-size:13px;color:rgba(242,237,230,.5);line-height:1.8;margin-bottom:22px;}
+.stamp-res{background:linear-gradient(135deg,rgba(46,125,91,.15),rgba(61,153,112,.07));border:1px solid rgba(46,125,91,.3);border-radius:14px;padding:20px;margin-bottom:18px;}
+.sadd{font-family:'DM Sans',sans-serif;font-size:52px;font-weight:200;color:#4CAF85;line-height:1;animation:countup .5s ease .3s both;}
+@keyframes countup{from{transform:translateY(18px);opacity:0}to{transform:translateY(0);opacity:1}}
+.sadd-lbl{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:rgba(242,237,230,.4);margin-top:4px;}
+.stotal{margin-top:12px;padding-top:12px;border-top:1px solid rgba(184,150,90,.12);font-size:13px;color:rgba(242,237,230,.55);}
+.stotal b{color:#B8965A;}
+.pthumbs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:18px;}
+.pthumb{border-radius:8px;overflow:hidden;height:68px;}
+.pthumb img{width:100%;height:100%;object-fit:cover;}
+.next-hint{background:rgba(184,150,90,.07);border:1px solid rgba(184,150,90,.18);border-radius:12px;padding:13px 15px;font-size:13px;color:rgba(242,237,230,.7);line-height:1.7;margin-bottom:18px;}
+
+/* Toast & Loading */
+#toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(70px);background:rgba(46,125,91,.95);color:#fff;font-family:'Noto Sans KR',sans-serif;font-size:13px;padding:11px 20px;border-radius:22px;box-shadow:0 6px 20px rgba(0,0,0,.3);transition:transform .3s cubic-bezier(.175,.885,.32,1.275);z-index:100;white-space:nowrap;}
+#toast.show{transform:translateX(-50%) translateY(0);}
+#ldo{display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,.72);backdrop-filter:blur(5px);align-items:center;justify-content:center;flex-direction:column;gap:14px;}
+#ldo.show{display:flex;}
+.spin{width:42px;height:42px;border-radius:50%;border:3px solid rgba(184,150,90,.18);border-top-color:#B8965A;animation:sp .8s linear infinite;}
+@keyframes sp{to{transform:rotate(360deg)}}
+.ldmsg{font-size:13px;color:rgba(242,237,230,.65);}
+
+.notice{width:100%;max-width:480px;font-family:'DM Sans',sans-serif;font-size:10px;letter-spacing:.05em;color:rgba(242,237,230,.22);text-align:center;line-height:2;padding-top:16px;}
+@media(max-width:380px){.ci{padding:20px 16px;}.pgrid{gap:8px;}}
+</style>
+</head>
+<body>
+<div class="bg"></div>
+<div class="grain"></div>
+<div id="ldo"><div class="spin"></div><div class="ldmsg" id="ldmsg">처리 중...</div></div>
+<div id="toast"></div>
+
+<div class="page">
+
+  <!-- HEADER -->
+  <header class="hdr">
+    <div class="logo">
+      <div class="logo-icon">🌿</div>
+      <div class="logo-name">온마을 <em>StayPass</em></div>
+    </div>
+    <h1 class="pg-title">스탬프투어 인증</h1>
+    <p class="pg-sub">Stamp Tour · Photo Verification</p>
+  </header>
+
+  <!-- STEPS -->
+  <div class="steps" id="stepbar">
+    <div class="step active" id="step1"><div class="s-circle active">1</div><div class="s-label">패스 확인</div></div>
+    <div class="step" id="step2"><div class="s-circle">2</div><div class="s-label">사진 업로드</div></div>
+    <div class="step" id="step3"><div class="s-circle">3</div><div class="s-label">스탬프 적립</div></div>
+  </div>
+
+  <!-- SCREEN 1: 패스 확인 -->
+  <div class="card" id="s1">
+    <div class="ci">
+      <span class="sec-eyebrow">Step 01</span>
+      <div class="sec-title">패스번호 입력</div>
+      <div class="sec-desc">온마을 스테이패스 번호를 입력해 주세요.<br>발급 문자 또는 QR 코드에서 확인하세요.</div>
+      <div class="fld">
+        <label class="flbl" for="tinp">패스번호 · Pass Number</label>
+        <input class="finp" id="tinp" placeholder="예) ONM-A1B2C3"
+          style="text-transform:uppercase;letter-spacing:.14em;font-size:17px;"
+          autocomplete="off" spellcheck="false"
+          oninput="this.value=this.value.toUpperCase();"
+          onkeydown="if(event.key==='Enter')verifyToken()">
+        <div class="fmsg info" id="tmsg">발급받은 패스번호를 입력하세요</div>
+      </div>
+      <button class="btn" onclick="verifyToken()">확인하기 →</button>
+      <div style="margin-top:14px;text-align:center;">
+        <a href="admin.html?register=1" style="font-size:12px;color:rgba(184,150,90,.5);text-decoration:none;letter-spacing:.05em;">
+          패스가 없으신가요? 무료 발급하기 →
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN 2: 사진 업로드 -->
+  <div class="card" id="s2" style="display:none;">
+    <div class="ci">
+      <span class="sec-eyebrow">Step 02</span>
+      <div class="sec-title">4곳 현장 사진</div>
+      <div class="sec-desc">아래 4곳에서 현장 사진을 찍어 업로드해 주세요.<br><span style="color:rgba(184,150,90,.7);">촬영 시각이 자동으로 기록됩니다.</span></div>
+      <div class="cbadge">
+        <div class="cavatar">🌿</div>
+        <div>
+          <div class="cname" id="cname">-</div>
+          <div class="cmeta" id="cmeta">-</div>
+        </div>
+        <div class="cstamp">
+          <div class="csnum" id="csnum">0</div>
+          <div class="cslbl">스탬프</div>
+        </div>
+      </div>
+      <div class="pgrid" id="pgrid"></div>
+      <div class="uprg" id="uprg">
+        <div id="uptxt">업로드 중...</div>
+        <div class="pbar-wrap"><div class="pbar" id="pbar"></div></div>
+      </div>
+      <button class="btn" id="sbtn" onclick="submitStamp()" disabled>
+        📸 스탬프 인증 제출
+        <span class="bcnt" id="pcnt">0/4</span>
+      </button>
+      <div style="margin-top:10px;text-align:center;font-size:11px;color:rgba(242,237,230,.28);line-height:1.8;">
+        4장 모두 선택하면 버튼이 활성화됩니다 · 제출 즉시 스탬프 1개 자동 적립
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN 3: 완료 -->
+  <div class="card" id="s3" style="display:none;">
+    <div class="done-wrap">
+      <div class="done-ico">✓</div>
+      <div class="done-title">스탬프 적립 완료!</div>
+      <div class="done-sub" id="dsub">인증 사진이 제출되어 스탬프가 적립되었습니다.</div>
+      <div class="stamp-res">
+        <div class="sadd">+1</div>
+        <div class="sadd-lbl">STAMP EARNED</div>
+        <div class="stotal">누적 스탬프 <b id="dtotal">0</b>개 <span id="dtier"></span></div>
+      </div>
+      <div class="pthumbs" id="dthumbs"></div>
+      <div class="next-hint" id="dnext" style="display:none;"></div>
+      <button class="btn-ghost" onclick="resetAll()">처음으로 돌아가기</button>
+    </div>
+  </div>
+
+  <div class="notice">
+    온마을 StayPass · 아침고요상생연대 협동조합<br>
+    경기도 가평군 상면 수목원로 313-15
+  </div>
+</div>
+
+<script>
+const FB_CFG = {
+  apiKey:"AIzaSyBFBX_W5Qk-XKL9K918e6NUwXwG8pLvETk",
+  authDomain:"onmaeul-2e7ea.firebaseapp.com",
+  projectId:"onmaeul-2e7ea",
+  storageBucket:"onmaeul-2e7ea.firebasestorage.app",
+  messagingSenderId:"448985054380",
+  appId:"1:448985054380:web:e93f7e4d0b2fa92c95f309"
+};
+
+const SPOTS=[
+  {name:'아침고요수목원', icon:'🌸', hint:'수목원 입구 또는 내부'},
+  {name:'마을카페 · 공방', icon:'☕', hint:'카페 또는 공방'},
+  {name:'마을식당',        icon:'🍽️', hint:'식당 내부 또는 음식'},
+  {name:'펜션 · 숙소',    icon:'🏡', hint:'숙소 외관 또는 체크인'}
+];
+const TIERS=[
+  {name:'새싹', min:0,  rate:5,  icon:'🌱'},
+  {name:'초록', min:5,  rate:10, icon:'🌿'},
+  {name:'숲 Gold', min:25, rate:20, icon:'🌳'}
+];
+const MILESTONES=[
+  {at:6,  icon:'🎁', msg:'데일리 코스 완성! 15% 추가 할인 쿠폰'},
+  {at:10, icon:'🏡', msg:'스테이 코스 완성! 숙박권 쿠폰'},
+  {at:25, icon:'🌳', msg:'숲 Gold 등급 달성 (20% 할인)'}
+];
+
+let _db=null, _st=null, _cust=null, _photos={}, _urls=[];
+
+// Firebase init
+(function(){
+  try{
+    firebase.initializeApp(FB_CFG);
+    _db=firebase.firestore();
+    _st=firebase.storage();
+    firebase.auth().signInAnonymously().catch(()=>{});
+  }catch(e){console.warn('FB init:',e.message);}
+})();
+
+// Utils
+const today=()=>new Date().toISOString().split('T')[0];
+const getTier=t=>{for(let i=TIERS.length-1;i>=0;i--)if(t>=TIERS[i].min)return TIERS[i];return TIERS[0];};
+const show=id=>{const el=document.getElementById(id);if(el){el.style.display='block';el.style.animation='none';void el.offsetHeight;el.style.animation='fadeUp .4s ease both';}};
+const hide=id=>{const el=document.getElementById(id);if(el)el.style.display='none';};
+const showLoad=m=>{document.getElementById('ldo').classList.add('show');document.getElementById('ldmsg').textContent=m||'처리 중...';};
+const hideLoad=()=>document.getElementById('ldo').classList.remove('show');
+function toast(m){const el=document.getElementById('toast');el.textContent=m;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2800);}
+function setStep(n){
+  [1,2,3].forEach(i=>{
+    const s=document.getElementById('step'+i);
+    const c=s.querySelector('.s-circle');
+    s.className='step'+(i===n?' active':i<n?' done':'');
+    c.className='s-circle'+(i===n?' active':i<n?' done':'');
+    c.textContent=i<n?'✓':String(i);
+  });
+}
+
+// EXIF timestamp
+function exifTs(file){
+  return new Promise(r=>{
+    const rd=new FileReader();
+    rd.onload=e=>{
+      try{
+        const a=new Uint8Array(e.target.result);
+        if(a[0]!==0xFF||a[1]!==0xD8){r(null);return;}
+        let i=2;
+        while(i<a.length-4){
+          if(a[i]!==0xFF)break;
+          const mk=a[i+1],ln=(a[i+2]<<8)|a[i+3];
+          if(mk===0xE1){
+            const mg=String.fromCharCode(a[i+4],a[i+5],a[i+6],a[i+7]);
+            if(mg==='Exif'){
+              const t=i+10,le=a[t]===0x49;
+              const r16=p=>le?a[t+p]|(a[t+p+1]<<8):(a[t+p]<<8)|a[t+p+1];
+              const r32=p=>le?a[t+p]|(a[t+p+1]<<8)|(a[t+p+2]<<16)|(a[t+p+3]<<24):(a[t+p]<<24)|(a[t+p+1]<<16)|(a[t+p+2]<<8)|a[t+p+3];
+              const ifd=r32(4),cnt=r16(ifd);
+              for(let e2=0;e2<cnt;e2++){
+                const eo=ifd+2+e2*12;
+                if(r16(eo)===0x0132){
+                  const vo=r32(eo+8);let dt='';
+                  for(let c=0;c<19;c++)dt+=String.fromCharCode(a[t+vo+c]);
+                  r(dt.replace(/^(\d{4}):(\d{2}):(\d{2})/,'$1-$2-$3'));return;
+                }
+              }
+            }
+            break;
+          }
+          i+=2+ln;
+        }
+      }catch(e2){}
+      r(null);
+    };
+    rd.readAsArrayBuffer(file.slice(0,65536));
+  });
+}
+
+// ── STEP 1: 패스 확인 ─────────────────────────────────────
+async function verifyToken(){
+  const val=(document.getElementById('tinp').value||'').trim();
+  const msg=document.getElementById('tmsg');
+  if(!val){msg.className='fmsg err';msg.textContent='패스번호를 입력해 주세요.';return;}
+  if(!_db){msg.className='fmsg err';msg.textContent='네트워크 연결을 확인해 주세요.';return;}
+  showLoad('패스 확인 중...');
+  try{
+    const snap=await _db.collection('customers').get();
+    const cust=snap.docs.map(d=>({...d.data(),__docId:d.id}))
+      .find(c=>c.qrToken===val||c.customerId===val);
+    if(!cust){msg.className='fmsg err';msg.textContent='패스번호를 찾을 수 없습니다.';hideLoad();return;}
+
+    // 오늘 중복 확인
+    const sub=await _db.collection('stamp_submissions')
+      .where('customerId','==',String(cust.id))
+      .where('submittedDate','==',today()).get().catch(()=>({docs:[]}));
+    if(sub.docs.length>0){
+      msg.className='fmsg err';
+      msg.innerHTML='오늘 이미 스탬프 인증을 완료했습니다 😊<br><span style="font-size:11px;opacity:.7;">하루 1회만 가능합니다.</span>';
+      hideLoad();return;
+    }
+
+    _cust=cust; _photos={}; _urls=[];
+    msg.className='fmsg ok'; msg.textContent='확인되었습니다!';
+    setTimeout(()=>{hide('s1');buildGrid();renderBadge();show('s2');setStep(2);},400);
+  }catch(e){msg.className='fmsg err';msg.textContent='오류: '+e.message;}
+  finally{hideLoad();}
+}
+
+function renderBadge(){
+  if(!_cust)return;
+  const tot=Number(_cust.stampTotal||0),tier=getTier(tot);
+  document.getElementById('cname').textContent=_cust.name||'-';
+  document.getElementById('cmeta').textContent=(_cust.phone||'')+' · '+tier.icon+' '+tier.name+' ('+tier.rate+'% 할인)';
+  document.getElementById('csnum').textContent=tot;
+}
+
+function buildGrid(){
+  _photos={};
+  const g=document.getElementById('pgrid');
+  g.innerHTML='';
+  SPOTS.forEach(function(sp,i){
+    const lbl=document.createElement('label');
+    lbl.className='pslot'; lbl.id='sl'+i;
+    lbl.innerHTML=
+      '<input type="file" accept="image/*" capture="environment" onchange="handlePhoto(this,'+i+')">'+
+      '<div class="snum">0'+(i+1)+'</div>'+
+      '<img class="sprev" id="pi'+i+'">'+
+      '<div class="sph" id="sph'+i+'">'+
+        '<div class="sicon">'+sp.icon+'</div>'+
+        '<div class="sname">'+sp.name+'<br><span style="font-size:9px;opacity:.45;">'+sp.hint+'</span></div>'+
+      '</div>'+
+      '<div class="sts" id="sts'+i+'"></div>'+
+      '<div class="schk" id="schk'+i+'">✓</div>';
+    g.appendChild(lbl);
+  });
+}
+
+async function handlePhoto(inp,i){
+  const f=inp.files[0]; if(!f)return;
+  const pi=document.getElementById('pi'+i);
+  const ph=document.getElementById('sph'+i);
+  const sl=document.getElementById('sl'+i);
+  const ts=document.getElementById('sts'+i);
+  const ck=document.getElementById('schk'+i);
+
+  const rd=new FileReader();
+  rd.onload=e=>{pi.src=e.target.result;pi.style.display='block';if(ph)ph.style.display='none';};
+  rd.readAsDataURL(f);
+  sl.classList.add('filled');
+
+  const srv=new Date().toLocaleString('ko-KR',{timeZone:'Asia/Seoul'});
+  const exif=await exifTs(f);
+  const cap=exif||'(촬영시각 없음)';
+  ts.innerHTML='📷 '+cap+'<br>⬆ '+srv.slice(0,16);
+  ts.classList.add('show'); ck.classList.add('show');
+  _photos[i]={file:f,captureTs:cap,serverTs:srv,spotName:SPOTS[i].name};
+  updateBtn();
+}
+
+function updateBtn(){
+  const cnt=Object.keys(_photos).length;
+  document.getElementById('pcnt').textContent=cnt+'/'+SPOTS.length;
+  document.getElementById('sbtn').disabled=(cnt<SPOTS.length);
+}
+
+// ── STEP 2: 제출 + 즉시 적립 ─────────────────────────────
+async function submitStamp(){
+  if(Object.keys(_photos).length<SPOTS.length)return;
+  if(!_cust||!_db||!_st){toast('연결 오류. 잠시 후 다시 시도하세요.');return;}
+  document.getElementById('sbtn').disabled=true;
+  const prg=document.getElementById('uprg');
+  const pb=document.getElementById('pbar');
+  const pt=document.getElementById('uptxt');
+  prg.style.display='block';
+  try{
+    const td=today();
+    const sid=String(_cust.id)+'_'+Date.now();
+    _urls=[];
+
+    // 사진 4장 Storage 업로드
+    for(let i=0;i<SPOTS.length;i++){
+      const pd=_photos[i];
+      pt.textContent=(i+1)+'/'+SPOTS.length+'번 사진 업로드 중...';
+      pb.style.width=Math.round(((i+0.5)/SPOTS.length)*70)+'%';
+      const ext=(pd.file.name.split('.').pop()||'jpg').toLowerCase();
+      const path='stamp_photos/'+td+'/'+sid+'_s'+i+'_'+pd.spotName.replace(/[^\w가-힣]/g,'')+'.'+ext;
+      const ref=_st.ref(path);
+      const snap=await ref.put(pd.file,{customMetadata:{captureTimestamp:pd.captureTs,uploadTimestamp:pd.serverTs,spotName:pd.spotName,customerName:_cust.name,customerId:String(_cust.id)}});
+      const url=await snap.ref.getDownloadURL();
+      _urls.push({spot:pd.spotName,url,captureTs:pd.captureTs,serverTs:pd.serverTs,path});
+    }
+
+    pt.textContent='스탬프 적립 처리 중...'; pb.style.width='85%';
+
+    // customers.stampTotal +1
+    const cur=Number(_cust.stampTotal||0), nxt=cur+1;
+    const ntier=getTier(nxt);
+    await _db.collection('customers').doc(_cust.__docId).update({
+      stampTotal:nxt,stampUpdated:new Date().toISOString(),tier:ntier.name
+    });
+
+    // stamp_submissions 이력 저장
+    await _db.collection('stamp_submissions').doc(sid).set({
+      submissionId:sid,customerId:String(_cust.id),customerName:_cust.name,
+      phone:_cust.phone||'',passToken:_cust.qrToken||'',
+      stampTotalBefore:cur,stampTotalAfter:nxt,photos:_urls,
+      status:'approved',submittedAt:new Date().toISOString(),submittedDate:td,
+      autoApproved:true,stampGranted:true,
+      reviewedAt:new Date().toISOString(),reviewedBy:'AUTO'
+    });
+
+    pb.style.width='100%';
+    await new Promise(r=>setTimeout(r,300));
+    hide('s2'); showDone(nxt,ntier); setStep(3);
+  }catch(e){
+    toast('오류: '+e.message);
+    document.getElementById('sbtn').disabled=false;
+    prg.style.display='none'; pb.style.width='0%';
+  }
+}
+
+// ── STEP 3: 완료 화면 ────────────────────────────────────
+function showDone(nxt,tier){
+  document.getElementById('dsub').textContent=(_cust.name||'고객')+'님의 스탬프가 '+nxt+'개로 업데이트되었습니다!';
+  document.getElementById('dtotal').textContent=nxt;
+  document.getElementById('dtier').innerHTML='<span style="background:rgba(184,150,90,.15);border-radius:10px;padding:2px 8px;font-size:11px;color:#B8965A;">'+tier.icon+' '+tier.name+'</span>';
+
+  const th=document.getElementById('dthumbs');
+  th.innerHTML=_urls.map(p=>'<div class="pthumb"><img src="'+p.url+'" alt="'+p.spot+'"></div>').join('');
+
+  const nx=MILESTONES.find(m=>m.at>nxt);
+  const nh=document.getElementById('dnext');
+  if(nx){
+    nh.style.display='block';
+    nh.innerHTML=nx.icon+' 다음 혜택까지 <b style="color:#B8965A;">'+(nx.at-nxt)+'개</b> 남았습니다<br><span style="font-size:11px;opacity:.65;">'+nx.msg+'</span>';
+  }
+  show('s3');
+}
+
+function resetAll(){
+  _cust=null;_photos={};_urls=[];
+  document.getElementById('tinp').value='';
+  document.getElementById('tmsg').className='fmsg info';
+  document.getElementById('tmsg').textContent='발급받은 패스번호를 입력하세요';
+  document.getElementById('uprg').style.display='none';
+  document.getElementById('pbar').style.width='0%';
+  hide('s3'); show('s1'); setStep(1);
+}
+</script>
+</body>
+</html>

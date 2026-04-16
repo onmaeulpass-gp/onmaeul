@@ -2851,7 +2851,7 @@ async function renderStampCards() {
     if (s.link) {
       btn.onclick = function(){ window.open(s.link, '_blank', 'noopener'); };
     } else {
-      btn.onclick = function(){ if(window.startBookingFrom) window.startBookingFrom(s.name); };
+      btn.onclick = function(){ window.location.href='stamp.html'; };
     }
     const img = document.createElement('img');
     img.className = 'coop-card-img';
