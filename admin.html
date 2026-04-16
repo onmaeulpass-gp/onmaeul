@@ -6152,7 +6152,37 @@ async function _renderLandingStamp(){
     const items = snap.docs.map(d=>({...d.data(),__id:d.id}))
       .sort((a,b)=>(a.order||99)-(b.order||99));
     if(!items.length){
-      listEl.innerHTML='<div style="text-align:center;padding:32px;color:var(--text-muted);">등록된 스탬프 코스가 없습니다.<br><span style="font-size:12px;">+ 코스 추가 버튼을 눌러 등록하세요.</span></div>';
+      listEl.innerHTML=`<div style="text-align:center;padding:40px;">
+        <div style="font-size:32px;margin-bottom:12px;">🗺️</div>
+        <div style="font-weight:600;color:var(--text);margin-bottom:6px;">등록된 스탬프 코스가 없습니다</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:20px;line-height:1.8;">
+          현재 랜딩페이지에는 <b>기본(FALLBACK) 데이터</b> 2개가 표시되고 있습니다.<br>
+          아래 버튼으로 Firestore에 등록하면 관리자에서 직접 편집할 수 있습니다.
+        </div>
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+          <button class="btn btn-primary" onclick="seedStampFallback()">
+            🌱 기본 데이터 2개 Firestore에 등록
+          </button>
+          <button class="btn btn-ghost" onclick="openLandingStampAdd()">
+            ✏️ 직접 추가하기
+          </button>
+        </div>
+        <div style="margin-top:24px;background:var(--bg2,#F4F6F8);border-radius:10px;padding:16px;text-align:left;">
+          <div style="font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:.05em;margin-bottom:10px;">현재 랜딩에 표시 중인 FALLBACK 데이터</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div style="background:#fff;border-radius:8px;padding:10px 14px;border:1px solid var(--border);">
+              <div style="font-weight:600;font-size:13px;">🌅 온마을 데일리 코스</div>
+              <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">카페·식당·체험·마트·수목원 6곳 방문 시 완성. 당일 15% 추가 할인 쿠폰 즉시 발급.</div>
+              <div style="font-size:10px;color:var(--primary);margin-top:3px;">버튼: 스탬프 패스 받기</div>
+            </div>
+            <div style="background:#fff;border-radius:8px;padding:10px 14px;border:1px solid var(--border);">
+              <div style="font-weight:600;font-size:13px;">🏡 스테이 코스</div>
+              <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">1박 2일 10스탬프 완성 시 협약 펜션 1박 무료 또는 굿즈세트. 숙박 체크인 시 보너스 스탬프 +2.</div>
+              <div style="font-size:10px;color:var(--primary);margin-top:3px;">버튼: 스테이패스 신청</div>
+            </div>
+          </div>
+        </div>
+      </div>`;
       return;
     }
     listEl.innerHTML=`<table class="table" style="width:100%;"><thead><tr>
@@ -6239,6 +6269,33 @@ async function deleteLandingStamp(docId, name){
   }catch(e){alert('삭제 실패: '+e.message);}
   finally{hideLoading();}
 }
+async function seedStampFallback(){
+  if(!confirm('기본 스탬프 코스 2개를 Firestore에 등록하시겠습니까?\n\n• 온마을 데일리 코스\n• 스테이 코스')) return;
+  showLoading('기본 데이터 등록 중...');
+  try{
+    const FALLBACK = [
+      {
+        name:'온마을 데일리 코스', en:'DAILY COURSE',
+        desc:'카페 · 식당 · 체험 · 마트 · 수목원 6곳 방문 시 완성. 당일 15% 추가 할인 쿠폰 즉시 발급.',
+        img:'images/img_cat_exp.png', link:'', linkText:'스탬프 패스 받기',
+        order:1, active:true, createdAt:new Date().toISOString(), note:'기본 데이터'
+      },
+      {
+        name:'스테이 코스', en:'STAY COURSE',
+        desc:'1박 2일 10스탬프 완성 시 협약 펜션 1박 무료 또는 굿즈세트. 숙박 체크인 시 보너스 스탬프 +2.',
+        img:'images/img_cat_coop.jpg', link:'', linkText:'스테이패스 신청',
+        order:2, active:true, createdAt:new Date().toISOString(), note:'기본 데이터'
+      },
+    ];
+    for(const item of FALLBACK){
+      await db.collection('landing_stamp').add(item);
+    }
+    await _renderLandingStamp();
+    showToast('✅ 기본 스탬프 코스 2개 등록 완료!','success');
+  }catch(e){ alert('등록 실패: '+e.message); }
+  finally{ hideLoading(); }
+}
+
 
 
 // ── 대형 섹션탭(landing_sections) 렌더 ──
