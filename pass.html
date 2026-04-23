@@ -81,13 +81,299 @@ html, body { min-height: 100vh; background: #0a1a0a; font-family: 'Noto Sans KR'
 }
 .pass-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 .footer-note { margin-top: 16px; font-size: 11px; color: #2a4a2a; text-align: center; line-height: 2; }
+
+/* ── 초대 배너 ── */
+.ref-banner {
+  width: 100%;
+  background: linear-gradient(135deg, #1a3a1a, #0f2a0f);
+  border: 1px solid #3a6a3a;
+  border-radius: 14px;
+  padding: 14px 18px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: fadeSlideIn 0.4s ease;
+}
+.ref-banner-icon { font-size: 22px; flex-shrink: 0; }
+.ref-banner-text { font-size: 13px; color: #81c784; line-height: 1.5; }
+.ref-banner-name { font-weight: 700; color: #a5d6a7; }
+@keyframes fadeSlideIn {
+  from { opacity:0; transform:translateY(-8px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+
+/* ── 공유 섹션 ── */
+.share-section {
+  width: 100%;
+  background: #111e11;
+  border: 1px solid #2a4a2a;
+  border-radius: 16px;
+  padding: 18px 20px;
+  margin-top: 12px;
+}
+.share-title {
+  font-size: 14px; font-weight: 700; color: #81c784;
+  margin-bottom: 6px;
+}
+.share-desc {
+  font-size: 12px; color: #4a7a4a; line-height: 1.7;
+  margin-bottom: 14px;
+}
+.share-btns {
+  display: flex; gap: 10px;
+}
+.btn-share-kakao {
+  flex: 1;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 13px 10px;
+  background: #FEE500; color: #191600;
+  border: none; border-radius: 10px;
+  font-size: 13px; font-weight: 700; font-family: inherit;
+  cursor: pointer; transition: background 0.15s, transform 0.1s;
+}
+.btn-share-kakao:active { background: #F5DA00; transform: scale(0.97); }
+.btn-share-copy {
+  flex: 1;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 13px 10px;
+  background: #1a3a1a; color: #81c784;
+  border: 1px solid #2a5a2a; border-radius: 10px;
+  font-size: 13px; font-weight: 700; font-family: inherit;
+  cursor: pointer; transition: background 0.15s, transform 0.1s;
+}
+.btn-share-copy:active { background: #223a22; transform: scale(0.97); }
+.share-limit { font-size: 11px; color: #2a5a2a; margin-top: 10px; text-align: center; }
+
+/* ══════════════════════════════════════
+   스탬프 현황판
+══════════════════════════════════════ */
+.stamp-board {
+  width: 100%;
+  background: #111e11;
+  border: 1px solid #2a4a2a;
+  border-radius: 20px;
+  padding: 22px 20px 20px;
+  margin-top: 12px;
+}
+
+/* 섹션 공통 헤더 */
+.sb-section-label {
+  font-size: 10px; letter-spacing: 3px; text-transform: uppercase;
+  color: #3a6a3a; margin-bottom: 14px; display: flex;
+  align-items: center; gap: 8px;
+}
+.sb-section-label::after {
+  content:''; flex:1; height:1px; background:#1e3a1e;
+}
+
+/* 스탬프 카운트 헤더 */
+.sb-count-row {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  margin-bottom: 16px;
+}
+.sb-count-big {
+  font-size: 42px; font-weight: 900; color: #81c784; line-height: 1;
+}
+.sb-count-unit { font-size: 16px; color: #4a7a4a; margin-left: 4px; font-weight: 400; }
+.sb-count-next {
+  font-size: 12px; color: #3a6a3a; text-align: right; line-height: 1.6;
+}
+
+/* 스탬프 그리드 */
+.stamp-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  margin-bottom: 18px;
+}
+.stamp-cell {
+  aspect-ratio: 1;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  position: relative;
+  transition: transform 0.2s;
+}
+.stamp-cell.filled {
+  background: radial-gradient(circle at 35% 35%, #2d6a3a, #1a4a22);
+  border: 1.5px solid #3a7a3a;
+  box-shadow: 0 2px 8px rgba(34,85,54,0.4);
+  animation: stampPop 0.3s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+.stamp-cell.empty {
+  background: #0d1a0d;
+  border: 1.5px dashed #1e3a1e;
+}
+.stamp-cell.milestone-marker {
+  border-color: #5a9a5a;
+}
+.stamp-cell.milestone-marker.empty {
+  border-color: #2a5a2a;
+  border-style: dashed;
+}
+@keyframes stampPop {
+  0%   { transform: scale(0.4); opacity:0; }
+  100% { transform: scale(1);   opacity:1; }
+}
+
+/* 마일스톤 숫자 뱃지 */
+.stamp-cell .ms-num {
+  position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%);
+  font-size: 8px; font-weight: 700; color: #5a9a5a;
+  background: #0a1a0a; padding: 0 3px; border-radius: 4px;
+  white-space: nowrap;
+}
+
+/* ── 구간 구분선 ── */
+.stamp-row-divider {
+  grid-column: 1 / -1;
+  height: 1px; background: #1a3a1a; margin: 2px 0;
+}
+
+/* ── 진행률 바 ── */
+.progress-section { margin-bottom: 20px; }
+.progress-track {
+  height: 8px; background: #0d1a0d; border-radius: 8px;
+  overflow: hidden; margin-bottom: 6px;
+  border: 1px solid #1a3a1a;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #225536, #4caf50, #81c784);
+  border-radius: 8px;
+  transition: width 1s cubic-bezier(0.4,0,0.2,1);
+  width: 0%;
+}
+.progress-ticks {
+  display: flex; justify-content: space-between;
+  padding: 0 2px;
+}
+.progress-ticks span {
+  font-size: 9px; color: #2a5a2a; font-weight: 700;
+  position: relative;
+}
+.progress-ticks span.reached { color: #81c784; }
+
+/* ── 마일스톤 타임라인 ── */
+.milestone-timeline { margin-bottom: 20px; }
+.ms-item {
+  display: flex; align-items: stretch; gap: 14px;
+  position: relative;
+}
+.ms-item + .ms-item { margin-top: 0; }
+.ms-line-col {
+  display: flex; flex-direction: column; align-items: center;
+  width: 28px; flex-shrink: 0;
+}
+.ms-dot {
+  width: 28px; height: 28px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; flex-shrink: 0;
+  border: 2px solid #1e3a1e;
+  background: #0d1a0d;
+  z-index: 1;
+}
+.ms-dot.done   { background: #1a4a22; border-color: #3a7a3a; }
+.ms-dot.active { background: #225536; border-color: #81c784;
+                 box-shadow: 0 0 0 3px rgba(129,199,132,0.2); }
+.ms-dot.locked { background: #0d1a0d; border-color: #1a2a1a; }
+.ms-connector {
+  width: 2px; flex: 1; min-height: 12px;
+  background: #1a3a1a; margin: 2px 0;
+}
+.ms-connector.done { background: #2a5a2a; }
+.ms-body {
+  padding: 4px 0 16px; flex: 1;
+}
+.ms-tier-row {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 4px;
+}
+.ms-tier-name {
+  font-size: 13px; font-weight: 700;
+}
+.ms-tier-name.done   { color: #81c784; }
+.ms-tier-name.active { color: #a5d6a7; }
+.ms-tier-name.locked { color: #2a5a2a; }
+.ms-visits {
+  font-size: 10px; color: #3a6a3a; font-weight: 700;
+  background: #0d1a0d; padding: 2px 7px; border-radius: 8px;
+  border: 1px solid #1a3a1a;
+}
+.ms-visits.done { border-color: #2a5a2a; color: #5a9a5a; }
+.ms-perk {
+  font-size: 12px; color: #2a5a2a; line-height: 1.5;
+}
+.ms-perk.done   { color: #4a8a4a; }
+.ms-perk.active { color: #81c784; }
+.ms-badge-done {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 10px; font-weight: 700; color: #4caf50;
+  background: #0d2a0d; padding: 2px 8px; border-radius: 8px;
+  border: 1px solid #2a5a2a; margin-top: 4px;
+}
+
+/* ── 방문 기록 타임라인 ── */
+.visit-history-list { }
+.vh-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #142014;
+}
+.vh-item:last-child { border-bottom: none; }
+.vh-num {
+  width: 24px; height: 24px; border-radius: 50%;
+  background: #1a3a1a; border: 1px solid #2a5a2a;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700; color: #5a9a5a;
+  flex-shrink: 0;
+}
+.vh-info { flex: 1; min-width: 0; }
+.vh-store {
+  font-size: 13px; font-weight: 700; color: #a5d6a7;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.vh-date { font-size: 11px; color: #3a6a3a; margin-top: 2px; }
+.vh-stamp { font-size: 16px; }
+
+/* ── 새 패스 발급 화면 ── */
+.new-pass-screen {
+  text-align: center; padding: 32px 0;
+}
+.new-pass-icon { font-size: 48px; margin-bottom: 12px; }
+.new-pass-title { font-size: 18px; font-weight: 700; color: #c8e6c9; margin-bottom: 8px; }
+.new-pass-sub { font-size: 13px; color: #4a7a4a; line-height: 1.8; }
+.new-pass-loading {
+  display: inline-block; width: 20px; height: 20px;
+  border: 2px solid #2a5a2a; border-top-color: #81c784;
+  border-radius: 50%; animation: spin 0.8s linear infinite;
+  margin-top: 16px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
 <div class="wrap">
   <img src="onmaeullogo.svg" alt="온마을 ONMAEUL" style="height:44px;width:auto;display:block;margin:0 auto 8px;filter:brightness(1.1) saturate(1.1);">
   <div class="logo-main">스테이패스</div>
+
+  <!-- ① 초대 배너 — ref 파라미터 감지 시 표시 -->
+  <div class="ref-banner" id="ref-banner" style="display:none;">
+    <div class="ref-banner-icon">🌿</div>
+    <div class="ref-banner-text">
+      <span class="ref-banner-name" id="ref-inviter-name">친구</span>님이 온마을 패스를 초대했어요!<br>
+      <span style="font-size:11px;color:#3a6a3a;">첫 가맹점 방문 시 스탬프 +1이 적립돼요</span>
+    </div>
+  </div>
+
   <div class="card">
+    <!-- 새 패스 발급 중 화면 -->
+    <div class="new-pass-screen" id="new-pass-screen" style="display:none;">
+      <div class="new-pass-icon">🌿</div>
+      <div class="new-pass-title">패스를 발급하고 있어요</div>
+      <div class="new-pass-sub">온마을 가평 스테이패스를<br>무료로 발급해 드릴게요</div>
+      <div class="new-pass-loading"></div>
+    </div>
     <div class="loading" id="loading">
       불러오는 중<span class="loading-dot">.</span><span class="loading-dot">.</span><span class="loading-dot">.</span>
     </div>
@@ -129,6 +415,64 @@ html, body { min-height: 100vh; background: #0a1a0a; font-family: 'Noto Sans KR'
       </svg>
       카카오톡 · 나에게 전송
     </button>
+  </div>
+
+  <!-- ════ 스탬프 현황판 ════ -->
+  <div class="stamp-board" id="stamp-board" style="display:none;">
+
+    <!-- ① 스탬프 카운트 -->
+    <div class="sb-count-row">
+      <div>
+        <span class="sb-count-big" id="sb-count-big">0</span>
+        <span class="sb-count-unit">개 적립</span>
+      </div>
+      <div class="sb-count-next" id="sb-count-next"></div>
+    </div>
+
+    <!-- ② 진행률 바 -->
+    <div class="progress-section">
+      <div class="progress-track">
+        <div class="progress-fill" id="sb-progress-fill"></div>
+      </div>
+      <div class="progress-ticks" id="sb-ticks">
+        <span>0</span><span>5</span><span>10</span><span>20</span>
+      </div>
+    </div>
+
+    <!-- ③ 스탬프 그리드 -->
+    <div class="sb-section-label">STAMP GRID</div>
+    <div class="stamp-grid" id="stamp-grid"></div>
+
+    <!-- ④ 마일스톤 타임라인 -->
+    <div class="sb-section-label">MILESTONE</div>
+    <div class="milestone-timeline" id="milestone-timeline"></div>
+
+    <!-- ⑤ 방문 기록 -->
+    <div class="sb-section-label" id="vh-label" style="display:none;">VISIT HISTORY</div>
+    <div class="visit-history-list" id="visit-history-list"></div>
+
+  </div>
+
+  <!-- 공유 리워드 섹션 — 패스 로드 후 표시 -->
+  <div class="share-section" id="share-section" style="display:none;">
+    <div class="share-title">🎁 친구 초대하고 스탬프 받기</div>
+    <div class="share-desc">
+      친구에게 내 초대 링크를 공유하세요.<br>
+      친구가 가맹점을 처음 방문하면 <strong style="color:#81c784;">스탬프 +1</strong>이 적립돼요!
+    </div>
+    <div class="share-btns">
+      <button class="btn-share-kakao" onclick="shareReferral('kakao')">
+        <svg width="18" height="18" viewBox="0 0 22 22" fill="none">
+          <ellipse cx="11" cy="10" rx="9" ry="8" fill="#3B1E08" opacity="0.9"/>
+          <path d="M11 4.5C7.41 4.5 4.5 6.74 4.5 9.5c0 1.78 1.1 3.34 2.75 4.27l-.7 2.57 3.07-2.02c.44.07.9.11 1.38.11 3.59 0 6.5-2.24 6.5-5s-2.91-4.93-6.5-4.93z" fill="#FEE500"/>
+        </svg>
+        카카오 공유
+      </button>
+      <button class="btn-share-copy" onclick="shareReferral('copy')">
+        🔗 링크 복사
+      </button>
+    </div>
+    <div class="share-limit" id="share-limit">이번 달 초대 가능 횟수 · 최대 3회</div>
   </div>
 
   <!-- 전송 완료 토스트 -->
@@ -176,26 +520,7 @@ function drawQR(tokenText) {
   }
 }
 
-function showPass(cust, visitCnt) {
-  document.getElementById('loading').style.display = 'none';
-  document.getElementById('content').style.display = 'block';
-  document.getElementById('cust-name').textContent    = cust.name    || '온마을 패스';
-  document.getElementById('cust-program').textContent = cust.program || '온마을 가평 체험';
-  document.getElementById('pass-num').textContent     = cust.qrToken || '-';
-  document.getElementById('cust-date').textContent    = cust.date    || '-';
-  document.getElementById('cust-people').textContent  = cust.people  ? cust.people+'명' : '-';
-  document.getElementById('visit-count').textContent  = visitCnt;
-  var tier = getTier(visitCnt);
-  var badge = document.getElementById('tier-badge');
-  badge.textContent = tier.label;
-  badge.className   = 'tier-badge '+tier.cls;
-  document.getElementById('visit-next').textContent =
-    tier.next ? '다음 등급까지 '+tier.next : '🏆 최상위 등급!';
-  drawQR(cust.qrToken || token);
-
-  // 패스 로드 완료 → 액션 버튼 표시
-  document.getElementById('action-btns').style.display = 'flex';
-}
+/* showPass 함수는 아래 공유 리워드 시스템 섹션에서 정의됩니다 */
 
 /* ── 패스 이미지 저장 ── */
 function sendToMyKakao() {
@@ -270,26 +595,438 @@ function showError() {
   document.getElementById('error').style.display   = 'block';
 }
 
-var params = new URLSearchParams(location.search);
-var token  = params.get('pass');
+// ════════════════════════════════════════════════
+// 공유 리워드 시스템
+// ════════════════════════════════════════════════
 
-if (!token) {
-  location.replace('https://onmaeulpass-gp.github.io/onmaeul/');
-} else {
+/* 새 패스 토큰 생성 — ONM-XXXX-XXXX 형식 */
+function generateToken() {
+  var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  var seg1 = '', seg2 = '';
+  for (var i = 0; i < 4; i++) seg1 += chars[Math.floor(Math.random() * chars.length)];
+  for (var j = 0; j < 4; j++) seg2 += chars[Math.floor(Math.random() * chars.length)];
+  return 'ONM-' + seg1 + '-' + seg2;
+}
+
+/* 초대 링크 생성 */
+function getReferralLink(myToken) {
+  var base = location.origin + location.pathname;
+  return base + '?ref=' + encodeURIComponent(myToken);
+}
+
+/* 공유 버튼 클릭 */
+function shareReferral(method) {
+  var myToken = localStorage.getItem('onmaeul_pass_token');
+  if (!myToken) { showPassToast('패스를 먼저 발급받아야 해요'); return; }
+
+  var link    = getReferralLink(myToken);
+  var custName = document.getElementById('cust-name').textContent || '온마을';
+  var msg     = '🌿 온마을 가평 스테이패스\n' + custName + '님이 초대했어요!\n가맹점 첫 방문 시 스탬프 +1 🎁\n\n' + link;
+
+  if (method === 'kakao') {
+    if (navigator.share) {
+      navigator.share({ title:'온마을 스테이패스 초대', text: msg, url: link })
+        .then(function() { showPassToast('초대 링크를 공유했어요 🌿'); })
+        .catch(function(e) { if (e.name !== 'AbortError') copyToClipboard(link); });
+    } else {
+      copyToClipboard(link);
+    }
+  } else {
+    copyToClipboard(link);
+  }
+}
+
+function copyToClipboard(text) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(function() {
+      showPassToast('초대 링크 복사 완료! 카카오톡에 붙여넣기 하세요 🌿');
+    }).catch(function() { legacyCopyRef(text); });
+  } else {
+    legacyCopyRef(text);
+  }
+}
+
+function legacyCopyRef(text) {
+  var ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px';
+  document.body.appendChild(ta);
+  ta.focus(); ta.select();
+  try { document.execCommand('copy'); showPassToast('초대 링크 복사 완료! 카카오톡에 붙여넣기 하세요 🌿'); }
+  catch(e) { showPassToast('링크를 직접 복사해 친구에게 보내주세요'); }
+  document.body.removeChild(ta);
+}
+
+/* 공유 횟수 표시 업데이트 */
+function updateShareLimit(referralCount) {
+  var remain = Math.max(0, 3 - (referralCount || 0));
+  var el = document.getElementById('share-limit');
+  if (remain === 0) {
+    el.textContent = '⚠️ 이번 달 초대 횟수(3회)를 모두 사용했어요';
+    el.style.color = '#c0392b';
+  } else {
+    el.textContent = '이번 달 남은 초대 횟수 · ' + remain + ' / 3회';
+  }
+}
+
+// ════════════════════════════════════════════════
+// 스탬프 현황판 렌더링
+// ════════════════════════════════════════════════
+
+/* 마일스톤 정의 — 확장 시 여기만 수정 */
+var MILESTONES = [
+  { at:0,  tier:'BRONZE', icon:'🌱', label:'BRONZE',  perk:'온마을 가평 스테이패스 발급',      color:'#cd7f32' },
+  { at:5,  tier:'SILVER', icon:'🌿', label:'SILVER',  perk:'5% 상시 할인 + 마을 단골 인증',   color:'#a0b0b0' },
+  { at:10, tier:'GOLD',   icon:'🍃', label:'GOLD',    perk:'10% 상시 할인 + 완주 스탬프 쿠폰', color:'#ffd700' },
+  { at:20, tier:'VIP',    icon:'🏡', label:'VIP',     perk:'20% 할인 + 프리미엄 숙박 혜택',   color:'#c084fc' }
+];
+var STAMP_MAX = 25; /* 그리드 최대 칸 수 */
+
+/* ── 스탬프 그리드 ── */
+function renderStampGrid(cnt) {
+  var grid = document.getElementById('stamp-grid');
+  grid.innerHTML = '';
+  var milestoneAts = [5, 10, 20];
+
+  for (var i = 1; i <= STAMP_MAX; i++) {
+    var cell = document.createElement('div');
+    var filled = i <= cnt;
+    cell.className = 'stamp-cell ' + (filled ? 'filled' : 'empty');
+
+    /* 마일스톤 칸 강조 */
+    if (milestoneAts.indexOf(i) !== -1) {
+      cell.classList.add('milestone-marker');
+    }
+
+    if (filled) {
+      cell.textContent = '🌿';
+      /* 애니메이션 딜레이 — 순차적 팝 효과 */
+      cell.style.animationDelay = (Math.min(i - 1, 14) * 40) + 'ms';
+    } else {
+      cell.textContent = '';
+    }
+
+    /* 마일스톤 위치 숫자 표시 */
+    if (milestoneAts.indexOf(i) !== -1) {
+      var num = document.createElement('span');
+      num.className = 'ms-num';
+      num.textContent = i + '회';
+      cell.appendChild(num);
+    }
+
+    grid.appendChild(cell);
+  }
+}
+
+/* ── 진행률 바 ── */
+function renderProgressBar(cnt) {
+  /* VIP(20)를 100% 기준으로 */
+  var pct = Math.min((cnt / 20) * 100, 100);
+  var fill = document.getElementById('sb-progress-fill');
+  /* DOM 렌더 후 width 적용해야 transition 동작 */
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() { fill.style.width = pct + '%'; });
+  });
+
+  /* 틱 색상 업데이트 */
+  var ticks = document.querySelectorAll('#sb-ticks span');
+  var thresholds = [0, 5, 10, 20];
+  ticks.forEach(function(t, idx) {
+    t.className = cnt >= thresholds[idx] ? 'reached' : '';
+  });
+}
+
+/* ── 마일스톤 타임라인 ── */
+function renderMilestones(cnt) {
+  var el = document.getElementById('milestone-timeline');
+  el.innerHTML = '';
+
+  MILESTONES.forEach(function(ms, idx) {
+    var isDone   = cnt >= ms.at && (idx === MILESTONES.length - 1 || cnt < MILESTONES[idx + 1].at ? false : true);
+    /* 현재 활성 구간 = 이 마일스톤은 달성, 다음 마일스톤은 미달성 */
+    var nextAt   = idx < MILESTONES.length - 1 ? MILESTONES[idx + 1].at : Infinity;
+    var done     = cnt >= nextAt;   /* 이 단계를 완전히 지나쳤음 */
+    var active   = cnt >= ms.at && cnt < nextAt;
+    var locked   = cnt < ms.at;
+    var stateKey = done ? 'done' : (active ? 'active' : 'locked');
+
+    var dotIcon  = done ? '✓' : (active ? ms.icon : '○');
+
+    var item = document.createElement('div');
+    item.className = 'ms-item';
+
+    var isLast = idx === MILESTONES.length - 1;
+    item.innerHTML =
+      '<div class="ms-line-col">' +
+        '<div class="ms-dot ' + stateKey + '">' + dotIcon + '</div>' +
+        (!isLast ? '<div class="ms-connector ' + (done ? 'done' : '') + '"></div>' : '') +
+      '</div>' +
+      '<div class="ms-body">' +
+        '<div class="ms-tier-row">' +
+          '<span class="ms-tier-name ' + stateKey + '" style="color:' + (stateKey !== 'locked' ? ms.color : '') + '">' + ms.label + '</span>' +
+          '<span class="ms-visits ' + stateKey + '">' + (ms.at === 0 ? '시작' : ms.at + '회') + '</span>' +
+        '</div>' +
+        '<div class="ms-perk ' + stateKey + '">' + ms.perk + '</div>' +
+        (done   ? '<div class="ms-badge-done">✓ 달성완료</div>' : '') +
+        (active ? '<div class="ms-badge-done" style="color:#81c784;border-color:#3a7a3a;">★ 현재 등급</div>' : '') +
+      '</div>';
+
+    el.appendChild(item);
+  });
+}
+
+/* ── 방문 기록 ── */
+function renderVisitHistory(visits) {
+  var list  = document.getElementById('visit-history-list');
+  var label = document.getElementById('vh-label');
+  if (!visits || visits.length === 0) { return; }
+
+  label.style.display = 'flex';
+  list.innerHTML = '';
+
+  /* 최신 5건만 표시 */
+  var recent = visits.slice(0, 5);
+  recent.forEach(function(v, idx) {
+    var dateStr = '-';
+    if (v.visitedAt) {
+      var d = new Date(v.visitedAt);
+      dateStr = d.getFullYear() + '.' +
+                String(d.getMonth()+1).padStart(2,'0') + '.' +
+                String(d.getDate()).padStart(2,'0') + ' ' +
+                String(d.getHours()).padStart(2,'0') + ':' +
+                String(d.getMinutes()).padStart(2,'0');
+    }
+    var storeName = v.coopName || v.storeName || '온마을 가맹점';
+    var num = visits.length - idx; /* 누적 순번 */
+
+    var item = document.createElement('div');
+    item.className = 'vh-item';
+    item.innerHTML =
+      '<div class="vh-num">' + num + '</div>' +
+      '<div class="vh-info">' +
+        '<div class="vh-store">' + storeName + '</div>' +
+        '<div class="vh-date">' + dateStr + '</div>' +
+      '</div>' +
+      '<div class="vh-stamp">🌿</div>';
+    list.appendChild(item);
+  });
+
+  if (visits.length > 5) {
+    var more = document.createElement('div');
+    more.style.cssText = 'text-align:center;font-size:11px;color:#2a5a2a;padding:8px 0;';
+    more.textContent   = '+ ' + (visits.length - 5) + '건 더 있어요';
+    list.appendChild(more);
+  }
+}
+
+/* ── 카운트 헤더 업데이트 ── */
+function renderCountHeader(cnt) {
+  document.getElementById('sb-count-big').textContent = cnt;
+
+  var nextMs = null;
+  for (var i = 0; i < MILESTONES.length; i++) {
+    if (cnt < MILESTONES[i].at) { nextMs = MILESTONES[i]; break; }
+  }
+  var nextEl = document.getElementById('sb-count-next');
+  if (nextMs) {
+    nextEl.innerHTML =
+      '<span style="color:#4a7a4a;">다음 등급까지</span><br>' +
+      '<strong style="color:#81c784;">' + (nextMs.at - cnt) + '회</strong>' +
+      '<span style="color:#3a6a3a;"> 남음</span>';
+  } else {
+    nextEl.innerHTML = '<strong style="color:#c084fc;">🏆 VIP 달성!</strong>';
+  }
+}
+
+/* ── 전체 스탬프 보드 렌더 진입점 ── */
+function renderStampBoard(cnt, visits) {
+  renderCountHeader(cnt);
+  renderProgressBar(cnt);
+  renderStampGrid(cnt);
+  renderMilestones(cnt);
+  renderVisitHistory(visits || []);
+  document.getElementById('stamp-board').style.display = 'block';
+}
+
+// ════════════════════════════════════════════════
+// 패스 표시 함수 (기존 showPass 확장)
+// ════════════════════════════════════════════════
+function showPass(cust, visitCnt, visits) {
+  document.getElementById('loading').style.display      = 'none';
+  document.getElementById('new-pass-screen').style.display = 'none';
+  document.getElementById('content').style.display      = 'block';
+
+  document.getElementById('cust-name').textContent    = cust.name    || '온마을 패스';
+  document.getElementById('cust-program').textContent = cust.program || '온마을 가평 체험';
+  document.getElementById('pass-num').textContent     = cust.qrToken || '-';
+  document.getElementById('cust-date').textContent    = cust.date    || '-';
+  document.getElementById('cust-people').textContent  = cust.people  ? cust.people+'명' : '-';
+  document.getElementById('visit-count').textContent  = visitCnt;
+
+  var tier  = getTier(visitCnt);
+  var badge = document.getElementById('tier-badge');
+  badge.textContent = tier.label;
+  badge.className   = 'tier-badge ' + tier.cls;
+  document.getElementById('visit-next').textContent =
+    tier.next ? '다음 등급까지 ' + tier.next : '🏆 최상위 등급!';
+
+  drawQR(cust.qrToken || token);
+
+  // 이번 달 월간 referralCount 계산
+  var thisMonth   = new Date().toISOString().slice(0, 7);
+  var monthKey    = 'referralCount_' + thisMonth;
+  var monthlyUsed = cust[monthKey] || 0;
+  updateShareLimit(monthlyUsed);
+
+  // 스탬프 현황판 렌더링
+  renderStampBoard(visitCnt, visits || []);
+
+  // 버튼 표시
+  document.getElementById('action-btns').style.display  = 'flex';
+  document.getElementById('share-section').style.display = 'block';
+}
+
+// ════════════════════════════════════════════════
+// 패스 로드 함수
+// ════════════════════════════════════════════════
+function loadPass(passToken) {
   firebase.auth().signInAnonymously()
     .then(function() {
-      return db.collection('customers').where('qrToken','==',token).limit(1).get();
+      return db.collection('customers').where('qrToken', '==', passToken).limit(1).get();
     })
     .then(function(snap) {
       if (snap.empty) { showError(); return; }
-      var cust = snap.docs[0].data();
-      return db.collection('visits').where('customerId','==',cust.id).get()
-        .then(function(vSnap) { showPass(cust, vSnap.size); });
+      var cust   = snap.docs[0].data();
+      cust.id    = snap.docs[0].id;
+      return db.collection('visits').where('customerId', '==', cust.id).get()
+        .then(function(vSnap) {
+          /* 방문 데이터 정렬 — 최신순 */
+          var visits = vSnap.docs.map(function(d) {
+            var v = d.data(); v._id = d.id; return v;
+          }).sort(function(a, b) {
+            return new Date(b.visitedAt || b.createdAt || 0) -
+                   new Date(a.visitedAt || a.createdAt || 0);
+          });
+          showPass(cust, visits.length, visits);
+        });
     })
     .catch(function(err) {
-      console.error('pass.html error:', err);
+      console.error('pass load error:', err);
       showError();
     });
+}
+
+// ════════════════════════════════════════════════
+// 초대 링크 처리 — 새 패스 자동 발급
+// ════════════════════════════════════════════════
+function handleReferral(refToken) {
+  // 새 패스 발급 중 화면 표시
+  document.getElementById('loading').style.display         = 'none';
+  document.getElementById('new-pass-screen').style.display = 'block';
+
+  firebase.auth().signInAnonymously()
+    .then(function() {
+      // 초대자 정보 조회 → 배너에 이름 표시
+      return db.collection('customers').where('qrToken', '==', refToken).limit(1).get();
+    })
+    .then(function(refSnap) {
+      var inviterName = '친구';
+      var inviterDocId = null;
+
+      if (!refSnap.empty) {
+        var refData = refSnap.docs[0].data();
+        inviterName  = refData.name || '친구';
+        inviterDocId = refSnap.docs[0].id;
+        // 초대 배너 표시
+        document.getElementById('ref-inviter-name').textContent = inviterName;
+        document.getElementById('ref-banner').style.display     = 'flex';
+      }
+
+      // 새 패스 생성
+      var newToken  = generateToken();
+      var now       = new Date();
+      var expiry    = new Date(now); expiry.setDate(expiry.getDate() + 30);
+      var thisMonth = now.toISOString().slice(0, 7);
+
+      var newCust = {
+        name:           '온마을 게스트',
+        program:        '온마을 가평 체험',
+        qrToken:        newToken,
+        date:           now.toISOString().slice(0, 10),
+        people:         1,
+        referredBy:     refToken,
+        referredByDocId: inviterDocId || '',
+        referralUsed:   false,              // 첫 방문 후 true로 변경 (2단계)
+        referralExpiry: expiry.toISOString().slice(0, 10),
+        isGuestPass:    true,
+        issuedAt:       now.toISOString()
+      };
+
+      return db.collection('customers').add(newCust)
+        .then(function(docRef) {
+          localStorage.setItem('onmaeul_pass_token', newToken);
+          var newUrl = location.origin + location.pathname + '?pass=' + newToken;
+          history.replaceState(null, '', newUrl);
+          newCust.id = docRef.id;
+          showPass(newCust, 0, []);
+          showPassToast('🌿 온마을 패스가 발급되었어요!');
+        });
+    })
+    .catch(function(err) {
+      console.error('referral error:', err);
+      // 오류 시에도 일반 패스 발급 시도 (ref 없이)
+      var newToken = generateToken();
+      var now      = new Date();
+      db.collection('customers').add({
+        name: '온마을 게스트', program: '온마을 가평 체험',
+        qrToken: newToken, date: now.toISOString().slice(0,10),
+        people: 1, isGuestPass: true, issuedAt: now.toISOString()
+      }).then(function(docRef) {
+        localStorage.setItem('onmaeul_pass_token', newToken);
+        history.replaceState(null, '', location.origin + location.pathname + '?pass=' + newToken);
+        showPass({ name:'온마을 게스트', program:'온마을 가평 체험', qrToken:newToken, date:now.toISOString().slice(0,10), people:1, id:docRef.id }, 0);
+      }).catch(showError);
+    });
+}
+
+// ════════════════════════════════════════════════
+// 진입점 — 파라미터 분기
+// ════════════════════════════════════════════════
+var params      = new URLSearchParams(location.search);
+var token       = params.get('pass');
+var refToken    = params.get('ref');
+var storedToken = localStorage.getItem('onmaeul_pass_token');
+
+if (token) {
+  // ① ?pass=TOKEN — 정상 패스 로드
+  localStorage.setItem('onmaeul_pass_token', token);
+  loadPass(token);
+
+} else if (refToken) {
+  // ② ?ref=TOKEN — 초대 링크
+  if (storedToken) {
+    // 이미 패스 있음 → 자신의 패스 보여주고 배너만 표시
+    var infoMsg = document.getElementById('ref-banner');
+    document.getElementById('ref-inviter-name').textContent = '친구';
+    infoMsg.style.display = 'flex';
+    // 배너 텍스트 변경
+    document.querySelector('.ref-banner-text').innerHTML =
+      '이미 온마을 패스가 있어요 🌿<br>' +
+      '<span style="font-size:11px;color:#3a6a3a;">기존 패스로 이동할게요</span>';
+    loadPass(storedToken);
+  } else {
+    // 신규 방문자 → 새 패스 발급
+    handleReferral(refToken);
+  }
+
+} else if (storedToken) {
+  // ③ 파라미터 없지만 localStorage에 패스 있음 → 자동 복원
+  history.replaceState(null, '', location.origin + location.pathname + '?pass=' + storedToken);
+  loadPass(storedToken);
+
+} else {
+  // ④ 아무것도 없음 → 랜딩으로 이동
+  location.replace('https://onmaeulpass-gp.github.io/onmaeul/');
 }
 </script>
 </body>
