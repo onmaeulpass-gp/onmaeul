@@ -2577,7 +2577,7 @@ async function renderCoopCards() {
       card.dataset.cat = s.cat || 'restaurant';
       card.innerHTML = `
         <img class="coop-card-img" src="${s.img || 'images/img_cat_coop.jpg'}" alt="${s.name}"
-          onerror="this.src='images/img_cat_coop.jpg'">
+          onerror="this.src=&quot;images/img_cat_coop.jpg&quot;">
         <div class="coop-card-body">
           <span class="coop-card-en">${s.en || ''}</span>
           <div class="coop-card-name">${s.name}</div>
@@ -2821,7 +2821,7 @@ async function renderSuwonCards() {
             (s.linkText||'문의하기') + '</a>'
         : '<a href="' + (s.link||'#') + '" target="_blank" rel="noopener" class="coop-card-btn">' + (s.linkText||'자세히 보기') + '</a>';
       card.innerHTML =
-        '<img class="coop-card-img" src="' + (s.img||'images/img_cat_coop.jpg') + '" alt="' + s.name + '" onerror="this.src='images/img_cat_coop.jpg'">' +
+        '<img class="coop-card-img" src="' + (s.img||'images/img_cat_coop.jpg') + '" alt="' + s.name + '" onerror="this.src=&quot;images/img_cat_coop.jpg&quot;">' +
         '<div class="coop-card-body">' +
           '<span class="coop-card-en">' + (s.en||'') + '</span>' +
           '<div class="coop-card-name">' + s.name + '</div>' +
