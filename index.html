@@ -2004,23 +2004,10 @@ async function saveToFirebase(payload) {
         firebase.auth().signInAnonymously()
           .then(function() {
             _fbReady = true;
-            console.log('✅ Firebase 익명 로그인 완료 — 저장 준비됨');
-            // 전체 카드 섹션 동적 렌더링
-            if (typeof renderSectionTabs === 'function') renderSectionTabs();
-            if (typeof renderGenreTabs   === 'function') renderGenreTabs();
-            if (typeof renderCoopCards   === 'function') renderCoopCards();
-            if (typeof renderExpCards    === 'function') renderExpCards();
-            if (typeof renderSuwonCards  === 'function') renderSuwonCards();
-            if (typeof renderStampCards  === 'function') renderStampCards();
+            console.log('✅ Firebase 익명 로그인 완료');
           })
           .catch(function(e) {
             console.warn('⚠️ 익명 로그인 실패:', e.message);
-            if (typeof renderSectionTabs === 'function') renderSectionTabs();
-            if (typeof renderGenreTabs   === 'function') renderGenreTabs();
-            if (typeof renderCoopCards   === 'function') renderCoopCards();
-            if (typeof renderExpCards    === 'function') renderExpCards();
-            if (typeof renderSuwonCards  === 'function') renderSuwonCards();
-            if (typeof renderStampCards  === 'function') renderStampCards();
           });
       }
     } catch(e) { console.warn('⚠️ Firebase 초기화 실패:', e.message); }
@@ -2057,6 +2044,25 @@ async function saveToFirebase(payload) {
   checkAndInit();
   window.addEventListener('online',  function() { if (!_fbReady) { console.log('🌐 인터넷 복구 → Firebase 재연결'); checkAndInit(); } });
   window.addEventListener('offline', function() { console.warn('📴 인터넷 끊김'); });
+})();
+</script>
+<!-- ✅ 즉시 렌더 — Firebase 완료 전에 폴백 데이터로 카드/탭 표시 -->
+<script>
+(function immediateRender() {
+  // 스크립트 파싱 완료 시점에 실행 (DOM은 이미 준비됨)
+  function runRender() {
+    if (typeof renderSectionTabs === 'function') renderSectionTabs();
+    if (typeof renderGenreTabs   === 'function') renderGenreTabs();
+    if (typeof renderCoopCards   === 'function') renderCoopCards();
+    if (typeof renderExpCards    === 'function') renderExpCards();
+    if (typeof renderSuwonCards  === 'function') renderSuwonCards();
+    if (typeof renderStampCards  === 'function') renderStampCards();
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', runRender);
+  } else {
+    runRender();
+  }
 })();
 </script>
 <!-- Leaflet.js (가맹점 지도) -->
@@ -2417,7 +2423,6 @@ async function renderSectionTabs() {
   // ── 폴백으로 즉시 탭 렌더 (Firestore 대기 없음) ──
   function buildTabs(sections) {
     wrap.innerHTML = '';
-    CAT_IDS.forEach(id => { if(!sections.find(s=>s.id===id)) { const p=document.getElementById('cat-'+id); if(p) p.classList.remove('open'); } });
     sections.forEach(s => {
       const panelExists = !!document.getElementById('cat-' + s.id);
       if (!panelExists) return;
@@ -2435,9 +2440,6 @@ async function renderSectionTabs() {
         '<span class="cat-tab-arrow">›</span>';
       wrap.appendChild(btn);
     });
-    if (!sections.find(s=>s.id===CAT_IDS[0])) return;
-    // CAT_IDS 동기화
-    sections.forEach(s => { if(!CAT_IDS.includes(s.id)) CAT_IDS.push(s.id); });
   }
 
   // ① 폴백 즉시 렌더
