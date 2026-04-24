@@ -707,7 +707,13 @@ html, body { min-height: 100vh; background: #0a1a0a; font-family: 'Noto Sans KR'
   <!-- 전송 완료 토스트 -->
   <div class="pass-toast" id="pass-toast">✓ 카카오톡 나에게 전송 완료</div>
 
-  <div class="footer-note">업주에게 이 화면을 보여주세요 · 카카오채널 @온마을가평</div>
+  <div class="footer-note">
+    업주에게 이 화면을 보여주세요 · 카카오채널 @온마을가평<br>
+    <a href="https://onmaeulpass-gp.github.io/onmaeul/" target="_blank"
+       style="color:#3a6a3a;text-decoration:none;font-size:11px;">
+      🌿 온마을 가평 홈페이지 바로가기
+    </a>
+  </div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -857,19 +863,11 @@ function shareReferral(method) {
   var link     = getReferralLink(myToken);
   var custName = document.getElementById('cust-name').textContent || '온마을';
 
-  /* ── 카카오 공유 메시지 — 온마을 소개 포함 ── */
+  /* ── 카카오 공유 메시지 — 초대 문구만 ── */
   var title = '🌿 온마을 가평 스테이패스';
   var desc  =
     custName + '님이 초대했어요!\n' +
-    '\n' +
-    '가평 아침고요수목원 마을에 온마을 할인 패스\n' +
-    '가맹점을 이용해 보세요.\n' +
-    '카페·식당·펜션·편의점 등을 한 패스로 이용하세요.\n' +
-    '\n' +
-    '✅ 방문마다 스탬프 적립\n' +
-    '✅ 최대 20% 상시 할인\n' +
-    '✅ 앱 설치 없이 QR 하나로 OK\n' +
-    '\n' +
+    '가평 아침고요수목원 마을 할인 패스를 발급받으세요.\n' +
     '👇 무료 패스 발급받기';
 
   if (method === 'kakao') {
