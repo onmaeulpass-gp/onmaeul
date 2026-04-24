@@ -2413,6 +2413,41 @@ const SECTIONS_FALLBACK = [
 async function renderSectionTabs() {
   const wrap = document.getElementById('cat-tabs-wrap');
   if (!wrap) return;
+
+  // ── 폴백으로 즉시 탭 렌더 (Firestore 대기 없음) ──
+  function buildTabs(sections) {
+    wrap.innerHTML = '';
+    CAT_IDS.forEach(id => { if(!sections.find(s=>s.id===id)) { const p=document.getElementById('cat-'+id); if(p) p.classList.remove('open'); } });
+    sections.forEach(s => {
+      const panelExists = !!document.getElementById('cat-' + s.id);
+      if (!panelExists) return;
+      const labelHtml = (s.label||'').replace(/\\n/g,'<br>').replace(/\n/g,'<br>');
+      const btn = document.createElement('button');
+      btn.className = 'cat-tab';
+      btn.id = 'tab-btn-' + s.id;
+      btn.setAttribute('onclick', "switchCat('" + s.id + "')");
+      btn.style.backgroundImage = "url('" + (s.bg||'') + "')";
+      btn.innerHTML =
+        '<span class="cat-tab-num">' + (s.num||'') + '</span>' +
+        '<span class="cat-tab-label">' + labelHtml + '</span>' +
+        '<span class="cat-tab-en">' + (s.en||'') + '</span>' +
+        (s.badge ? '<span class="cat-tab-badge">' + s.badge + '</span>' : '') +
+        '<span class="cat-tab-arrow">›</span>';
+      wrap.appendChild(btn);
+    });
+    if (!sections.find(s=>s.id===CAT_IDS[0])) return;
+    // CAT_IDS 동기화
+    sections.forEach(s => { if(!CAT_IDS.includes(s.id)) CAT_IDS.push(s.id); });
+  }
+
+  // ① 폴백 즉시 렌더
+  buildTabs(SECTIONS_FALLBACK);
+
+  // ② Firestore 비동기 갱신
+  let waited = 0;
+  while (!window._fbDB && waited < 20) { await new Promise(r=>setTimeout(r,100)); waited++; }
+  if (!window._fbDB) return;
+
   let sections = [];
   try {
     if (window._fbDB) {
@@ -2469,27 +2504,8 @@ async function renderSectionTabs() {
   // CAT_IDS 동기화
   sections.forEach(s => { if(!CAT_IDS.includes(s.id)) CAT_IDS.push(s.id); });
 
-  sections.forEach(s => {
-    // 패널 존재 여부 확인
-    const panelExists = !!document.getElementById('cat-' + s.id);
-    if (!panelExists) {
-      console.warn(`landing_sections: cat-${s.id} 패널 없음 — 탭 버튼 생성 스킵`);
-      return;
-    }
-    const labelHtml = (s.label||'').replace(/\\n/g,'<br>').replace(/\n/g,'<br>');
-    const btn = document.createElement('button');
-    btn.className = 'cat-tab';
-    btn.id = 'tab-btn-' + s.id;
-    btn.setAttribute('onclick', "switchCat('" + s.id + "')");
-    btn.style.backgroundImage = "url('" + (s.bg||'') + "')";
-    btn.innerHTML =
-      '<span class="cat-tab-num">' + (s.num||'') + '</span>' +
-      '<span class="cat-tab-label">' + labelHtml + '</span>' +
-      '<span class="cat-tab-en">' + (s.en||'') + '</span>' +
-      (s.badge ? '<span class="cat-tab-badge">' + s.badge + '</span>' : '') +
-      '<span class="cat-tab-arrow">›</span>';
-    wrap.appendChild(btn);
-  });
+  // Firestore에서 가져온 섹션으로 탭 재렌더
+  buildTabs(sections);
 }
 
 // ── 업종 필터탭(genre-tabs) 동적 렌더링 ──
