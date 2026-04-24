@@ -976,6 +976,35 @@ body.role-viewer .perm-write { display: none !important; }
 
       <!-- ── admin/공통: 기존 대시보드 ── -->
       <div id="dash-admin-section">
+
+      <!-- 🎫 신규 웰컴 회원 확인 카드 (미확인 있을 때만 강조) -->
+      <div class="card perm-admin" id="welcome-new-card" style="margin-bottom:0;border:2px solid var(--primary);display:none;">
+        <div class="card-header" style="background:linear-gradient(135deg,#e8f5e9,#f1f8f1);">
+          <h3 style="color:var(--primary);">🎫 신규 웰컴 패스 — 확인 필요</h3>
+          <div style="display:flex;gap:8px;">
+            <span id="welcome-new-badge" style="background:var(--primary);color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:12px;"></span>
+            <button class="btn btn-ghost btn-sm" onclick="loadWelcomeNewMembers()">🔄</button>
+          </div>
+        </div>
+        <div class="card-body" style="padding:0;">
+          <table class="table" style="width:100%;margin:0;">
+            <thead>
+              <tr>
+                <th>발급 시각</th>
+                <th>이름</th>
+                <th>연락처</th>
+                <th>발급처 가맹점</th>
+                <th>패스번호</th>
+                <th>확인</th>
+              </tr>
+            </thead>
+            <tbody id="welcome-new-tbody">
+              <tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:16px;">불러오는 중...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;" class="dash-grid">
         <div class="card">
           <div class="card-header"><h3>📅 오늘의 체험 일정</h3></div>
@@ -2344,6 +2373,37 @@ body.role-viewer .perm-write { display: none !important; }
 </div>
 
 <!-- M04 조합 Modal -->
+<!-- ══ 웰컴 QR 모달 ══ -->
+<div class="modal-overlay" id="welcome-qr-modal">
+  <div class="modal" style="max-width:380px;text-align:center;">
+    <div class="modal-header">
+      <h3 id="welcome-qr-title">🎫 웰컴 QR</h3>
+      <button class="modal-close" onclick="closeModal('welcome-qr-modal')">✕</button>
+    </div>
+    <div class="modal-body" style="display:flex;flex-direction:column;align-items:center;gap:14px;">
+      <div style="font-size:13px;color:var(--text-muted);line-height:1.7;">
+        카운터에 비치해 두세요.<br>
+        손님이 스캔하면 <strong style="color:var(--primary);">패스 자동 발급 + 스탬프 +1</strong> 적립돼요.
+      </div>
+      <!-- QR 코드 렌더 영역 -->
+      <div style="background:#fff;border-radius:14px;padding:16px;border:2px solid var(--border);">
+        <div id="welcome-qr-box" style="width:200px;height:200px;"></div>
+      </div>
+      <!-- URL 표시 -->
+      <div style="background:var(--bg);border-radius:8px;padding:8px 14px;width:100%;font-size:11px;font-family:monospace;color:var(--text-muted);word-break:break-all;text-align:left;" id="welcome-qr-url"></div>
+      <!-- 가맹점 이름 라벨 (인쇄용) -->
+      <div style="font-size:14px;font-weight:700;color:var(--primary);" id="welcome-qr-label"></div>
+      <div style="display:flex;gap:10px;width:100%;">
+        <button class="btn btn-primary" style="flex:1;" onclick="downloadWelcomeQR()">⬇ PNG 저장</button>
+        <button class="btn btn-ghost"   style="flex:1;" onclick="copyWelcomeQRUrl()">🔗 URL 복사</button>
+      </div>
+      <div style="font-size:11px;color:var(--text-muted);">
+        인쇄 권장 크기: 10×10cm 이상 · 300DPI
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="m04-modal">
   <div class="modal">
     <div class="modal-header">
@@ -3295,10 +3355,14 @@ async function openNotifPopup(){
             ? '<div style="padding:32px;text-align:center;color:#aaa;font-size:14px;">새 알림이 없습니다.</div>'
             : notifs.map(n=>`
               <div class="notif-item ${n.read?'':'unread'}" id="ni-${n.id}">
-                <div class="notif-item-icon">${n.type==='new_biz'?'🏪':'📢'}</div>
+                <div class="notif-item-icon">${n.type==='new_biz'?'🏪':n.type==='welcome_new'?'🎫':'📢'}</div>
                 <div class="notif-item-body">
                   <div class="notif-item-title">${n.title}</div>
-                  <div class="notif-item-desc">${n.desc}</div>
+                  <div class="notif-item-desc">${n.type==='welcome_new'
+                    ? `<span style="color:#2e7d32;font-weight:600;">${n.coopName||''}</span> · ${n.custName||''} · ${n.custPhone||'연락처없음'}`
+                    : (n.body||n.desc||'')}</div>
+                  ${n.type==='welcome_new' && n.passToken
+                    ? `<div style="font-size:10px;font-family:monospace;color:#aaa;margin-top:2px;">패스: ${n.passToken}</div>`:''}
                   <div class="notif-item-time">${formatRelTime(n.createdAt)}</div>
                 </div>
                 ${!n.read?`<button onclick="markNotifRead('${n.id}')" style="flex-shrink:0;background:#e8f5e9;border:none;color:#2e7d32;border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;white-space:nowrap;">읽음</button>`:'<span style="font-size:11px;color:#ccc;flex-shrink:0;">✓</span>'}
@@ -3748,11 +3812,93 @@ function showModule(mod) {
 function toggleSidebar(){ document.getElementById('sidebar').classList.toggle('open'); document.getElementById('overlay').classList.toggle('open'); }
 function closeSidebar(){ document.getElementById('sidebar').classList.remove('open'); document.getElementById('overlay').classList.remove('open'); }
 
+// ─────────────────────────────────────────────────
+// 🎫 신규 웰컴 회원 확인 — 대시보드 카드
+// ─────────────────────────────────────────────────
+async function loadWelcomeNewMembers() {
+  const card  = document.getElementById('welcome-new-card');
+  const tbody = document.getElementById('welcome-new-tbody');
+  const badge = document.getElementById('welcome-new-badge');
+  if (!card || !tbody) return;
+
+  try {
+    // 최근 7일 이내 welcome_new 알림 조회
+    const snap = await db.collection('notifications')
+      .where('type', '==', 'welcome_new')
+      .orderBy('createdAt', 'desc')
+      .limit(30)
+      .get()
+      .catch(() =>
+        // orderBy 인덱스 없을 때 폴백
+        db.collection('notifications').where('type', '==', 'welcome_new').get()
+      );
+
+    const items = snap.docs.map(d => ({ ...d.data(), _docId: d.id }))
+      .sort((a, b) => (b.createdAt || '') > (a.createdAt || '') ? 1 : -1);
+
+    const unread = items.filter(n => !n.read).length;
+
+    if (items.length === 0) {
+      card.style.display = 'none';
+      return;
+    }
+
+    card.style.display = 'block';
+    if (badge) badge.textContent = unread > 0 ? `신규 ${unread}건` : '확인 완료';
+
+    tbody.innerHTML = items.slice(0, 20).map(n => {
+      const dt = n.createdAt
+        ? new Date(n.createdAt).toLocaleString('ko-KR', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' })
+        : '-';
+      const isNew = !n.read;
+      return `<tr style="${isNew ? 'background:#f1f8f1;' : ''}">
+        <td style="font-size:12px;">${dt}</td>
+        <td><b style="${isNew ? 'color:var(--primary);' : ''}">${n.custName || '-'}</b></td>
+        <td>
+          ${n.custPhone
+            ? `<a href="tel:${n.custPhone.replace(/-/g,'')}" style="color:var(--primary);text-decoration:none;font-weight:600;">${n.custPhone}</a>`
+            : '<span style="color:#ccc;">미입력</span>'}
+        </td>
+        <td><span style="background:#e8f5e9;color:#1b5e20;font-size:11px;padding:2px 8px;border-radius:8px;font-weight:700;">${n.coopName || '-'}</span></td>
+        <td><code style="font-size:10px;color:var(--primary);">${n.passToken || '-'}</code></td>
+        <td>
+          ${isNew
+            ? `<button class="btn btn-primary btn-sm" onclick="confirmWelcomeMember('${n._docId}', this)" style="font-size:11px;padding:4px 10px;">✓ 확인</button>`
+            : `<span style="font-size:11px;color:#aaa;">✓</span>`}
+        </td>
+      </tr>`;
+    }).join('');
+
+  } catch(e) {
+    console.warn('웰컴 회원 로드 실패:', e);
+    card.style.display = 'none';
+  }
+}
+
+async function confirmWelcomeMember(docId, btn) {
+  try {
+    await db.collection('notifications').doc(docId).update({ read: true });
+    // 행 스타일 즉시 변경
+    const row = btn.closest('tr');
+    if (row) {
+      row.style.background = '';
+      btn.outerHTML = '<span style="font-size:11px;color:#aaa;">✓</span>';
+    }
+    // 뱃지 업데이트
+    await loadWelcomeNewMembers();
+    showToast('확인 처리됐어요', 'success');
+  } catch(e) {
+    showToast('처리 실패 — 다시 시도해 주세요', 'error');
+  }
+}
+
 // ═══════════════════════════════════════════════════════════
 // DASHBOARD
 // ═══════════════════════════════════════════════════════════
 async function renderDashboard() {
   showLoading('대시보드 로딩 중...');
+  // 신규 웰컴 회원 병렬 로드
+  loadWelcomeNewMembers();
   try {
     const _cid = myCoopId();
     const [customers, employees, tasks, coops] = await Promise.all([
@@ -5140,6 +5286,7 @@ async function renderM04(){
         <td><code style="font-size:11px;color:var(--primary)">${c.coopCode||'-'}</code></td>
         <td>
           <button class="btn btn-ghost btn-sm btn-icon perm-write" onclick="openM04Edit(${c.id})">✏️</button>
+          <button class="btn btn-ghost btn-sm perm-write" style="font-size:11px;color:var(--primary);border-color:var(--primary);padding:4px 8px;" onclick="openWelcomeQR('${c.coopCode||''}','${(c.name||'').replace(/'/g,String.fromCharCode(39))}')">🎫 웰컴QR</button>
           <button class="btn btn-danger btn-sm btn-icon perm-write" onclick="deleteM04(${c.id})">🗑️</button>
         </td></tr>`).join('');
     }
@@ -5165,6 +5312,136 @@ async function renderM04(){
     }
   }finally{hideLoading();}
 }
+
+// ─────────────────────────────────────────────────
+// 🎫 웰컴 QR — 가맹점별 고정 QR 생성 / 저장 / 복사
+// ─────────────────────────────────────────────────
+var _welcomeQRCoopCode = '';
+var _welcomeQRCoopName = '';
+var _welcomeQRInstance = null;
+
+function openWelcomeQR(coopCode, coopName) {
+  if (!coopCode) { alert('가맹점 코드가 없어요. 가맹점을 저장한 후 다시 시도해 주세요.'); return; }
+
+  _welcomeQRCoopCode = coopCode;
+  _welcomeQRCoopName = coopName;
+
+  var baseUrl = 'https://onmaeulpass-gp.github.io/onmaeul/pass.html';
+  var qrUrl   = baseUrl + '?src=' + encodeURIComponent(coopCode) + '&action=welcome';
+
+  // 모달 내용 설정
+  document.getElementById('welcome-qr-title').textContent = '🎫 웰컴 QR — ' + coopName;
+  document.getElementById('welcome-qr-url').textContent   = qrUrl;
+  document.getElementById('welcome-qr-label').textContent = coopName + ' · 온마을 스테이패스';
+
+  // QR 생성
+  var box = document.getElementById('welcome-qr-box');
+  box.innerHTML = '';
+  try {
+    if (_welcomeQRInstance) {
+      _welcomeQRInstance.clear();
+      _welcomeQRInstance = null;
+    }
+    _welcomeQRInstance = new QRCode(box, {
+      text:          qrUrl,
+      width:         200,
+      height:        200,
+      colorDark:     '#225536',
+      colorLight:    '#ffffff',
+      correctLevel:  QRCode.CorrectLevel.H
+    });
+  } catch(e) {
+    box.innerHTML = '<div style="width:200px;height:200px;display:flex;align-items:center;justify-content:center;font-size:12px;color:#666;padding:12px;word-break:break-all;">' + qrUrl + '</div>';
+  }
+
+  openModal('welcome-qr-modal');
+}
+
+function downloadWelcomeQR() {
+  var box = document.getElementById('welcome-qr-box');
+  var img = box ? box.querySelector('img') : null;
+  if (!img) { alert('QR 이미지를 먼저 생성해 주세요.'); return; }
+
+  // 캔버스에 가맹점 이름 + QR 합성 후 다운로드
+  var canvas  = document.createElement('canvas');
+  var padding = 32;
+  var footerH = 60;
+  var qrSize  = 200;
+  canvas.width  = qrSize + padding * 2;
+  canvas.height = qrSize + padding * 2 + footerH;
+
+  var ctx = canvas.getContext('2d');
+
+  // 배경
+  ctx.fillStyle = '#ffffff';
+  ctx.roundRect(0, 0, canvas.width, canvas.height, 16);
+  ctx.fill();
+
+  // 상단 초록 바
+  ctx.fillStyle = '#225536';
+  ctx.roundRect(0, 0, canvas.width, 44, [16, 16, 0, 0]);
+  ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  ctx.font      = 'bold 13px "Apple SD Gothic Neo", "Noto Sans KR", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('온마을 가평 · 스테이패스', canvas.width / 2, 27);
+
+  // QR 이미지
+  var qrImg = new Image();
+  qrImg.crossOrigin = 'anonymous';
+  qrImg.onload = function() {
+    ctx.drawImage(qrImg, padding, 44 + (padding / 2), qrSize, qrSize);
+
+    // 하단 가맹점 이름
+    ctx.fillStyle = '#225536';
+    ctx.font      = 'bold 14px "Apple SD Gothic Neo", "Noto Sans KR", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(_welcomeQRCoopName, canvas.width / 2, canvas.height - 30);
+
+    ctx.fillStyle = '#888888';
+    ctx.font      = '11px "Apple SD Gothic Neo", "Noto Sans KR", sans-serif';
+    ctx.fillText('QR을 스캔하고 스탬프를 받아보세요', canvas.width / 2, canvas.height - 12);
+
+    // 다운로드
+    var link      = document.createElement('a');
+    link.download = 'welcome_qr_' + (_welcomeQRCoopCode || 'coop') + '.png';
+    link.href     = canvas.toDataURL('image/png');
+    link.click();
+  };
+  qrImg.onerror = function() {
+    // img src 직접 사용 폴백
+    var link      = document.createElement('a');
+    link.download = 'welcome_qr_' + (_welcomeQRCoopCode || 'coop') + '.png';
+    link.href     = img.src;
+    link.click();
+  };
+  qrImg.src = img.src;
+}
+
+function copyWelcomeQRUrl() {
+  var urlEl = document.getElementById('welcome-qr-url');
+  if (!urlEl) return;
+  var url = urlEl.textContent;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url).then(function() {
+      showToast('웰컴 QR URL이 복사됐어요 🌿', 'success');
+    }).catch(function() { legacyCopyAdmin(url); });
+  } else {
+    legacyCopyAdmin(url);
+  }
+}
+
+function legacyCopyAdmin(text) {
+  var ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px';
+  document.body.appendChild(ta);
+  ta.focus(); ta.select();
+  try { document.execCommand('copy'); showToast('URL 복사 완료!', 'success'); }
+  catch(e) { alert('복사 실패 — URL을 직접 선택해 복사해 주세요.'); }
+  document.body.removeChild(ta);
+}
+
 
 function m04GoPage(p){
   const total      = _m04State.filtered.length;
@@ -6327,7 +6604,7 @@ async function _renderLandingSections(){
         <thead><tr><th>#</th><th>탭 ID</th><th>번호</th><th>한글명</th><th>영문명</th><th>배지</th><th>배경이미지</th><th>공개</th><th style="width:120px;">작업</th></tr></thead>
         <tbody>${items.map(s=>`<tr style="${!s.active?'opacity:0.45;':''}">
           <td><span style="font-size:11px;color:var(--text-muted);">${s.order||'-'}</span></td>
-          <td><code style="font-size:11px;background:${['exp','coop','suwon'].includes(s.id)?'#e3ede7':'#FFEBEE'};padding:2px 6px;border-radius:4px;color:${['exp','coop','suwon'].includes(s.id)?'#085041':'#C62828'}">${s.id||'-'}${['exp','coop','suwon'].includes(s.id)?'':'⚠️'}</code></td>
+          <td><code style="font-size:11px;background:${['exp','coop','suwon','stamp'].includes(s.id)?'#e3ede7':'#FFEBEE'};padding:2px 6px;border-radius:4px;color:${['exp','coop','suwon','stamp'].includes(s.id)?'#085041':'#C62828'}">${s.id||'-'}${['exp','coop','suwon','stamp'].includes(s.id)?'':'⚠️'}</code></td>
           <td style="font-size:13px;font-weight:700;color:var(--primary);">${s.num||'-'}</td>
           <td style="font-size:13px;font-weight:600;">${(s.label||'').replace(/\n/g,' ')}</td>
           <td style="font-size:12px;color:var(--text-muted);">${s.en||'-'}</td>
@@ -6340,7 +6617,7 @@ async function _renderLandingSections(){
           </div></td>
         </tr>`).join('')}</tbody>
       </table>
-      <div style="text-align:center;padding:10px;font-size:12px;color:var(--text-muted);">총 ${items.length}개 · 탭 ID는 cat-exp/cat-coop/cat-suwon과 일치해야 합니다</div>`;
+      <div style="text-align:center;padding:10px;font-size:12px;color:var(--text-muted);">총 ${items.length}개 · 탭 ID는 cat-exp/cat-coop/cat-suwon/cat-stamp과 일치해야 합니다</div>`;
   }catch(e){ listEl.innerHTML=`<div style="color:#e53935;padding:20px;">오류: ${e.message}</div>`; }
 }
 
@@ -6383,7 +6660,7 @@ async function openLandingSectionEdit(docId){
 async function saveLandingSection(){
   const id=document.getElementById('lsec-id').value.trim();
   const label=document.getElementById('lsec-label').value.trim();
-  if(!id){ alert('탭 ID를 선택하세요.\n\nexp(체험) / coop(가맹점) / suwon(수목원) 중 하나를 선택해야 합니다.'); return; }
+  if(!id){ alert('탭 ID를 선택하세요.\n\nexp(체험) / coop(가맹점) / suwon(수목원) / stamp(스탬프투어) 중 하나를 선택해야 합니다.'); return; }
   if(!label){ alert('한글명을 입력하세요.'); return; }
   if(!['exp','coop','suwon','stamp'].includes(id)){ alert('탭 ID는 exp / coop / suwon / stamp 중 하나여야 합니다.\n현재 입력값: '+id); return; }
   showLoading('저장 중...');
