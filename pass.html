@@ -749,6 +749,8 @@ function drawQR(tokenText) {
   }
 }
 
+var _currentPassToken = null;  // 카카오 인앱 브라우저 localStorage 차단 대비
+
 /* showPass 함수는 아래 공유 리워드 시스템 섹션에서 정의됩니다 */
 
 /* ── 패스 이미지 저장 ── */
@@ -845,7 +847,11 @@ function getReferralLink(myToken) {
 
 /* 공유 버튼 클릭 — 카카오 메시지 개선 */
 function shareReferral(method) {
-  var myToken  = localStorage.getItem('onmaeul_pass_token');
+  // localStorage가 카카오 인앱 브라우저에서 차단될 수 있어서
+  // URL ?pass= 파라미터 → 전역 _currentPassToken → localStorage 순으로 읽음
+  var myToken = _currentPassToken
+             || (new URLSearchParams(location.search)).get('pass')
+             || localStorage.getItem('onmaeul_pass_token');
   if (!myToken) { showPassToast('패스를 먼저 발급받아야 해요'); return; }
 
   var link     = getReferralLink(myToken);
@@ -1113,6 +1119,9 @@ function renderStampBoard(cnt, visits) {
 // 패스 표시 함수 (기존 showPass 확장)
 // ════════════════════════════════════════════════
 function showPass(cust, visitCnt, visits) {
+  // 전역 토큰 저장 — 카카오 인앱 브라우저 localStorage 차단 대비
+  if (cust.qrToken) { _currentPassToken = cust.qrToken; }
+
   document.getElementById('loading').style.display      = 'none';
   document.getElementById('new-pass-screen').style.display = 'none';
   document.getElementById('content').style.display      = 'block';
