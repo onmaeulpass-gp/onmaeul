@@ -2545,36 +2545,21 @@ async function renderCoopCards() {
   const loading= document.getElementById('coop-cards-loading');
   if (!grid) return;
 
-  // Firestore 준비 대기 (최대 5초)
-  let waited = 0;
-  while (!window._fbDB && waited < 50) { await new Promise(r=>setTimeout(r,100)); waited++; }
+  const CACHE_KEY = 'onmaeul_coops_v2';
+  const CACHE_TTL = 10 * 60 * 1000; // 10분
 
-  try {
-    let snap;
-    try {
-      snap = await window._fbDB.collection('landing_coops').orderBy('order','asc').get();
-    } catch(e) {
-      snap = await window._fbDB.collection('landing_coops').get();
-    }
-    _coopStores = snap.docs
-      .map(d => ({ ...d.data(), __id: d.id }))
-      .filter(s => s.active !== false)
-      .sort((a,b) => (a.order||99)-(b.order||99));
-
-    if (_coopStores.length === 0) {
-      // Firestore에 데이터 없으면 폴백 하드코딩 표시
-      _coopStores = _COOP_FALLBACK;
-    }
-
-    // 카드 렌더링
+  // ── 카드 그리기 헬퍼 ──
+  function drawCoopCards(stores) {
+    _coopStores = stores;
     if (loading) loading.remove();
-    _coopStores.forEach(s => {
+    grid.innerHTML = '';
+    stores.forEach(s => {
       const card = document.createElement('div');
       card.className = 'coop-card';
       card.dataset.cat = s.cat || 'restaurant';
       card.innerHTML = `
         <img class="coop-card-img" src="${s.img || 'images/img_cat_coop.jpg'}" alt="${s.name}"
-          onerror="this.src=&quot;images/img_cat_coop.jpg&quot;">
+          onerror="this.src='images/img_cat_coop.jpg'">
         <div class="coop-card-body">
           <span class="coop-card-en">${s.en || ''}</span>
           <div class="coop-card-name">${s.name}</div>
@@ -2588,30 +2573,40 @@ async function renderCoopCards() {
       grid.appendChild(card);
       if (typeof observer !== 'undefined') observer.observe(card);
     });
-
-    // 지도 목록 렌더링
     _renderMapStoreList();
+  }
 
+  // ── 1단계: 캐시 또는 폴백으로 즉시 표시 ──
+  let fromCache = false;
+  try {
+    const c = localStorage.getItem(CACHE_KEY);
+    if (c) {
+      const { data, ts } = JSON.parse(c);
+      if (data && data.length && Date.now() - ts < CACHE_TTL) {
+        drawCoopCards(data); fromCache = true;
+      }
+    }
+  } catch(e) {}
+  if (!fromCache) drawCoopCards(_COOP_FALLBACK);
+
+  // ── 2단계: Firestore 비동기 조회 후 갱신 ──
+  let waited = 0;
+  while (!window._fbDB && waited < 20) { await new Promise(r=>setTimeout(r,100)); waited++; }
+  if (!window._fbDB) return;
+
+  try {
+    let snap;
+    try { snap = await window._fbDB.collection('landing_coops').orderBy('order','asc').get(); }
+    catch(e) { snap = await window._fbDB.collection('landing_coops').get(); }
+
+    let fresh = snap.docs.map(d=>({...d.data(),__id:d.id}))
+      .filter(s=>s.active!==false).sort((a,b)=>(a.order||99)-(b.order||99));
+    if (!fresh.length) fresh = _COOP_FALLBACK;
+
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify({data:fresh, ts:Date.now()})); } catch(e) {}
+    drawCoopCards(fresh);
   } catch(e) {
-    console.warn('landing_coops 로드 실패, 폴백 사용:', e.message);
-    _coopStores = _COOP_FALLBACK;
-    if (loading) loading.remove();
-    _coopStores.forEach(s => {
-      const card = document.createElement('div');
-      card.className = 'coop-card';
-      card.dataset.cat = s.cat;
-      card.innerHTML = `
-        <img class="coop-card-img" src="${s.img}" alt="${s.name}">
-        <div class="coop-card-body">
-          <span class="coop-card-en">${s.en}</span>
-          <div class="coop-card-name">${s.name}</div>
-          <p class="coop-card-desc">${s.desc}</p>
-          <a href="${s.kakao}" target="_blank" class="coop-card-btn">${KAKAO_SVG} 카카오톡으로 문의하기</a>
-        </div>`;
-      grid.appendChild(card);
-      if (typeof observer !== 'undefined') observer.observe(card);
-    });
-    _renderMapStoreList();
+    console.warn('landing_coops Firestore 실패 — 폴백 유지:', e.message);
   }
 }
 
@@ -2634,8 +2629,8 @@ async function renderExpCards() {
   const grid = document.getElementById('exp-grid');
   if (!grid) return;
 
-  let waited = 0;
-  while (!window._fbDB && waited < 50) { await new Promise(r=>setTimeout(r,100)); waited++; }
+  const CACHE_KEY_EXP = 'onmaeul_exp_v2';
+  const CACHE_TTL_EXP = 10 * 60 * 1000;
 
   const EXP_FALLBACK = [
     { name:'먹다 · 잣 체험',  en:'Pine Nut Cooking', desc:'힐링숲에서 직접 수확한 잣으로 쿠키, 전병, 아이스크림을 만들어 보는 요리 프로그램.', img:'images/img_02.jpg', tags:'잣 쿠키 · 20,000원,잣 전병 · 15,000원,잣 아이스크림 · 10,000원', reserve:'먹다 · 잣 체험', order:1 },
@@ -2643,32 +2638,12 @@ async function renderExpCards() {
     { name:'느끼다 · 힐링숲', en:'Forest Healing',   desc:'잣나무와 전나무 가득한 숲 속에서 에코티어링, 잣줍기 등 자연 생태체험을 경험하세요.', img:'images/img_04.jpg', tags:'에코티어링 · 15,000원,자연 생태체험 · 20,000원', reserve:'느끼다 · 힐링숲', order:3 },
   ];
 
-  let items = [];
-  try {
-    if (window._fbDB) {
-      const snap = await window._fbDB.collection('landing_exp').orderBy('order','asc').get()
-        .catch(() => window._fbDB.collection('landing_exp').get());
-      items = snap.docs.map(d => d.data()).filter(s => s.active !== false)
-                  .sort((a,b) => (a.order||99) - (b.order||99));
-    }
-  } catch(e) { console.warn('landing_exp 로드 실패:', e.message); }
-
-  // Firestore + FALLBACK 병합 (중복 제거)
-  if (!items.length) {
-    items = EXP_FALLBACK;
-  } else {
-    const existNames = new Set(items.map(i => i.reserve || i.name));
-    EXP_FALLBACK.forEach(f => { if (!existNames.has(f.reserve || f.name)) items.push(f); });
-    items.sort((a,b) => (a.order||99) - (b.order||99));
-  }
-
-  const loading = document.getElementById('exp-cards-loading');
-  if (loading) loading.remove();
-
-  // 기존 카드/드로어 제거 (재렌더 시 중복 방지)
-  grid.querySelectorAll('.exp-card, .exp-inline-drawer').forEach(el => el.remove());
-
-  items.forEach(function(s, idx) {
+  // ── 카드 그리기 헬퍼 ──
+  function drawExpCards(items) {
+    const loading = document.getElementById('exp-cards-loading');
+    if (loading) loading.remove();
+    grid.querySelectorAll('.exp-card, .exp-inline-drawer').forEach(el => el.remove());
+    items.forEach(function(s, idx) {
     const rn   = (s.reserve || s.name || '').trim();
     // 구분자: | 우선, 없으면 콤마 fallback (20,000원 같은 숫자 콤마 오인식 방지)
     const _rawTags = s.tags || '';
@@ -2762,7 +2737,43 @@ async function renderExpCards() {
 
     wrap.appendChild(drawer);
     grid.appendChild(wrap);
-  });
+  }); // end drawExpCards forEach
+  } // end drawExpCards
+
+  // ── 캐시 → 즉시 렌더 ──
+  let expFromCache = false;
+  try {
+    const c = localStorage.getItem(CACHE_KEY_EXP);
+    if (c) {
+      const { data, ts } = JSON.parse(c);
+      if (data && data.length && Date.now() - ts < CACHE_TTL_EXP) {
+        drawExpCards(data); expFromCache = true;
+      }
+    }
+  } catch(e) {}
+  if (!expFromCache) drawExpCards(EXP_FALLBACK);
+
+  // ── Firestore 비동기 조회 후 갱신 ──
+  let waited = 0;
+  while (!window._fbDB && waited < 20) { await new Promise(r=>setTimeout(r,100)); waited++; }
+  if (!window._fbDB) return;
+
+  try {
+    const snap = await window._fbDB.collection('landing_exp').orderBy('order','asc').get()
+      .catch(() => window._fbDB.collection('landing_exp').get());
+    let fresh = snap.docs.map(d=>d.data()).filter(s=>s.active!==false)
+      .sort((a,b)=>(a.order||99)-(b.order||99));
+    if (!fresh.length) fresh = EXP_FALLBACK;
+    else {
+      const names = new Set(fresh.map(i=>i.reserve||i.name));
+      EXP_FALLBACK.forEach(f=>{ if(!names.has(f.reserve||f.name)) fresh.push(f); });
+      fresh.sort((a,b)=>(a.order||99)-(b.order||99));
+    }
+    try { localStorage.setItem(CACHE_KEY_EXP, JSON.stringify({data:fresh, ts:Date.now()})); } catch(e) {}
+    drawExpCards(fresh);
+  } catch(e) {
+    console.warn('landing_exp Firestore 실패 — 폴백 유지:', e.message);
+  }
 }
 
 // ── 수목원·동물원 렌더링 (landing_suwon) ──
@@ -2770,104 +2781,116 @@ async function renderSuwonCards() {
   const grid = document.getElementById('suwon-card-grid');
   if (!grid) return;
 
-  let waited = 0;
-  while (!window._fbDB && waited < 50) { await new Promise(r=>setTimeout(r,100)); waited++; }
-
+  const CACHE_KEY_SUWON = 'onmaeul_suwon_v2';
+  const CACHE_TTL_SUWON = 10 * 60 * 1000;
   const SUWON_FALLBACK = [
     { name:'아침고요수목원', en:'GARDEN', desc:'축령산 자락 5,000여 평, 20개 이상의 테마 정원. 계절마다 달라지는 꽃과 나무의 향연.\n온마을 스테이패스 제시 시 입장 할인 (MOU 협약 예정)', img:'images/img_suwon_garden.jpg', link:'https://www.morningcalm.co.kr', linkText:'공식 홈페이지 →', order:1 },
     { name:'아침고요 동물원', en:'ZOO', desc:'수목원 인근 가족 친화형 동물원. 어린이와 함께하는 자연 체험의 완성.\n온마을 패키지 연계 방문 가능', img:'images/img_suwon_zoo.png', link:'http://pf.kakao.com/_FVxjZX/chat', linkText:'패키지 문의하기', order:2 },
   ];
 
-  let items = [];
+  function drawSuwonCards(items) {
+    const loading = document.getElementById('suwon-cards-loading');
+    if (loading) loading.remove();
+    grid.innerHTML = '';
+    const isKakao = url => url && url.includes('kakao');
+    items.forEach(s => {
+      const card = document.createElement('div');
+      card.className = 'coop-card';
+      const descHtml = (s.desc||'').replace(/\n/g,'<br>');
+      const btnHtml = isKakao(s.link)
+        ? '<a href="' + s.link + '" target="_blank" class="coop-card-btn">' +
+            '<svg width="16" height="16" viewBox="0 0 18 18" fill="none"><ellipse cx="9" cy="8" rx="8" ry="7" fill="#3A1D1D"/><path d="M9 3.5C5.96 3.5 3.5 5.46 3.5 7.88c0 1.5 1 2.82 2.56 3.62l-.6 2.2c-.04.17.13.31.28.22l2.75-1.83c.32.05.66.08 1.01.08 3.04 0 5.5-1.96 5.5-4.38S12.04 3.5 9 3.5z" fill="#FEE500"/></svg> ' +
+            (s.linkText||'문의하기') + '</a>'
+        : '<a href="' + (s.link||'#') + '" target="_blank" rel="noopener" class="coop-card-btn">' + (s.linkText||'자세히 보기') + '</a>';
+      card.innerHTML =
+        '<img class="coop-card-img" src="' + (s.img||'images/img_cat_coop.jpg') + '" alt="' + s.name + '" onerror="this.src='images/img_cat_coop.jpg'">' +
+        '<div class="coop-card-body">' +
+          '<span class="coop-card-en">' + (s.en||'') + '</span>' +
+          '<div class="coop-card-name">' + s.name + '</div>' +
+          '<p class="coop-card-desc">' + descHtml + '</p>' +
+          btnHtml +
+        '</div>';
+      grid.appendChild(card);
+      if (typeof observer !== 'undefined') observer.observe(card);
+    });
+  }
+
+  let suwonFromCache = false;
   try {
-    if (window._fbDB) {
-      const snap = await window._fbDB.collection('landing_suwon').orderBy('order','asc').get()
-        .catch(() => window._fbDB.collection('landing_suwon').get());
-      items = snap.docs.map(d=>d.data()).filter(s=>s.active!==false).sort((a,b)=>(a.order||99)-(b.order||99));
-    }
-  } catch(e) { console.warn('landing_suwon 로드 실패:', e.message); }
-  if (!items.length) items = SUWON_FALLBACK;
+    const c = localStorage.getItem(CACHE_KEY_SUWON);
+    if (c) { const {data,ts}=JSON.parse(c); if(data&&data.length&&Date.now()-ts<CACHE_TTL_SUWON){ drawSuwonCards(data); suwonFromCache=true; } }
+  } catch(e) {}
+  if (!suwonFromCache) drawSuwonCards(SUWON_FALLBACK);
 
-  const loading = document.getElementById('suwon-cards-loading');
-  if (loading) loading.remove();
-
-  const isKakao = url => url && url.includes('kakao');
-  items.forEach(s => {
-    const card = document.createElement('div');
-    card.className = 'coop-card';
-    const descHtml = (s.desc||'').replace(/\n/g,'<br>');
-    const btnHtml = isKakao(s.link)
-      ? '<a href="' + s.link + '" target="_blank" class="coop-card-btn">' +
-          '<svg width="16" height="16" viewBox="0 0 18 18" fill="none"><ellipse cx="9" cy="8" rx="8" ry="7" fill="#3A1D1D"/><path d="M9 3.5C5.96 3.5 3.5 5.46 3.5 7.88c0 1.5 1 2.82 2.56 3.62l-.6 2.2c-.04.17.13.31.28.22l2.75-1.83c.32.05.66.08 1.01.08 3.04 0 5.5-1.96 5.5-4.38S12.04 3.5 9 3.5z" fill="#FEE500"/></svg> ' +
-          (s.linkText||'문의하기') + '</a>'
-      : '<a href="' + (s.link||'#') + '" target="_blank" rel="noopener" class="coop-card-btn">' + (s.linkText||'자세히 보기') + '</a>';
-    card.innerHTML =
-      '<img class="coop-card-img" src="' + (s.img||'images/img_cat_coop.jpg') + '" alt="' + s.name + '" onerror="this.src=&quot;images/img_cat_coop.jpg&quot;">' +
-      '<div class="coop-card-body">' +
-        '<span class="coop-card-en">' + (s.en||'') + '</span>' +
-        '<div class="coop-card-name">' + s.name + '</div>' +
-        '<p class="coop-card-desc">' + descHtml + '</p>' +
-        btnHtml +
-      '</div>';
-    grid.appendChild(card);
-    if (typeof observer !== 'undefined') observer.observe(card);
-  });
+  let waited = 0;
+  while (!window._fbDB && waited < 20) { await new Promise(r=>setTimeout(r,100)); waited++; }
+  if (!window._fbDB) return;
+  try {
+    const snap = await window._fbDB.collection('landing_suwon').orderBy('order','asc').get()
+      .catch(() => window._fbDB.collection('landing_suwon').get());
+    let fresh = snap.docs.map(d=>d.data()).filter(s=>s.active!==false).sort((a,b)=>(a.order||99)-(b.order||99));
+    if (!fresh.length) fresh = SUWON_FALLBACK;
+    try { localStorage.setItem(CACHE_KEY_SUWON, JSON.stringify({data:fresh,ts:Date.now()})); } catch(e) {}
+    drawSuwonCards(fresh);
+  } catch(e) { console.warn('landing_suwon Firestore 실패 — 폴백 유지:', e.message); }
 }
 
-// 폴백 하드코딩 (Firestore 불가 시)
 // ── 스탬프투어 카드 렌더링 (landing_stamp) ──
 async function renderStampCards() {
   const grid = document.getElementById('stamp-card-grid');
   if (!grid) return;
 
-  let waited = 0;
-  while (!window._fbDB && waited < 50) { await new Promise(r=>setTimeout(r,100)); waited++; }
-
+  const CACHE_KEY_STAMP = 'onmaeul_stamp_v2';
+  const CACHE_TTL_STAMP = 10 * 60 * 1000;
   const STAMP_TOUR_FALLBACK = [
     { name:'온마을 데일리 코스', en:'DAILY COURSE', desc:'카페 · 식당 · 체험 · 마트 · 수목원 6곳 방문 시 완성. 당일 15% 추가 할인 쿠폰 즉시 발급.', img:'images/img_cat_exp.png', link:'', linkText:'스탬프 패스 받기', order:1 },
     { name:'스테이 코스',        en:'STAY COURSE',  desc:'1박 2일 10스탬프 완성 시 협약 펜션 1박 무료 또는 굿즈세트. 숙박 체크인 시 보너스 스탬프 +2.', img:'images/img_cat_coop.jpg', link:'', linkText:'스테이패스 신청', order:2 },
   ];
 
-  let items = [];
+  function drawStampCards(items) {
+    const loading = document.getElementById('stamp-cards-loading');
+    if (loading) loading.remove();
+    grid.innerHTML = '';
+    items.forEach(s => {
+      const card = document.createElement('div');
+      card.className = 'coop-card';
+      const descHtml = (s.desc||'').replace(/\n/g,'<br>');
+      const btn = document.createElement('button');
+      btn.className = 'btn-exp-reserve';
+      btn.textContent = s.linkText || (s.link ? '자세히 보기' : '스테이패스 신청');
+      if (s.link) { btn.onclick = function(){ window.open(s.link,'_blank','noopener'); }; }
+      else { btn.onclick = function(){ window.location.href='stamp.html'; }; }
+      const img = document.createElement('img');
+      img.className='coop-card-img'; img.src=s.img||'images/img_cat_exp.png'; img.alt=s.name;
+      img.onerror=function(){ this.src='images/img_cat_exp.png'; };
+      const body=document.createElement('div'); body.className='coop-card-body';
+      const enEl=document.createElement('span'); enEl.className='coop-card-en'; enEl.textContent=s.en||'';
+      const nameEl=document.createElement('div'); nameEl.className='coop-card-name'; nameEl.textContent=s.name;
+      const descEl=document.createElement('p'); descEl.className='coop-card-desc'; descEl.innerHTML=descHtml;
+      body.appendChild(enEl); body.appendChild(nameEl); body.appendChild(descEl); body.appendChild(btn);
+      card.appendChild(img); card.appendChild(body);
+      grid.appendChild(card);
+    });
+  }
+
+  let stampFromCache = false;
   try {
-    if (window._fbDB) {
-      const snap = await window._fbDB.collection('landing_stamp').orderBy('order','asc').get()
-        .catch(() => window._fbDB.collection('landing_stamp').get());
-      items = snap.docs.map(d=>d.data()).filter(s=>s.active!==false).sort((a,b)=>(a.order||99)-(b.order||99));
-    }
-  } catch(e) { console.warn('landing_stamp 로드 실패:', e.message); }
-  if (!items.length) items = STAMP_TOUR_FALLBACK;
+    const c = localStorage.getItem(CACHE_KEY_STAMP);
+    if (c) { const {data,ts}=JSON.parse(c); if(data&&data.length&&Date.now()-ts<CACHE_TTL_STAMP){ drawStampCards(data); stampFromCache=true; } }
+  } catch(e) {}
+  if (!stampFromCache) drawStampCards(STAMP_TOUR_FALLBACK);
 
-  const loading = document.getElementById('stamp-cards-loading');
-  if (loading) loading.remove();
-
-  items.forEach(s => {
-    const card = document.createElement('div');
-    card.className = 'coop-card';
-    const descHtml = (s.desc||'').replace(/\n/g,'<br>');
-    const btn = document.createElement('button');
-    btn.className = 'btn-exp-reserve';
-    btn.textContent = s.linkText || (s.link ? '자세히 보기' : '스테이패스 신청');
-    if (s.link) {
-      btn.onclick = function(){ window.open(s.link, '_blank', 'noopener'); };
-    } else {
-      btn.onclick = function(){ window.location.href='stamp.html'; };
-    }
-    const img = document.createElement('img');
-    img.className = 'coop-card-img';
-    img.src = s.img || 'images/img_cat_exp.png';
-    img.alt = s.name;
-    img.onerror = function(){ this.src='images/img_cat_exp.png'; };
-
-    const body = document.createElement('div');
-    body.className = 'coop-card-body';
-    const enEl = document.createElement('span'); enEl.className='coop-card-en'; enEl.textContent=s.en||'';
-    const nameEl = document.createElement('div'); nameEl.className='coop-card-name'; nameEl.textContent=s.name;
-    const descEl = document.createElement('p');   descEl.className='coop-card-desc'; descEl.innerHTML=descHtml;
-    body.appendChild(enEl); body.appendChild(nameEl); body.appendChild(descEl); body.appendChild(btn);
-    card.appendChild(img); card.appendChild(body);
-    grid.appendChild(card);
-  });
+  let waited = 0;
+  while (!window._fbDB && waited < 20) { await new Promise(r=>setTimeout(r,100)); waited++; }
+  if (!window._fbDB) return;
+  try {
+    const snap = await window._fbDB.collection('landing_stamp').orderBy('order','asc').get()
+      .catch(() => window._fbDB.collection('landing_stamp').get());
+    let fresh = snap.docs.map(d=>d.data()).filter(s=>s.active!==false).sort((a,b)=>(a.order||99)-(b.order||99));
+    if (!fresh.length) fresh = STAMP_TOUR_FALLBACK;
+    try { localStorage.setItem(CACHE_KEY_STAMP, JSON.stringify({data:fresh,ts:Date.now()})); } catch(e) {}
+    drawStampCards(fresh);
+  } catch(e) { console.warn('landing_stamp Firestore 실패 — 폴백 유지:', e.message); }
 }
 
 
