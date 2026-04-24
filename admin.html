@@ -5595,16 +5595,87 @@ async function renderM05(){
   }finally{hideLoading();}
 }
 
-// 결제상태 클릭 순환 변경
+// 결제상태 클릭 순환 변경 — 결제 완료 시 스탬프 자동 적립
 async function cyclePayStatus(taskId, el) {
   const cycle = ['미입금','입금완료','부분입금','현장결제'];
-  const cur = el.textContent.trim();
+  const cur  = el.textContent.trim();
   const next = cycle[(cycle.indexOf(cur)+1)%cycle.length];
-  const colorMap={'입금완료':['#2E7D32','#E8F5E9'],'부분입금':['#E65100','#FFF3E0'],'현장결제':['#1565C0','#E3F2FD'],'미입금':['#B71C1C','#FFEBEE']};
-  const [c,bg]=colorMap[next]||['#B71C1C','#FFEBEE'];
-  el.textContent=next; el.style.color=c; el.style.background=bg;
-  try { await db.collection('tasks').doc(String(taskId)).update({payStatus:next}); }
-  catch(e){ alert('저장 실패: '+e.message); }
+  const colorMap = {
+    '입금완료': ['#2E7D32','#E8F5E9'],
+    '부분입금': ['#E65100','#FFF3E0'],
+    '현장결제': ['#1565C0','#E3F2FD'],
+    '미입금':   ['#B71C1C','#FFEBEE']
+  };
+  const [c,bg] = colorMap[next] || ['#B71C1C','#FFEBEE'];
+  el.textContent = next; el.style.color = c; el.style.background = bg;
+
+  try {
+    await db.collection('tasks').doc(String(taskId)).update({ payStatus: next });
+
+    // ✅ 결제 완료(입금완료 / 현장결제) 시 → 고객 스탬프 +1 자동 적립
+    const PAY_DONE = ['입금완료','현장결제'];
+    const WAS_DONE = ['입금완료','현장결제'];
+    if (PAY_DONE.includes(next) && !WAS_DONE.includes(cur)) {
+      try {
+        // task에서 고객 정보 조회
+        const taskDoc = await db.collection('tasks').doc(String(taskId)).get();
+        const task    = taskDoc.data();
+        if (!task || !task.customerId) { throw new Error('고객ID 없음'); }
+
+        const custId  = String(task.customerId);
+        const today   = new Date().toISOString().split('T')[0];
+        const nowISO  = new Date().toISOString();
+
+        // 오늘 이미 결제 스탬프 적립했는지 중복 체크
+        const vSnap = await db.collection('visits')
+          .where('customerId', '==', custId)
+          .where('visitDate',  '==', today)
+          .where('visitType',  '==', 'payment_done')
+          .limit(1).get();
+
+        if (!vSnap.empty) {
+          showToast('오늘 이미 결제 스탬프가 적립되어 있어요', 'warning'); return;
+        }
+
+        // 방문 기록 저장
+        const vid = await genId('visits');
+        await upsert('visits', {
+          id:           vid,
+          customerId:   custId,
+          customerName: task.customerName || task.name || '',
+          coopId:       0,
+          coopName:     task.program || '온마을 체험',
+          visitType:    'payment_done',
+          visitDate:    today,
+          visitTime:    new Date().toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit'}),
+          discountRate: 0,
+          payStatus:    next,
+          taskId:       String(taskId),
+          createdAt:    nowISO
+        });
+
+        // 고객 문서 stampTotal +1
+        const custSnap = await db.collection('customers').doc(custId).get();
+        if (custSnap.exists) {
+          const prev = Number(custSnap.data().stampTotal || 0);
+          await db.collection('customers').doc(custId).update({
+            stampTotal: prev + 1,
+            lastVisit:  nowISO
+          });
+          invalidateCache('visits');
+          invalidateCache('customers');
+          showToast(`🌿 ${task.customerName||'고객'}님 스탬프 +1 적립 (${prev+1}개)`, 'success');
+        } else {
+          showToast('⚠️ 고객 패스를 찾을 수 없어요. 수동으로 확인해 주세요.', 'warning');
+        }
+      } catch(se) {
+        console.warn('스탬프 적립 실패:', se.message);
+        showToast('결제 저장 완료. 스탬프 적립 실패 — 수동 확인 필요', 'warning');
+      }
+    }
+  } catch(e) {
+    alert('저장 실패: ' + e.message);
+  }
 }
 // ═══════════════════════════════════════════════════════════
 // M06 항목관리
@@ -7684,38 +7755,8 @@ async function executeSNSSend() {
       (_snsSendType === 'sms' ? '📱 문자' : '💬 카카오톡') +
       ` 발송 완료!<br><span style="font-size:11px;">${_snsCustData.name}님 · Make → ${_snsSendType === 'sms' ? '솔라피' : '카카오 알림톡'} 전송됨</span>`;
 
-    // 문자 발송 시 방문 1회 자동 기록 (visits 컬렉션)
-    if (_snsSendType === 'sms' && _snsCustData && _snsCustData.id) {
-      try {
-        // 이미 오늘 문자 발송 기록이 있으면 중복 생성 안 함
-        const allVisits = await getAll('visits');
-        const today = new Date().toISOString().split('T')[0];
-        const alreadyLogged = allVisits.some(v =>
-          v.customerId === _snsCustData.id &&
-          v.visitType === 'sms_sent' &&
-          v.visitDate === today
-        );
-        if (!alreadyLogged) {
-          const vid = await genId('visits');
-          await upsert('visits', {
-            id: vid,
-            customerId:   _snsCustData.id,
-            customerName: _snsCustData.name || '',
-            coopId:       0,
-            coopName:     '온마을 가평 (문자 발급)',
-            visitType:    'sms_sent',
-            visitDate:    today,
-            visitTime:    new Date().toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit'}),
-            discountRate: 0,
-            createdAt:    new Date().toISOString()
-          });
-          invalidateCache('visits');
-          console.log('✅ 방문 1회 자동 기록:', _snsCustData.name);
-        }
-      } catch(ve) {
-        console.warn('방문 기록 실패:', ve.message);
-      }
-    }
+    // ⛔ SMS 발송 시 스탬프 자동 적립 제거 (2026-04-24)
+    // 스탬프는 결제 완료(입금완료/현장결제) 확인 후 cyclePayStatus에서만 적립됩니다.
   } catch(e) {
     document.getElementById('sns-send-result').style.display = '';
     document.getElementById('sns-send-result').style.background = '#fff0f0';

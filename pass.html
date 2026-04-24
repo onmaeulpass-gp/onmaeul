@@ -82,6 +82,78 @@ html, body { min-height: 100vh; background: #0a1a0a; font-family: 'Noto Sans KR'
 .pass-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 .footer-note { margin-top: 16px; font-size: 11px; color: #2a4a2a; text-align: center; line-height: 2; }
 
+/* ── 웰컴 배너 ── */
+.welcome-banner {
+  width: 100%;
+  background: linear-gradient(135deg, #1a3a1a, #225536);
+  border: 1.5px solid #4a8a4a;
+  border-radius: 14px;
+  padding: 16px 18px;
+  margin-bottom: 16px;
+  text-align: center;
+  animation: fadeSlideIn 0.4s ease;
+}
+.welcome-banner-icon { font-size: 36px; margin-bottom: 6px; }
+.welcome-banner-store { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: #4a9a4a; margin-bottom: 4px; }
+.welcome-banner-msg { font-size: 16px; font-weight: 700; color: #c8e6c9; margin-bottom: 4px; }
+.welcome-banner-sub { font-size: 12px; color: #4a7a4a; line-height: 1.6; }
+.welcome-stamp-pop {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: #225536; color: #fff;
+  font-size: 13px; font-weight: 700;
+  padding: 6px 16px; border-radius: 20px; margin-top: 10px;
+  animation: stampPop 0.4s cubic-bezier(0.34,1.56,0.64,1) 0.3s both;
+}
+.welcome-dup-banner {
+  width: 100%;
+  background: #1a1a2a;
+  border: 1.5px solid #3a3a5a;
+  border-radius: 14px;
+  padding: 14px 18px;
+  margin-bottom: 16px;
+  text-align: center;
+  animation: fadeSlideIn 0.4s ease;
+}
+.welcome-dup-banner .dup-icon { font-size: 28px; margin-bottom: 6px; }
+.welcome-dup-banner .dup-msg { font-size: 14px; font-weight: 700; color: #9090c0; }
+.welcome-dup-banner .dup-sub { font-size: 12px; color: #4a4a7a; margin-top: 4px; line-height: 1.6; }
+
+/* ── 이름 입력 팝업 ── */
+.name-input-card {
+  width: 100%;
+  background: #111e11;
+  border: 1px solid #2a4a2a;
+  border-radius: 20px;
+  padding: 28px 24px;
+  text-align: center;
+  animation: fadeSlideIn 0.35s ease;
+}
+.name-input-card h3 { font-size: 18px; font-weight: 700; color: #c8e6c9; margin-bottom: 8px; }
+.name-input-card p  { font-size: 13px; color: #4a7a4a; margin-bottom: 20px; line-height: 1.7; }
+.name-input-field {
+  width: 100%; padding: 14px 16px;
+  background: #0a150a; border: 1.5px solid #2a5a2a;
+  border-radius: 10px; color: #c8e6c9;
+  font-size: 16px; font-family: inherit;
+  text-align: center; outline: none;
+  margin-bottom: 12px;
+}
+.name-input-field::placeholder { color: #2a5a2a; }
+.name-input-field:focus { border-color: #4a9a4a; }
+.btn-welcome-issue {
+  width: 100%; padding: 16px;
+  background: #225536; color: #c8e6c9;
+  border: none; border-radius: 12px;
+  font-size: 15px; font-weight: 700; font-family: inherit;
+  cursor: pointer; transition: background 0.15s, transform 0.1s;
+}
+.btn-welcome-issue:active { background: #1a4a2a; transform: scale(0.98); }
+.btn-welcome-skip {
+  background: none; border: none;
+  font-size: 12px; color: #2a5a2a; font-family: inherit;
+  cursor: pointer; margin-top: 8px; text-decoration: underline;
+}
+
 /* ── 초대 배너 ── */
 .ref-banner {
   width: 100%;
@@ -356,6 +428,45 @@ html, body { min-height: 100vh; background: #0a1a0a; font-family: 'Noto Sans KR'
 <div class="wrap">
   <img src="onmaeullogo.svg" alt="온마을 ONMAEUL" style="height:44px;width:auto;display:block;margin:0 auto 8px;filter:brightness(1.1) saturate(1.1);">
   <div class="logo-main">스테이패스</div>
+
+  <!-- ① 웰컴 배너 — 가맹점 QR 스캔 시 표시 -->
+  <div class="welcome-banner" id="welcome-banner" style="display:none;">
+    <div class="welcome-banner-icon">☕</div>
+    <div class="welcome-banner-store" id="welcome-store-name">온마을 가맹점</div>
+    <div class="welcome-banner-msg" id="welcome-msg">첫 방문을 환영해요!</div>
+    <div class="welcome-banner-sub" id="welcome-sub">온마을 스테이패스가 발급됐어요</div>
+    <div class="welcome-stamp-pop" id="welcome-stamp-pop">🌿 스탬프 +1 적립!</div>
+  </div>
+
+  <!-- ② 중복 방지 배너 — 오늘 이미 적립한 경우 -->
+  <div class="welcome-dup-banner" id="welcome-dup-banner" style="display:none;">
+    <div class="dup-icon">🕐</div>
+    <div class="dup-msg">오늘은 이미 적립했어요</div>
+    <div class="dup-sub" id="dup-store-name">같은 가게는 하루 1회만 적립돼요<br>내일 또 방문해 주세요 😊</div>
+  </div>
+
+  <!-- ③ 이름 입력 화면 — 신규 발급 시 -->
+  <div class="name-input-card" id="name-input-card" style="display:none;">
+    <div style="font-size:36px;margin-bottom:12px;">🌿</div>
+    <h3>온마을 스테이패스</h3>
+    <p id="name-input-store-label">가맹점 방문 스탬프 적립을 위해<br>간단한 정보를 입력해 주세요</p>
+    <input class="name-input-field" id="name-input-field"
+           placeholder="이름 (예: 홍길동)" maxlength="10"
+           style="margin-bottom:10px;">
+    <input class="name-input-field" id="phone-input-field"
+           placeholder="연락처 (예: 010-1234-5678)"
+           maxlength="13" inputmode="tel"
+           oninput="formatPhonePass(this)"
+           style="margin-bottom:12px;">
+    <div style="font-size:11px;color:#2a5a2a;margin-bottom:14px;line-height:1.6;">
+      📌 연락처는 패스 분실 시 복구와 혜택 안내에만 사용돼요
+    </div>
+    <button class="btn-welcome-issue" id="name-input-btn" onclick="issueWelcomePass()">
+      🎫 패스 발급 + 스탬프 받기
+    </button>
+    <br>
+    <button class="btn-welcome-skip" onclick="issueWelcomePass(true)">이름 없이 발급</button>
+  </div>
 
   <!-- ① 초대 배너 — ref 파라미터 감지 시 표시 -->
   <div class="ref-banner" id="ref-banner" style="display:none;">
@@ -990,11 +1101,287 @@ function handleReferral(refToken) {
 }
 
 // ════════════════════════════════════════════════
+// 🏪 웰컴 QR 시스템
+// ?src=CP-0001&action=welcome
+// ════════════════════════════════════════════════
+
+var _welcomeCoopId   = null;
+var _welcomeCoopName = '';
+var _welcomeCoopDoc  = null;
+
+/* 전화번호 자동 포맷 */
+function formatPhonePass(input) {
+  var v = input.value.replace(/\D/g, '').slice(0, 11);
+  if (v.length < 4)       input.value = v;
+  else if (v.length < 8)  input.value = v.slice(0,3) + '-' + v.slice(3);
+  else                    input.value = v.slice(0,3) + '-' + v.slice(3,7) + '-' + v.slice(7);
+}
+
+/* 관리자 신규 웰컴 알림 전송 — Firebase notifications + Make webhook */
+function sendWelcomeNotif(custName, custPhone, coopName, coopCode, passToken) {
+  var now    = new Date().toISOString();
+  var notifId = 'WN-' + Date.now();
+  var payload = {
+    id:        notifId,
+    type:      'welcome_new',
+    title:     '신규 웰컴 패스 발급',
+    body:      (custName || '이름없음') + ' · ' + (custPhone || '연락처없음') + ' · ' + coopName,
+    coopName:  coopName,
+    coopCode:  coopCode,
+    custName:  custName  || '이름없음',
+    custPhone: custPhone || '',
+    passToken: passToken,
+    read:      false,
+    createdAt: now
+  };
+
+  /* ① Firestore notifications 저장 */
+  db.collection('notifications').doc(notifId).set(payload)
+    .catch(function(e) { console.warn('알림 저장 실패:', e); });
+
+  /* ② Make 웹훅 — 관리자 SMS/카카오 알림 */
+  var webhookUrl = 'https://hook.us2.make.com/mpdncqtym3a5ud370g4hpd95b1g6c42j';
+  fetch(webhookUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      type:      'welcome_new',
+      coopName:  coopName,
+      coopCode:  coopCode,
+      custName:  custName  || '이름없음',
+      custPhone: custPhone || '미입력',
+      passToken: passToken,
+      issuedAt:  now
+    })
+  }).catch(function(e) { console.warn('웹훅 전송 실패:', e); });
+}
+
+/* 웰컴 배너 표시 */
+function showWelcomeBanner(coopName, isNew, isDup) {
+  var storeEl = document.getElementById('welcome-store-name');
+  var msgEl   = document.getElementById('welcome-msg');
+  var subEl   = document.getElementById('welcome-sub');
+  if (storeEl) storeEl.textContent = coopName;
+
+  if (isDup) {
+    document.getElementById('welcome-dup-banner').style.display = 'block';
+    document.getElementById('dup-store-name').innerHTML =
+      '<strong style="color:#8080b0;">' + coopName + '</strong><br>' +
+      '같은 가게는 하루 1회만 적립돼요 😊';
+    return;
+  }
+
+  if (msgEl) msgEl.textContent = isNew ? '첫 방문을 환영해요!' : '반갑습니다! 스탬프 적립됐어요';
+  if (subEl) subEl.textContent = isNew ? '온마을 스테이패스가 발급됐어요 🌿' : '오늘도 온마을 가평에 오셨군요 🌿';
+  document.getElementById('welcome-banner').style.display = 'block';
+}
+
+/* 오늘 이 가맹점 방문 여부 확인 */
+function checkDupVisit(custDocId, coopDocId) {
+  var today = new Date().toISOString().slice(0, 10);
+  return db.collection('visits')
+    .where('customerId', '==', custDocId)
+    .where('coopId',     '==', coopDocId)
+    .where('visitDate',  '==', today)
+    .limit(1).get()
+    .then(function(snap) { return !snap.empty; });
+}
+
+/* 스탬프 적립 + 방문 기록 저장 */
+function addWelcomeStamp(custDocId, coopDocId, coopName, custName) {
+  var today   = new Date().toISOString().slice(0, 10);
+  var nowISO  = new Date().toISOString();
+  var batch   = db.batch();
+
+  // 방문 기록 추가
+  var visitRef = db.collection('visits').doc();
+  batch.set(visitRef, {
+    customerId:   custDocId,
+    coopId:       coopDocId,
+    coopName:     coopName,
+    customerName: custName || '온마을 게스트',
+    visitDate:    today,
+    visitedAt:    nowISO,
+    source:       'welcome_qr',
+    discountRate: 0
+  });
+
+  // 고객 stampTotal 증가
+  var custRef = db.collection('customers').doc(custDocId);
+  batch.update(custRef, {
+    stampTotal: firebase.firestore.FieldValue.increment(1),
+    lastVisit:  nowISO
+  });
+
+  return batch.commit();
+}
+
+/* 신규 패스 발급 (이름+연락처 입력 화면에서 호출) */
+function issueWelcomePass(skipName) {
+  var nameVal  = skipName ? '온마을 게스트'
+               : (document.getElementById('name-input-field').value.trim() || '온마을 게스트');
+  var phoneVal = skipName ? ''
+               : (document.getElementById('phone-input-field').value.trim() || '');
+
+  var newToken = generateToken();
+  var now      = new Date();
+  var nowISO   = now.toISOString();
+
+  document.getElementById('name-input-card').style.display = 'none';
+  document.getElementById('loading').style.display = 'block';
+
+  firebase.auth().signInAnonymously()
+    .then(function() {
+      return db.collection('customers').add({
+        name:        nameVal,
+        phone:       phoneVal,
+        program:     '온마을 가평 체험',
+        qrToken:     newToken,
+        date:        nowISO.slice(0, 10),
+        people:      1,
+        stampTotal:  0,
+        isGuestPass: true,
+        issuedAt:    nowISO,
+        welcomeCoop: _welcomeCoopId || '',
+        welcomeCoopName: _welcomeCoopName || ''
+      });
+    })
+    .then(function(docRef) {
+      localStorage.setItem('onmaeul_pass_token', newToken);
+      history.replaceState(null, '', location.origin + location.pathname + '?pass=' + newToken);
+
+      /* 관리자 알림 전송 */
+      sendWelcomeNotif(nameVal, phoneVal, _welcomeCoopName, _welcomeCoopId, newToken);
+
+      if (_welcomeCoopDoc) {
+        return addWelcomeStamp(docRef.id, _welcomeCoopDoc, _welcomeCoopName, nameVal)
+          .then(function() {
+            return db.collection('customers').doc(docRef.id).get();
+          })
+          .then(function(updSnap) {
+            var cust = updSnap.data(); cust.id = docRef.id;
+            showWelcomeBanner(_welcomeCoopName, true, false);
+            showPass(cust, 1, []);
+            showPassToast('🌿 패스 발급 완료! 스탬프 +1');
+          });
+      } else {
+        var cust = { name: nameVal, phone: phoneVal,
+                     program: '온마을 가평 체험', qrToken: newToken,
+                     date: nowISO.slice(0,10), people:1, stampTotal:0, id: docRef.id };
+        showWelcomeBanner('온마을 가맹점', true, false);
+        showPass(cust, 0, []);
+      }
+    })
+    .catch(function(err) {
+      console.error('welcome issue error:', err);
+      showError();
+    });
+}
+
+/* 웰컴 QR 진입 처리 메인 함수 */
+function handleWelcome(coopCode) {
+  _welcomeCoopId = coopCode;
+
+  document.getElementById('loading').style.display     = 'block';
+  document.getElementById('name-input-card').style.display = 'none';
+
+  firebase.auth().signInAnonymously()
+    .then(function() {
+      // 가맹점 정보 조회
+      return db.collection('coops').where('coopCode', '==', coopCode).limit(1).get();
+    })
+    .then(function(coopSnap) {
+      if (!coopSnap.empty) {
+        _welcomeCoopName = coopSnap.docs[0].data().name || '온마을 가맹점';
+        _welcomeCoopDoc  = coopSnap.docs[0].id;
+      } else {
+        _welcomeCoopName = '온마을 가맹점';
+        _welcomeCoopDoc  = null;
+      }
+
+      // 이름 입력 화면 store 표시
+      var labelEl = document.getElementById('name-input-store-label');
+      if (labelEl) {
+        labelEl.innerHTML = '<strong style="color:#81c784;">' + _welcomeCoopName + '</strong> 방문을 환영해요!<br>' +
+                            '이름을 알려주시면 더 편리하게 이용하실 수 있어요 (선택)';
+      }
+
+      var storedToken = localStorage.getItem('onmaeul_pass_token');
+
+      if (storedToken) {
+        // ── 기존 패스 보유자 ──
+        return db.collection('customers').where('qrToken', '==', storedToken).limit(1).get()
+          .then(function(custSnap) {
+            if (custSnap.empty) {
+              // 저장된 토큰이 유효하지 않음 → 신규 발급 화면
+              document.getElementById('loading').style.display = 'none';
+              document.getElementById('name-input-card').style.display = 'block';
+              return;
+            }
+
+            var custData  = custSnap.docs[0].data();
+            var custDocId = custSnap.docs[0].id;
+            custData.id   = custDocId;
+
+            if (!_welcomeCoopDoc) {
+              // 가맹점 못 찾음 → 그냥 패스만 표시
+              return db.collection('visits').where('customerId', '==', custDocId).get()
+                .then(function(vSnap) { showPass(custData, vSnap.size, []); });
+            }
+
+            // 오늘 이 가맹점 중복 방문 체크
+            return checkDupVisit(custDocId, _welcomeCoopDoc)
+              .then(function(isDup) {
+                if (isDup) {
+                  // 중복 → 패스는 보여주되 스탬프 미적립
+                  return db.collection('visits').where('customerId', '==', custDocId).get()
+                    .then(function(vSnap) {
+                      var visits = vSnap.docs.map(function(d) { return d.data(); });
+                      document.getElementById('loading').style.display = 'none';
+                      showWelcomeBanner(_welcomeCoopName, false, true);
+                      showPass(custData, vSnap.size, visits);
+                    });
+                }
+
+                // 정상 적립
+                return addWelcomeStamp(custDocId, _welcomeCoopDoc, _welcomeCoopName, custData.name)
+                  .then(function() {
+                    return db.collection('visits').where('customerId', '==', custDocId).get();
+                  })
+                  .then(function(vSnap) {
+                    var visits = vSnap.docs.map(function(d) { return d.data(); })
+                      .sort(function(a, b) {
+                        return new Date(b.visitedAt||0) - new Date(a.visitedAt||0);
+                      });
+                    custData.stampTotal = (custData.stampTotal || 0) + 1;
+                    document.getElementById('loading').style.display = 'none';
+                    showWelcomeBanner(_welcomeCoopName, false, false);
+                    showPass(custData, vSnap.size, visits);
+                    showPassToast('🌿 ' + _welcomeCoopName + ' 스탬프 적립 완료!');
+                  });
+              });
+          });
+
+      } else {
+        // ── 신규 방문자 → 이름 입력 화면 ──
+        document.getElementById('loading').style.display     = 'none';
+        document.getElementById('name-input-card').style.display = 'block';
+      }
+    })
+    .catch(function(err) {
+      console.error('welcome error:', err);
+      showError();
+    });
+}
+
+// ════════════════════════════════════════════════
 // 진입점 — 파라미터 분기
 // ════════════════════════════════════════════════
 var params      = new URLSearchParams(location.search);
 var token       = params.get('pass');
 var refToken    = params.get('ref');
+var srcCoop     = params.get('src');     // 가맹점 웰컴 QR
+var action      = params.get('action');  // 'welcome'
 var storedToken = localStorage.getItem('onmaeul_pass_token');
 
 if (token) {
@@ -1002,30 +1389,31 @@ if (token) {
   localStorage.setItem('onmaeul_pass_token', token);
   loadPass(token);
 
+} else if (srcCoop && action === 'welcome') {
+  // ② ?src=CP-0001&action=welcome — 가맹점 웰컴 QR
+  handleWelcome(srcCoop);
+
 } else if (refToken) {
-  // ② ?ref=TOKEN — 초대 링크
+  // ③ ?ref=TOKEN — 친구 초대 링크
   if (storedToken) {
-    // 이미 패스 있음 → 자신의 패스 보여주고 배너만 표시
     var infoMsg = document.getElementById('ref-banner');
     document.getElementById('ref-inviter-name').textContent = '친구';
     infoMsg.style.display = 'flex';
-    // 배너 텍스트 변경
     document.querySelector('.ref-banner-text').innerHTML =
       '이미 온마을 패스가 있어요 🌿<br>' +
       '<span style="font-size:11px;color:#3a6a3a;">기존 패스로 이동할게요</span>';
     loadPass(storedToken);
   } else {
-    // 신규 방문자 → 새 패스 발급
     handleReferral(refToken);
   }
 
 } else if (storedToken) {
-  // ③ 파라미터 없지만 localStorage에 패스 있음 → 자동 복원
+  // ④ 파라미터 없음 + localStorage 있음 → 자동 복원
   history.replaceState(null, '', location.origin + location.pathname + '?pass=' + storedToken);
   loadPass(storedToken);
 
 } else {
-  // ④ 아무것도 없음 → 랜딩으로 이동
+  // ⑤ 아무것도 없음 → 랜딩으로 이동
   location.replace('https://onmaeulpass-gp.github.io/onmaeul/');
 }
 </script>
