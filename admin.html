@@ -3355,11 +3355,13 @@ async function openNotifPopup(){
             ? '<div style="padding:32px;text-align:center;color:#aaa;font-size:14px;">새 알림이 없습니다.</div>'
             : notifs.map(n=>`
               <div class="notif-item ${n.read?'':'unread'}" id="ni-${n.id}">
-                <div class="notif-item-icon">${n.type==='new_biz'?'🏪':n.type==='welcome_new'?'🎫':'📢'}</div>
+                <div class="notif-item-icon">${n.type==='new_biz'?'🏪':n.type==='welcome_new'?'🎫':n.type==='stamp_cert'?'📸':'📢'}</div>
                 <div class="notif-item-body">
                   <div class="notif-item-title">${n.title}</div>
                   <div class="notif-item-desc">${n.type==='welcome_new'
-                    ? `<span style="color:#2e7d32;font-weight:600;">${n.coopName||''}</span> · ${n.custName||''} · ${n.custPhone||'연락처없음'}`
+                    ? `<span style='color:#2e7d32;font-weight:600;'>${n.coopName||''}</span> · ${n.custName||''} · ${n.custPhone||'연락처없음'}`
+                    : n.type==='stamp_cert'
+                    ? `📸 ${n.custName||''} · 사진 4장 제출 · <a href='#' onclick="switchModule('stamp');renderStampReview();" style='color:var(--primary);'>검토하기 →</a>`
                     : (n.body||n.desc||'')}</div>
                   ${n.type==='welcome_new' && n.passToken
                     ? `<div style="font-size:10px;font-family:monospace;color:#aaa;margin-top:2px;">패스: ${n.passToken}</div>`:''}
@@ -9660,20 +9662,21 @@ async function renderStampReview() {
             ${STATUS[s.status]||s.status}
           </span>
         </div>
-        <!-- 사진 4장 -->
+        <!-- 사진 4장 — URL 또는 base64 모두 지원 -->
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;">
-          ${(s.photos||[]).map((p,i) => `
-            <div style="border-radius:8px;overflow:hidden;position:relative;">
-              <a href="${p.url}" target="_blank">
-                <img src="${p.url}" style="width:100%;height:90px;object-fit:cover;display:block;">
-              </a>
+          ${(s.photos||[]).map((p,i) => {
+            const src = p.dataUrl || p.url || '';
+            const href = p.url || '#';
+            return `<div style="border-radius:8px;overflow:hidden;position:relative;">
+              ${src ? (p.url
+                ? `<a href="${p.url}" target="_blank"><img src="${src}" style="width:100%;height:90px;object-fit:cover;display:block;" loading="lazy"></a>`
+                : `<img src="${src}" style="width:100%;height:90px;object-fit:cover;display:block;" loading="lazy">`)
+                : `<div style="width:100%;height:90px;background:#eee;display:flex;align-items:center;justify-content:center;font-size:11px;color:#aaa;">사진없음</div>`}
               <div style="background:rgba(0,0,0,.65);color:#fff;font-size:9px;padding:3px 5px;line-height:1.4;">
-                <b>${p.spot}</b><br>
-                📷 ${p.captureTs||'-'}<br>
-                ⬆️ ${(p.serverTs||'').slice(0,16)}
+                <b>${p.spot||('-')}</b>
               </div>
-            </div>
-          `).join('')}
+            </div>`;
+          }).join('')}
         </div>
         <!-- 액션 버튼 -->
         ${s.status==='pending' ? `
@@ -9699,12 +9702,20 @@ async function approveStamp(submId, custId, custName) {
   try {
     const sess = getSession();
     const now  = new Date().toISOString();
-    // 1. 제출 상태 업데이트
+    // 1. 제출 상태 업데이트 + base64 사진 삭제 (용량 절약)
     await db.collection('stamp_submissions').doc(submId).update({
       status:      'approved',
       reviewedAt:  now,
       reviewedBy:  sess?.name || '관리자',
-      stampGranted:true
+      stampGranted:true,
+      photos:      firebase.firestore.FieldValue.delete() // base64 제거
+    }).catch(async () => {
+      // FieldValue.delete on array 미지원 시 빈 배열로 대체
+      await db.collection('stamp_submissions').doc(submId).update({
+        status: 'approved', reviewedAt: now,
+        reviewedBy: sess?.name || '관리자', stampGranted: true,
+        photos: []
+      });
     });
     // 2. 고객 스탬프 +1
     const custRef  = db.collection('customers');
@@ -9721,9 +9732,23 @@ async function approveStamp(submId, custId, custName) {
         tier:         newTier.name
       });
     }
-    // 3. stamp_submissions에 결과 기록
-    await db.collection('stamp_submissions').doc(submId).update({ finalStampTotal: (custDoc?.data().stampTotal||0)+1 });
-    showToast(`✅ ${custName}님 스탬프 승인 완료 (+1)`, 'success');
+    // 3. 방문 기록 추가
+    const vid = await genId('visits');
+    await upsert('visits', {
+      id: vid,
+      customerId:   String(custId),
+      customerName: custName || '',
+      coopId:       0,
+      coopName:     '온마을 스탬프 인증',
+      visitType:    'photo_cert',
+      visitDate:    now.slice(0,10),
+      visitTime:    new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'}),
+      discountRate: 0,
+      createdAt:    now
+    });
+    invalidateCache('visits');
+    invalidateCache('customers');
+    showToast(`✅ ${custName}님 스탬프 승인 + 사진 삭제 완료`, 'success');
     await renderStampReview();
   } catch(e) { alert('오류: '+e.message); }
   finally { hideLoading(); }
