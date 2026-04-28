@@ -9091,21 +9091,25 @@ async function submitSelfRegister() {
               <div style="font-size:11px;color:#777;margin-bottom:6px;">내 패스번호</div>
               <div style="font-size:16px;font-weight:900;font-family:monospace;color:#1B5E20;letter-spacing:2px;margin-bottom:12px;" id="dup-pass-token">${existing.qrToken}</div>
               <button onclick="
-                navigator.clipboard ? navigator.clipboard.writeText('${existing.qrToken}').then(function(){
-                  var b = document.getElementById('copy-pass-btn');
-                  b.textContent='✅ 복사됨!'; b.style.background='#2E7D32';
-                  setTimeout(function(){b.textContent='📋 패스번호 복사';b.style.background='#1B5E20';},2000);
-                }) : (function(){
-                  var ta=document.createElement('textarea');ta.value='${existing.qrToken}';
-                  document.body.appendChild(ta);ta.select();document.execCommand('copy');
-                  document.body.removeChild(ta);
-                  var b=document.getElementById('copy-pass-btn');
-                  b.textContent='✅ 복사됨!';b.style.background='#2E7D32';
-                  setTimeout(function(){b.textContent='📋 패스번호 복사';b.style.background='#1B5E20';},2000);
-                })()
+                var token = '${existing.qrToken}';
+                var btn = document.getElementById('copy-pass-btn');
+                function onCopied() {
+                  btn.textContent = '✅ 복사 완료! 이전 화면으로 돌아갑니다...';
+                  btn.style.background = '#2E7D32';
+                  setTimeout(function(){ history.back(); }, 1500);
+                }
+                if (navigator.clipboard) {
+                  navigator.clipboard.writeText(token).then(onCopied).catch(function(){
+                    var ta=document.createElement('textarea');ta.value=token;document.body.appendChild(ta);ta.select();
+                    try{document.execCommand('copy');onCopied();}catch(e){}document.body.removeChild(ta);
+                  });
+                } else {
+                  var ta=document.createElement('textarea');ta.value=token;document.body.appendChild(ta);ta.select();
+                  try{document.execCommand('copy');onCopied();}catch(e){}document.body.removeChild(ta);
+                }
               " id="copy-pass-btn"
               style="width:100%;padding:12px;background:#1B5E20;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:0.5px;">
-                📋 패스번호 복사
+                📋 패스번호 복사하기
               </button>
             </div>
             <p style="font-size:12px;color:#999;">복사 후 관리자 화면의 입력란에 붙여넣기(길게 눌러 붙여넣기)해 주세요</p>

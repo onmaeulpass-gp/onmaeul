@@ -1735,11 +1735,13 @@ function showDupPassCard(existingToken) {
 function doCopyPassToken(token) {
   var btn = document.getElementById('dup-copy-btn');
   function onSuccess() {
-    if (btn) { btn.textContent = '✅ 복사 완료!'; btn.style.background = '#1a3a1a'; btn.style.color = '#a5d6a7'; }
-    showPassToast('패스번호가 복사됐어요 — 붙여넣기 해주세요');
-    setTimeout(function() {
-      if (btn) { btn.textContent = '📋 패스번호 복사하기'; btn.style.background = '#1b3a1b'; btn.style.color = '#81c784'; }
-    }, 3000);
+    if (btn) {
+      btn.textContent = '✅ 복사 완료! 이전 화면으로 돌아갑니다...';
+      btn.style.background = '#2E7D32';
+      btn.style.color = '#a5d6a7';
+    }
+    showPassToast('패스번호 복사 완료 — 이전 화면에서 붙여넣기 해주세요');
+    setTimeout(function() { history.back(); }, 1500);
   }
   if (navigator.clipboard) {
     navigator.clipboard.writeText(token).then(onSuccess).catch(function() {
