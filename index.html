@@ -1862,13 +1862,14 @@ body.has-weather .hero-content { padding-top: 136px; }
 .exp-card:hover .exp-desc { color:rgba(250,247,242,.88); }
 .exp-card:hover .exp-en { color:var(--gold); }
 .exp-card:hover .exp-arrow { color:var(--gold); transform:translateX(6px); }
-.exp-card:hover .exp-tag { border-color:rgba(184,150,90,.5); color:var(--gold); background:rgba(184,150,90,.12); }
+.exp-card:hover .exp-tag { color:var(--gold); }
 .exp-icon { font-size:30px; margin-bottom:22px; display:block; }
 .exp-name { font-family:'Noto Serif KR',serif; font-size:22px; font-weight:300; color:var(--ink); margin-bottom:4px; transition:color .35s; }
 .exp-en { font-family:'Cormorant Garamond',serif; font-style:italic; font-size:13px; color:var(--gold); letter-spacing:2px; display:block; margin-bottom:18px; transition:color .35s; }
 .exp-desc { font-size:13px; color:var(--fog); line-height:1.95; transition:color .35s; margin-bottom:22px; }
-.exp-tags { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:28px; }
-.exp-tag { font-size:10px; letter-spacing:1px; padding:5px 11px; border:1px solid rgba(184,150,90,.2); color:var(--gold); transition:all .35s; }
+.exp-tags { display:flex; flex-wrap:wrap; gap:0; margin-bottom:28px; }
+.exp-tag { font-size:12px; letter-spacing:0.02em; padding:0; border:none; background:none; color:rgba(184,150,90,0.8); transition:color .35s; }
+.exp-tag:not(:last-child)::after { content:'  ·  '; color:rgba(184,150,90,0.35); white-space:pre; }
 .exp-arrow { font-size:20px; color:var(--mist); transition:all .35s; display:inline-block; }
 .exp-hint { font-family:'Noto Serif KR',serif; font-size:0.72rem; font-weight:300; color:var(--fog); letter-spacing:0.04em; }
 .exp-arrow-wrap { display:flex; align-items:center; gap:10px; margin-top:4px; }
@@ -2665,9 +2666,10 @@ async function renderExpCards() {
     const rn   = (s.reserve || s.name || '').trim();
     // 구분자: | 우선, 없으면 콤마 fallback (20,000원 같은 숫자 콤마 오인식 방지)
     const _rawTags = s.tags || '';
+    // 구분자: | 우선, 없으면 숫자 사이 콤마(20,000원) 오인식 방지 — 콤마 앞뒤가 숫자가 아닌 경우만 split
     const tags = (_rawTags.includes('|')
       ? _rawTags.split('|')
-      : _rawTags.split(',')
+      : _rawTags.split(/,(?!\d{3})/)  // 콤마 다음이 숫자 3자리가 아닐 때만 분리
     ).map(t => t.trim()).filter(Boolean);
     const num  = '0' + (idx + 1);
     const safeRn = rn.replace(/"/g, '&quot;');
