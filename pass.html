@@ -1682,24 +1682,78 @@ function addWelcomeStamp(custDocId, coopDocId, coopName, custName) {
 
 /* 신규 패스 발급 (이름+연락처 입력 화면에서 호출) */
 /* ── 이름+전화번호로 기존 패스 조회 ── */
+/* ── 전화번호 정규화 헬퍼 ── */
+function normalizePhone(p) { return (p || '').replace(/\D/g, ''); }
+
 async function findExistingCustomer(name, phone) {
   if (!name || !phone || name === '온마을 게스트') return null;
+  var normPhone = normalizePhone(phone);
   try {
+    /* ① name 정확히 일치하는 고객 전체 조회 후 phone 정규화 비교 */
     var snap = await db.collection('customers')
-      .where('name',  '==', name)
-      .where('phone', '==', phone)
-      .limit(1).get();
+      .where('name', '==', name)
+      .get();
     if (snap.empty) return null;
-    var data = snap.docs[0].data();
-    data.id  = snap.docs[0].id;
-    return data;
+    var found = null;
+    snap.forEach(function(doc) {
+      var d = doc.data();
+      if (normalizePhone(d.phone) === normPhone && d.qrToken) {
+        found = d;
+        found.id = doc.id;
+      }
+    });
+    return found;
   } catch(e) { console.warn('기존 패스 조회 실패:', e); return null; }
 }
 
 /* ── 중복 경고 초기화 ── */
 function resetDupWarning() {
   var w = document.getElementById('dup-warning');
-  if (w) w.style.display = 'none';
+  if (w) { w.style.display = 'none'; w.innerHTML = ''; }
+}
+
+/* ── 중복 패스 발견 시 복사 버튼 표시 ── */
+function showDupPassCard(existingToken) {
+  var w = document.getElementById('dup-warning');
+  if (!w) return;
+  w.style.display = 'block';
+  w.style.background = '#0d1a0d';
+  w.style.border = '1px solid #2a5a2a';
+  w.style.borderRadius = '12px';
+  w.style.padding = '16px';
+  w.style.marginBottom = '12px';
+  w.style.textAlign = 'center';
+  w.innerHTML =
+    '<div style="font-size:13px;color:#81c784;font-weight:700;margin-bottom:4px;">🌿 이미 발급된 패스가 있어요!</div>' +
+    '<div style="font-size:11px;color:#4a7a4a;margin-bottom:12px;">아래 패스번호를 복사해서 입력창에 붙여넣기 해주세요</div>' +
+    '<div style="font-size:13px;font-family:monospace;color:#a5d6a7;background:#0a150a;border:1px solid #2a5a2a;border-radius:8px;padding:10px 12px;letter-spacing:1px;margin-bottom:12px;word-break:break-all;" id="dup-token-display">' + existingToken + '</div>' +
+    '<button id="dup-copy-btn" onclick="doCopyPassToken(\'' + existingToken + '\')" ' +
+    'style="width:100%;padding:12px;background:#1b3a1b;border:1px solid #2a5a2a;color:#81c784;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">' +
+    '📋 패스번호 복사하기</button>';
+}
+
+function doCopyPassToken(token) {
+  var btn = document.getElementById('dup-copy-btn');
+  function onSuccess() {
+    if (btn) { btn.textContent = '✅ 복사 완료!'; btn.style.background = '#1a3a1a'; btn.style.color = '#a5d6a7'; }
+    showPassToast('패스번호가 복사됐어요 — 붙여넣기 해주세요');
+    setTimeout(function() {
+      if (btn) { btn.textContent = '📋 패스번호 복사하기'; btn.style.background = '#1b3a1b'; btn.style.color = '#81c784'; }
+    }, 3000);
+  }
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(token).then(onSuccess).catch(function() {
+      var ta = document.createElement('textarea');
+      ta.value = token; document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); onSuccess(); } catch(e) {}
+      document.body.removeChild(ta);
+    });
+  } else {
+    var ta = document.createElement('textarea');
+    ta.value = token; document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); onSuccess(); } catch(e) {}
+    document.body.removeChild(ta);
+  }
 }
 
 /* ── "내 패스 번호 찾기" 버튼 클릭 ── */
@@ -1716,11 +1770,10 @@ async function findPassByNamePhone() {
   firebase.auth().signInAnonymously().then(async function() {
     var existing = await findExistingCustomer(nameVal, phoneVal);
     if (existing) {
-      /* 기존 패스 발견 → localStorage 저장 후 로드 */
+      /* 기존 패스 발견 → localStorage 저장 + 복사 버튼 안내 */
       localStorage.setItem('onmaeul_pass_token', existing.qrToken);
       history.replaceState(null, '', location.origin + location.pathname + '?pass=' + existing.qrToken);
-      showPassToast('🌿 기존 패스를 불러왔어요!');
-      /* 가맹점 웰컴 QR 경유 시 스탬프 적립 처리 */
+      /* 가맹점 웰컴 QR 경유 시 스탬프 적립 처리 후 패스 표시 */
       if (_welcomeCoopDoc) {
         return checkDupVisit(existing.id, _welcomeCoopDoc).then(function(isDup) {
           if (!isDup) {
@@ -1743,10 +1796,12 @@ async function findPassByNamePhone() {
           }
         });
       } else {
+        /* 가맹점 없이 찾은 경우 → 패스 직접 표시 */
         return db.collection('visits').where('customerId','==',existing.id).get()
           .then(function(vSnap) {
             document.getElementById('loading').style.display = 'none';
             showPass(existing, vSnap.size, vSnap.docs.map(function(d){return d.data();}));
+            showPassToast('🌿 기존 패스를 불러왔어요!');
           });
       }
     } else {
@@ -1778,13 +1833,10 @@ function issueWelcomePass(skipName) {
       .then(async function() {
         var existing = await findExistingCustomer(nameVal, phoneVal);
         if (existing) {
-          /* ── 기존 패스 발견 → 안내 후 로드 ── */
+          /* ── 기존 패스 발견 → 복사 버튼 안내 ── */
           document.getElementById('loading').style.display = 'none';
           document.getElementById('name-input-card').style.display = 'block';
-          var warn = document.getElementById('dup-warning');
-          if (warn) warn.style.display = 'block';
-          /* 자동으로 기존 패스 불러오기 */
-          setTimeout(function() { findPassByNamePhone(); }, 1800);
+          showDupPassCard(existing.qrToken);
           return;
         }
         /* 중복 없음 → 신규 발급 */
