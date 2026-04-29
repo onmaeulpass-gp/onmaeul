@@ -795,7 +795,7 @@ html, body { min-height: 100vh; background: #0a1a0a; font-family: 'Noto Sans KR'
       <button class="btn-cert-submit" id="btn-cert-submit" onclick="submitCertPhotos()">
         📸 스탬프 인증 신청
       </button>
-    </div>
+      <p style="font-size:11px;color:#4a7a4a;text-align:center;margin-top:8px;">제출하시고 스탬프 1개 받아보세요 🌿</p>
   </div>
 
   <!-- 공유 리워드 섹션 — 패스 로드 후 표시 -->
@@ -1240,13 +1240,16 @@ var _certCustName = '';
 var _certPassToken = '';
 
 /* 이미지 압축 — canvas로 600px 리사이즈, JPEG 45% (Firestore 1MB 한도 대응) */
+/* 이미지 압축 — 320px, JPEG 30% → 장당 ~8KB, 4장 합계 ~30KB */
 function compressImage(file) {
   return new Promise(function(resolve) {
     var reader = new FileReader();
+    reader.onerror = function() { resolve(null); };
     reader.onload = function(e) {
       var img = new Image();
+      img.onerror = function() { resolve(null); };
       img.onload = function() {
-        var MAX = 600;
+        var MAX = 320;
         var w = img.width, h = img.height;
         if (w > MAX || h > MAX) {
           if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
@@ -1255,7 +1258,7 @@ function compressImage(file) {
         var canvas = document.createElement('canvas');
         canvas.width = w; canvas.height = h;
         canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-        resolve(canvas.toDataURL('image/jpeg', 0.45));
+        resolve(canvas.toDataURL('image/jpeg', 0.30));
       };
       img.src = e.target.result;
     };
@@ -1329,50 +1332,65 @@ function updateCertCount() {
 async function submitCertPhotos() {
   if (Object.keys(_certPhotos).length < 4) return;
   var btn = document.getElementById('btn-cert-submit');
-  if (btn) { btn.textContent = '제출 중...'; btn.classList.remove('ready'); }
+  if (btn) { btn.textContent = '압축 중...'; btn.classList.remove('ready'); }
 
   var today  = new Date().toISOString().slice(0, 10);
   var nowISO = new Date().toISOString();
   var submId = _certPassToken + '_' + Date.now();
+
+  /* 용량 체크 — 4장 합계 800KB 초과 시 재압축 */
+  var totalBytes = CERT_SPOTS.reduce(function(sum, s, idx) {
+    return sum + (_certPhotos[idx] || '').length;
+  }, 0);
+  if (totalBytes > 800000) {
+    showPassToast('사진 용량 최적화 중...');
+    for (var ri = 0; ri < CERT_SPOTS.length; ri++) {
+      var slot = document.getElementById('cert-file-' + ri);
+      if (slot && slot.files[0]) {
+        var recomp = await compressImage(slot.files[0]);
+        if (recomp) _certPhotos[ri] = recomp;
+      }
+    }
+  }
 
   var photos = CERT_SPOTS.map(function(spot, idx) {
     return { spot: spot, dataUrl: _certPhotos[idx] || '' };
   });
 
   var doc = {
-    submissionId:     submId,
-    customerId:       _certCustId   || '',
-    customerName:     _certCustName || '',
-    passToken:        _certPassToken || '',
-    photos:           photos,
-    status:           'pending',
-    submittedAt:      nowISO,
-    submittedDate:    today,
-    stampGranted:     false,
-    reviewedBy:       null,
-    reviewedAt:       null
+    submissionId:  submId,
+    customerId:    _certCustId    || '',
+    customerName:  _certCustName  || '',
+    passToken:     _certPassToken || '',
+    photos:        photos,
+    status:        'pending',
+    submittedAt:   nowISO,
+    submittedDate: today,
+    stampGranted:  false,
+    reviewedBy:    null,
+    reviewedAt:    null
   };
+
+  if (btn) btn.textContent = '제출 중...';
 
   try {
     await db.collection('stamp_submissions').doc(submId).set(doc);
 
-    /* 관리자 알림 */
     db.collection('notifications').doc('CERT-' + Date.now()).set({
       type:      'stamp_cert',
       title:     '📸 스탬프 인증 신청',
       body:      (_certCustName || '고객') + '님 · 사진 4장 제출',
-      custName:  _certCustName || '',
+      custName:  _certCustName  || '',
       passToken: _certPassToken || '',
       read:      false,
       createdAt: nowISO
     }).catch(function() {});
 
-    /* 완료 UI */
     document.getElementById('cert-upload-ui').style.display = 'none';
     document.getElementById('cert-done-box').style.display  = 'block';
-    showPassToast('📸 인증 신청 완료! 관리자 확인 후 적립돼요 🌿');
+    showPassToast('📸 인증 신청 완료! 확인 후 스탬프 적립돼요 🌿');
   } catch(e) {
-    showPassToast('제출 실패 — 다시 시도해 주세요');
+    showPassToast('제출 실패(' + e.message + ') — 다시 시도해 주세요');
     if (btn) { btn.textContent = '📸 스탬프 인증 신청'; btn.classList.add('ready'); }
   }
 }
