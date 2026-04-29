@@ -9663,7 +9663,10 @@ async function handleStampPhoto(input, slotIdx, spotName) {
 
 // ── 고객: 제출 ────────────────────────────────────────────────────
 /* 업로드 전 이미지 압축 헬퍼 */
-/* ── 이미지 압축 → base64 (Firestore 저장용, 장당 ~8KB) ── */
+/* ── 이미지 압축 (저용량 우선) ──
+   목표: 장당 ~50KB 이하 → 4장 합계 200KB 이내
+   480px, JPEG 35% → 약 30~60KB/장 */
+/* ── 이미지 압축 → base64 (Firestore 저장, 장당 ~8KB) ── */
 function _compressStampFile(file, maxPx, quality) {
   maxPx   = maxPx   || 320;
   quality = quality || 0.30;
@@ -9715,14 +9718,10 @@ async function submitStampPhotos() {
       if (!dataUrl) throw new Error(`${i+1}번 사진 압축 실패`);
       const kb = Math.round(dataUrl.length * 0.75 / 1024);
       setP(`${i+1}/${total} 완료 (${kb}KB) ✓`);
-      photoResults.push({
-        spot:      photoData.spotName,
-        dataUrl,
-        captureTs: photoData.captureTs
-      });
+      photoResults.push({ spot: photoData.spotName, dataUrl, captureTs: photoData.captureTs });
     }
 
-    setP('Firestore 저장 중...');
+    setP('저장 중...');
     await window._fbDB.collection('stamp_submissions').doc(submId).set({
       submissionId:     submId,
       customerId:       String(cust.id),
