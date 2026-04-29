@@ -684,7 +684,7 @@ body.role-viewer .perm-write { display: none !important; }
         style="width:100%;padding:14px;background:#1B5E20;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;opacity:.5;pointer-events:none;transition:all .2s;">
         📸 스탬프 인증 신청
       </button>
-      <p style="font-size:12px;color:#2E7D32;text-align:center;margin-top:8px;font-weight:600;">제출하시면 확인 후 스탬프 적립!</p>
+      <p style="font-size:12px;color:#2E7D32;text-align:center;margin-top:8px;font-weight:600;">제출하시고 스탬프 1개 받아보세요 🌿</p>
     </div>
     <!-- 제출 완료 화면 -->
     <div id="stamp-done-section" style="display:none;text-align:center;padding:10px;">
@@ -9663,18 +9663,16 @@ async function handleStampPhoto(input, slotIdx, spotName) {
 
 // ── 고객: 제출 ────────────────────────────────────────────────────
 /* 업로드 전 이미지 압축 헬퍼 */
-/* ── 이미지 압축 (저용량 우선) ──
-   목표: 장당 ~50KB 이하 → 4장 합계 200KB 이내
-   480px, JPEG 35% → 약 30~60KB/장 */
+/* ── 이미지 압축 → base64 (Firestore 저장용, 장당 ~8KB) ── */
 function _compressStampFile(file, maxPx, quality) {
-  maxPx   = maxPx   || 480;
-  quality = quality || 0.35;
-  return new Promise(function(resolve, reject) {
+  maxPx   = maxPx   || 320;
+  quality = quality || 0.30;
+  return new Promise(function(resolve) {
     var reader = new FileReader();
-    reader.onerror = function() { resolve(file); }; // 압축 실패 시 원본 사용
+    reader.onerror = function() { resolve(null); };
     reader.onload = function(e) {
       var img = new Image();
-      img.onerror = function() { resolve(file); };
+      img.onerror = function() { resolve(null); };
       img.onload = function() {
         var w = img.width, h = img.height;
         if (w > maxPx || h > maxPx) {
@@ -9684,42 +9682,11 @@ function _compressStampFile(file, maxPx, quality) {
         var canvas = document.createElement('canvas');
         canvas.width = w; canvas.height = h;
         canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-        canvas.toBlob(function(blob) {
-          resolve(blob && blob.size > 0 ? blob : file);
-        }, 'image/jpeg', quality);
+        resolve(canvas.toDataURL('image/jpeg', quality));
       };
       img.src = e.target.result;
     };
     reader.readAsDataURL(file);
-  });
-}
-
-/* ── Firebase Storage 업로드 (취소 가능 + 타임아웃) ── */
-function _uploadWithTimeout(storageRef, blob, meta, timeoutMs) {
-  timeoutMs = timeoutMs || 25000;
-  return new Promise(function(resolve, reject) {
-    var task = storageRef.put(blob, meta);
-    var timer = setTimeout(function() {
-      task.cancel();
-      reject(new Error('업로드 시간 초과 (' + Math.round(timeoutMs/1000) + '초) — 네트워크를 확인해 주세요'));
-    }, timeoutMs);
-
-    task.on(
-      firebase.storage.TaskEvent.STATE_CHANGED,
-      function(snapshot) { /* 진행률 optional */ },
-      function(err) {
-        clearTimeout(timer);
-        if (err.code === 'storage/canceled') {
-          reject(new Error('업로드가 취소되었습니다 (시간 초과)'));
-        } else {
-          reject(err);
-        }
-      },
-      function() {
-        clearTimeout(timer);
-        resolve(task.snapshot);
-      }
-    );
   });
 }
 
@@ -9728,48 +9695,41 @@ async function submitStampPhotos() {
   if (!cust) return;
   const submitBtn = document.getElementById('stamp-submit-btn');
   const progress  = document.getElementById('stamp-upload-progress');
-  const setProgress = (msg) => { if(progress){ progress.style.display='block'; progress.textContent=msg; } };
+  const setP = (msg) => { if(progress){ progress.style.display='block'; progress.textContent=msg; } };
 
-  if(submitBtn) { submitBtn.disabled=true; submitBtn.textContent='업로드 중...'; }
-  setProgress('준비 중...');
+  if(submitBtn) { submitBtn.disabled=true; submitBtn.textContent='제출 중...'; }
+  setP('사진 압축 중...');
 
   try {
-    if (!window._fbDB) throw new Error('Firebase DB 연결 없음. 새로고침 후 다시 시도해 주세요.');
-    const storage = firebase.storage();
-    const today   = new Date().toISOString().split('T')[0];
-    const submId  = `${cust.id}_${Date.now()}`;
+    if (!window._fbDB) throw new Error('DB 연결 없음. 새로고침 후 시도해 주세요.');
+    const today  = new Date().toISOString().split('T')[0];
+    const submId = `${cust.id}_${Date.now()}`;
+    const total  = STAMP_SPOTS_CONFIG.length;
     const photoResults = [];
-    const total = STAMP_SPOTS_CONFIG.length;
 
     for (let i = 0; i < total; i++) {
       const photoData = window._stampPhotos[i];
-      if (!photoData) throw new Error(`${i+1}번 사진이 없습니다. 사진을 다시 선택해 주세요.`);
-
-      setProgress(`${i+1}/${total} 압축 중...`);
-      /* 저용량 압축: 480px, JPEG 35% → ~30~60KB */
-      const compressed = await _compressStampFile(photoData.file, 480, 0.35);
-
-      setProgress(`${i+1}/${total} 업로드 중... (${Math.round((compressed.size||0)/1024)}KB)`);
-      const path = `stamp_photos/${today}/${submId}_s${i}.jpg`;
-      const ref  = storage.ref(path);
-      const snap = await _uploadWithTimeout(ref, compressed, {
-        contentType: 'image/jpeg',
-        customMetadata: { spot: photoData.spotName, customer: cust.name }
-      }, 25000);
-
-      const url = await snap.ref.getDownloadURL();
-      photoResults.push({ spot: photoData.spotName, url, captureTs: photoData.captureTs });
-      setProgress(`${i+1}/${total} 완료 ✓`);
+      if (!photoData) throw new Error(`${i+1}번 사진이 없습니다.`);
+      setP(`${i+1}/${total} 압축 중...`);
+      const dataUrl = await _compressStampFile(photoData.file, 320, 0.30);
+      if (!dataUrl) throw new Error(`${i+1}번 사진 압축 실패`);
+      const kb = Math.round(dataUrl.length * 0.75 / 1024);
+      setP(`${i+1}/${total} 완료 (${kb}KB) ✓`);
+      photoResults.push({
+        spot:      photoData.spotName,
+        dataUrl,
+        captureTs: photoData.captureTs
+      });
     }
 
-    setProgress('제출 기록 저장 중...');
+    setP('Firestore 저장 중...');
     await window._fbDB.collection('stamp_submissions').doc(submId).set({
       submissionId:     submId,
       customerId:       String(cust.id),
       customerName:     cust.name,
-      phone:            cust.phone||'',
-      passToken:        cust.qrToken||'',
-      stampTotalBefore: Number(cust.stampTotal||0),
+      phone:            cust.phone || '',
+      passToken:        cust.qrToken || '',
+      stampTotalBefore: Number(cust.stampTotal || 0),
       photos:           photoResults,
       status:           'pending',
       submittedAt:      new Date().toISOString(),
@@ -9783,10 +9743,10 @@ async function submitStampPhotos() {
     const doneInfo = document.getElementById('stamp-done-info');
     if(doneInfo) doneInfo.innerHTML =
       `<b>${cust.name}</b>님 · ${photoResults.length}장 제출 완료<br>` +
-      photoResults.map(p=>`📍 ${p.spot}`).join('<br>');
+      photoResults.map(p => `📍 ${p.spot}`).join('<br>');
   } catch(e) {
     if(progress) progress.style.display = 'none';
-    alert('❌ 오류: ' + e.message);
+    alert('❌ ' + e.message);
     if(submitBtn) { submitBtn.disabled=false; submitBtn.textContent='📸 스탬프 인증 신청'; }
   }
 }
