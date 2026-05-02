@@ -177,9 +177,46 @@ body{min-height:100vh;background:#0A120C;color:#F2EDE6;font-family:'Noto Sans KR
       </div>
       <button class="btn" onclick="verifyToken()">확인하기 →</button>
       <div style="margin-top:14px;text-align:center;">
-        <a href="admin.html?register=1" style="font-size:12px;color:rgba(184,150,90,.5);text-decoration:none;letter-spacing:.05em;">
+        <button onclick="showRegisterPanel()" style="background:none;border:none;font-size:12px;color:rgba(184,150,90,.5);text-decoration:none;letter-spacing:.05em;cursor:pointer;font-family:inherit;">
           패스가 없으신가요? 무료 발급하기 →
-        </a>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 무료 발급 패널 (stamp.html 내장 — 관리자 화면 노출 없음) -->
+  <div id="reg-panel" style="display:none;">
+    <div class="card" style="margin-top:0;">
+      <div class="sec-step">STEP 00</div>
+      <div class="sec-title">무료 패스 발급</div>
+      <div class="sec-desc" style="margin-bottom:16px;">성함과 전화번호로 기존 패스를 찾아드려요.<br>등록된 고객이면 패스번호를 바로 확인할 수 있어요.</div>
+
+      <div class="fgrp">
+        <label class="flbl">성함</label>
+        <input class="finp" id="reg-name" type="text" placeholder="홍길동" maxlength="10">
+      </div>
+      <div class="fgrp">
+        <label class="flbl">전화번호</label>
+        <input class="finp" id="reg-phone" type="tel" placeholder="010-1234-5678" maxlength="13"
+          oninput="this.value=this.value.replace(/[^0-9]/g,'').replace(/^(\d{3})(\d{4})(\d{4})$/,'$1-$2-$3').replace(/^(\d{3})(\d{1,4})$/,'$1-$2')">
+      </div>
+      <div class="fmsg info" id="reg-msg" style="margin-bottom:12px;">성함과 전화번호를 입력해 주세요</div>
+      <button class="btn" onclick="lookupPass()">패스 찾기 →</button>
+
+      <!-- 패스 찾기 결과 -->
+      <div id="reg-result" style="display:none;margin-top:16px;background:rgba(184,150,90,.08);border:1px solid rgba(184,150,90,.25);border-radius:12px;padding:16px;">
+        <div style="font-size:12px;color:rgba(184,150,90,.7);letter-spacing:.05em;margin-bottom:8px;">PASS FOUND</div>
+        <div style="font-size:18px;font-weight:700;color:#F2EDE6;margin-bottom:4px;" id="reg-found-name"></div>
+        <div style="font-size:12px;color:rgba(242,237,230,.5);margin-bottom:14px;" id="reg-found-meta"></div>
+        <div style="background:rgba(0,0,0,.25);border-radius:8px;padding:10px 14px;margin-bottom:12px;">
+          <div style="font-size:10px;color:rgba(184,150,90,.5);letter-spacing:.1em;margin-bottom:4px;">PASS NUMBER</div>
+          <div style="font-size:14px;font-family:monospace;color:#B8965A;letter-spacing:.08em;word-break:break-all;" id="reg-found-token"></div>
+        </div>
+        <button class="btn" onclick="useFoundPass()">이 패스번호로 바로 인증하기 →</button>
+      </div>
+
+      <div style="margin-top:14px;text-align:center;">
+        <button onclick="hideRegisterPanel()" style="background:none;border:none;font-size:12px;color:rgba(242,237,230,.3);cursor:pointer;font-family:inherit;">← 뒤로</button>
       </div>
     </div>
   </div>
@@ -333,6 +370,89 @@ function exifTs(file){
     };
     rd.readAsArrayBuffer(file.slice(0,65536));
   });
+}
+
+// ── 무료 발급 패널 ────────────────────────────────────────
+function showRegisterPanel(){
+  hide('s1');
+  document.getElementById('reg-panel').style.display='block';
+  document.getElementById('reg-panel').style.animation='fadeUp .35s ease both';
+  document.getElementById('reg-msg').className='fmsg info';
+  document.getElementById('reg-msg').textContent='성함과 전화번호를 입력해 주세요';
+  document.getElementById('reg-result').style.display='none';
+  document.getElementById('reg-name').value='';
+  document.getElementById('reg-phone').value='';
+}
+
+function hideRegisterPanel(){
+  document.getElementById('reg-panel').style.display='none';
+  show('s1');
+}
+
+async function lookupPass(){
+  const name  = (document.getElementById('reg-name').value||'').trim();
+  const phone = (document.getElementById('reg-phone').value||'').trim().replace(/-/g,'');
+  const msg   = document.getElementById('reg-msg');
+
+  if(!name||!phone){
+    msg.className='fmsg err';
+    msg.textContent='성함과 전화번호를 모두 입력해 주세요.';
+    return;
+  }
+  if(!_db){msg.className='fmsg err';msg.textContent='네트워크 연결을 확인해 주세요.';return;}
+
+  showLoad('고객 정보 확인 중...');
+  try{
+    // 이름 + 전화번호 중복 체크
+    const snap = await _db.collection('customers').get();
+    const match = snap.docs
+      .map(d=>({...d.data(),__docId:d.id}))
+      .find(c=>{
+        const cName  = (c.name||'').trim();
+        const cPhone = (c.phone||c.tel||'').replace(/-/g,'');
+        return cName===name && cPhone===phone;
+      });
+
+    hideLoad();
+
+    if(!match){
+      msg.className='fmsg err';
+      msg.innerHTML='고객 정보를 찾을 수 없어요.<br><span style="font-size:11px;opacity:.7;">성함·전화번호를 다시 확인하거나 관리자에게 문의해 주세요.</span>';
+      document.getElementById('reg-result').style.display='none';
+      return;
+    }
+
+    // 찾음 — 결과 표시
+    msg.className='fmsg ok';
+    msg.textContent='고객 정보가 확인되었습니다!';
+
+    const tier = getTier(Number(match.stampTotal||0));
+    document.getElementById('reg-found-name').textContent  = match.name||'-';
+    document.getElementById('reg-found-meta').textContent  =
+      (match.phone||'') + ' · ' + tier.icon + ' ' + tier.name + ' · 스탬프 ' + (match.stampTotal||0) + '개';
+    document.getElementById('reg-found-token').textContent = match.qrToken||'-';
+
+    const res = document.getElementById('reg-result');
+    res.style.display='block';
+    res.style.animation='fadeUp .3s ease both';
+
+    // 패스번호 자동 입력
+    document.getElementById('tinp').value = match.qrToken||'';
+
+  }catch(e){
+    hideLoad();
+    msg.className='fmsg err';
+    msg.textContent='오류: '+e.message;
+  }
+}
+
+function useFoundPass(){
+  const token = document.getElementById('reg-found-token').textContent.trim();
+  if(!token||token==='-') return;
+  document.getElementById('tinp').value = token;
+  hideRegisterPanel();
+  // 자동으로 패스 확인 실행
+  verifyToken();
 }
 
 // ── STEP 1: 패스 확인 ─────────────────────────────────────
