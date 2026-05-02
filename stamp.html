@@ -211,7 +211,7 @@ body{min-height:100vh;background:#0A120C;color:#F2EDE6;font-family:'Noto Sans KR
         <span class="bcnt" id="pcnt">0/4</span>
       </button>
       <div style="margin-top:10px;text-align:center;font-size:11px;color:rgba(242,237,230,.28);line-height:1.8;">
-        스탬프 장소를 보내시면 스탬프 1개 적립!!
+        4장 모두 선택하면 버튼이 활성화됩니다 · 제출 즉시 스탬프 1개 자동 적립
       </div>
     </div>
   </div>
@@ -425,7 +425,7 @@ function updateBtn(){
 // ── STEP 2: 제출 + 즉시 적립 ─────────────────────────────
 async function submitStamp(){
   if(Object.keys(_photos).length<SPOTS.length)return;
-  if(!_cust||!_db){toast('연결 오류. 잠시 후 다시 시도하세요.');return;}
+  if(!_cust||!_db||!_st){toast('연결 오류. 잠시 후 다시 시도하세요.');return;}
   document.getElementById('sbtn').disabled=true;
   const prg=document.getElementById('uprg');
   const pb=document.getElementById('pbar');
@@ -436,45 +436,29 @@ async function submitStamp(){
     const sid=String(_cust.id)+'_'+Date.now();
     _urls=[];
 
-    // 사진 4장 — canvas 압축 후 base64 저장 (Storage 불필요)
+    // 사진 4장 Storage 업로드
     for(let i=0;i<SPOTS.length;i++){
       const pd=_photos[i];
-      pt.textContent=(i+1)+'/'+SPOTS.length+'번 사진 압축 중...';
+      pt.textContent=(i+1)+'/'+SPOTS.length+'번 사진 업로드 중...';
       pb.style.width=Math.round(((i+0.5)/SPOTS.length)*70)+'%';
-
-      // canvas 압축 — 800px, JPEG 70%
-      const dataUrl=await new Promise(resolve=>{
-        const img=new Image();
-        img.onload=()=>{
-          const MAX=800;
-          let w=img.width,h=img.height;
-          if(w>MAX||h>MAX){
-            if(w>h){h=Math.round(h*MAX/w);w=MAX;}
-            else{w=Math.round(w*MAX/h);h=MAX;}
-          }
-          const cv=document.createElement('canvas');
-          cv.width=w;cv.height=h;
-          cv.getContext('2d').drawImage(img,0,0,w,h);
-          resolve(cv.toDataURL('image/jpeg',0.70));
-        };
-        const reader=new FileReader();
-        reader.onload=e=>{img.src=e.target.result;};
-        reader.readAsDataURL(pd.file);
-      });
-
-      _urls.push({spot:pd.spotName,dataUrl,captureTs:pd.captureTs,serverTs:pd.serverTs});
+      const ext=(pd.file.name.split('.').pop()||'jpg').toLowerCase();
+      const path='stamp_photos/'+td+'/'+sid+'_s'+i+'_'+pd.spotName.replace(/[^\w가-힣]/g,'')+'.'+ext;
+      const ref=_st.ref(path);
+      const snap=await ref.put(pd.file,{customMetadata:{captureTimestamp:pd.captureTs,uploadTimestamp:pd.serverTs,spotName:pd.spotName,customerName:_cust.name,customerId:String(_cust.id)}});
+      const url=await snap.ref.getDownloadURL();
+      _urls.push({spot:pd.spotName,url,captureTs:pd.captureTs,serverTs:pd.serverTs,path});
     }
 
     pt.textContent='스탬프 적립 처리 중...'; pb.style.width='85%';
 
     // customers.stampTotal +1
-    const cur=Number(_cust.stampTotal||0),nxt=cur+1;
+    const cur=Number(_cust.stampTotal||0), nxt=cur+1;
     const ntier=getTier(nxt);
     await _db.collection('customers').doc(_cust.__docId).update({
       stampTotal:nxt,stampUpdated:new Date().toISOString(),tier:ntier.name
     });
 
-    // stamp_submissions 이력 저장 (base64, 승인 후 삭제 가능)
+    // stamp_submissions 이력 저장
     await _db.collection('stamp_submissions').doc(sid).set({
       submissionId:sid,customerId:String(_cust.id),customerName:_cust.name,
       phone:_cust.phone||'',passToken:_cust.qrToken||'',
@@ -501,7 +485,7 @@ function showDone(nxt,tier){
   document.getElementById('dtier').innerHTML='<span style="background:rgba(184,150,90,.15);border-radius:10px;padding:2px 8px;font-size:11px;color:#B8965A;">'+tier.icon+' '+tier.name+'</span>';
 
   const th=document.getElementById('dthumbs');
-  th.innerHTML=_urls.map(p=>'<div class="pthumb"><img src="'+(p.dataUrl||p.url||'')+'" alt="'+p.spot+'"></div>').join('');
+  th.innerHTML=_urls.map(p=>'<div class="pthumb"><img src="'+p.url+'" alt="'+p.spot+'"></div>').join('');
 
   const nx=MILESTONES.find(m=>m.at>nxt);
   const nh=document.getElementById('dnext');
