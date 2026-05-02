@@ -3361,7 +3361,7 @@ async function openNotifPopup(){
                   <div class="notif-item-desc">${n.type==='welcome_new'
                     ? `<span style='color:#2e7d32;font-weight:600;'>${n.coopName||''}</span> · ${n.custName||''} · ${n.custPhone||'연락처없음'}`
                     : n.type==='stamp_cert'
-                    ? `📸 ${n.custName||''} · 사진 4장 제출 · <a href='#' onclick="switchModule('stamp');renderStampReview();" style='color:var(--primary);'>검토하기 →</a>`
+                    ? `📸 ${n.custName||''} · 사진 4장 제출 · <a href='#' onclick="var op=document.getElementById('notif-popup-overlay');if(op)op.remove();showModule('stamp-review');renderStampReview();" style='color:var(--primary);'>검토하기 →</a>`
                     : (n.body||n.desc||'')}</div>
                   ${n.type==='welcome_new' && n.passToken
                     ? `<div style="font-size:10px;font-family:monospace;color:#aaa;margin-top:2px;">패스: ${n.passToken}</div>`:''}
