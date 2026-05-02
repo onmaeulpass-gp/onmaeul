@@ -9465,7 +9465,7 @@ async function verifyStampPassToken() {
 
   try {
     if (!window._fbDB) { if(msgEl) msgEl.textContent='연결 오류. 잠시 후 다시 시도해주세요.'; return; }
-    const snap = await window._fbDB.collection('customers').get();
+    const snap = await ((typeof db!=='undefined'&&db)||window._fbDB).collection('customers').get();
     const cust = snap.docs.map(d=>d.data()).find(c => c.qrToken === token || c.customerId === token);
     if (!cust) {
       if(msgEl) msgEl.innerHTML='<span style="color:#e53935;">패스번호를 찾을 수 없습니다. 다시 확인해주세요.</span>';
@@ -9473,7 +9473,7 @@ async function verifyStampPassToken() {
     }
     // 오늘 이미 제출한 건 있는지 확인
     const today = new Date().toISOString().split('T')[0];
-    const subSnap = await window._fbDB.collection('stamp_submissions')
+    const subSnap = await ((typeof db!=='undefined'&&db)||window._fbDB).collection('stamp_submissions')
       .where('customerId','==',String(cust.id))
       .where('submittedDate','==',today).get()
       .catch(()=>({docs:[]}));
@@ -9619,10 +9619,10 @@ async function submitStampPhotos() {
       stampGranted:     false,
       rejectReason:     ''
     };
-    await window._fbDB.collection('stamp_submissions').doc(submId).set(submDoc);
+    await ((typeof db!=='undefined'&&db)||window._fbDB).collection('stamp_submissions').doc(submId).set(submDoc);
 
     // 관리자 알림
-    window._fbDB.collection('notifications').doc('CERT-'+Date.now()).set({
+    ((typeof db!=='undefined'&&db)||window._fbDB).collection('notifications').doc('CERT-'+Date.now()).set({
       type: 'stamp_cert', title: '📸 스탬프 인증 신청',
       body: (cust.name||'고객')+'님 · 사진 4장 제출',
       custName: cust.name||'', passToken: cust.qrToken||'',
@@ -9649,8 +9649,15 @@ async function renderStampReview() {
   if(!wrap) return;
   wrap.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted);">불러오는 중...</div>';
   try {
-    let q = window.db ? window.db.collection('stamp_submissions') : null;
-    if (!q) { wrap.innerHTML='<div style="color:#e53935;">DB 연결 없음</div>'; return; }
+    // db 변수 — firebase.firestore() 초기화된 전역 변수 사용
+    const _db = (typeof db !== 'undefined' && db) || window._fbDB || null;
+    if (!_db) {
+      // DB 아직 초기화 중 — 1초 후 재시도
+      setTimeout(renderStampReview, 1000);
+      wrap.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted);">DB 연결 중... 잠시 후 자동으로 표시됩니다.</div>';
+      return;
+    }
+    let q = _db.collection('stamp_submissions');
     if (filter) q = q.where('status','==',filter);
     const snap = await q.orderBy('submittedAt','desc').get()
       .catch(() => q.get());
