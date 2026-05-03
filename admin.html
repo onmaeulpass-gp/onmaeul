@@ -1035,6 +1035,12 @@ body.role-viewer .perm-write { display: none !important; }
       <div class="card">
         <div class="card-header">
           <h3>👥 고객 목록</h3>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <button class="btn btn-ghost btn-sm perm-admin" onclick="checkDuplicateCustomers()"
+              style="font-size:11px;color:#c0392b;border-color:#c0392b;">
+              ⚠️ 중복 확인
+            </button>
+          </div>
           <button class="btn btn-primary btn-sm perm-write" onclick="openM01Add()">+ 고객 등록</button>
           <button class="btn-excel" onclick="exportExcel('customers')">📥 엑셀 다운로드</button>
         </div>
@@ -1046,9 +1052,20 @@ body.role-viewer .perm-write { display: none !important; }
             </select>
           </div>
           <div class="tbl-wrap">
+            <!-- 일괄 선택 액션 바 -->
+            <div id="m01-bulk-bar" style="display:none;align-items:center;gap:10px;padding:10px 14px;background:#fff3cd;border:1px solid #ffc107;border-radius:10px;margin-bottom:10px;">
+              <span id="m01-selected-count" style="font-size:13px;font-weight:700;color:#856404;">0명 선택됨</span>
+              <button class="btn btn-danger btn-sm" onclick="bulkDeleteM01()" style="font-size:12px;">🗑️ 선택 삭제</button>
+              <button class="btn btn-ghost btn-sm" onclick="clearM01Selection()" style="font-size:12px;">✕ 선택 해제</button>
+            </div>
             <table>
               <thead>
                 <tr>
+                  <th style="width:36px;text-align:center;">
+                    <input type="checkbox" id="m01-check-all" title="전체 선택"
+                      onchange="toggleM01All(this.checked)"
+                      style="width:15px;height:15px;cursor:pointer;accent-color:var(--primary);">
+                  </th>
                   <th>ID</th><th>고객명</th><th>전화번호</th><th>체험일자</th>
                   <th>프로그램</th><th>인원</th><th>유입경로</th><th>결제</th><th>SNS 발송</th><th>QR</th><th>관리</th>
                 </tr>
@@ -4295,6 +4312,28 @@ async function saveM01() {
     if(m01EditId){
       await db.collection('customers').doc(String(m01EditId)).update(data);
     } else {
+      // ── 중복 체크: 이름 + 전화번호 동일한 고객 이미 존재하면 차단 ──
+      const allCusts = await getAll('customers');
+      const newPhone = fmtedPhone.replace(/\D/g,'');
+      const dup = allCusts.find(c => {
+        const cPhone = (c.phone||'').replace(/\D/g,'');
+        const cName  = (c.name||'').trim();
+        return cName === name && cPhone === newPhone && cPhone.length >= 10;
+      });
+      if (dup) {
+        hideLoading();
+        const go = confirm(
+          `⚠️ 중복 고객 감지\n\n` +
+          `동일한 고객 정보가 이미 등록되어 있어요.\n\n` +
+          `기존 고객: ${dup.name} · ${dup.phone}\n` +
+          `고객번호: ${dup.customerId || dup.id}\n` +
+          `패스번호: ${dup.qrToken || '-'}\n\n` +
+          `그래도 새로 등록하시겠습니까?\n` +
+          `(기존 고객의 스탬프 적립이 분산될 수 있어요)`
+        );
+        if (!go) return;
+        showLoading('저장 중...');
+      }
       const id=await genId('customers');
       const customerId=await genCustomerId();
       const qrToken = _previewQRToken || genPassToken();
@@ -4334,6 +4373,108 @@ SMS로 패스 발급 안내를 발송하시겠습니까?`)){
     closeModal('m01-modal'); await renderM01();
   } catch(e){alert('저장 실패: '+e.message);} finally{hideLoading();}
 }
+// ── 고객 목록 체크박스 일괄 선택/삭제 ────────────────────────────
+function toggleM01All(checked) {
+  document.querySelectorAll('.m01-cb').forEach(cb => { cb.checked = checked; });
+  updateM01BulkBar();
+}
+
+function updateM01BulkBar() {
+  const checked = document.querySelectorAll('.m01-cb:checked');
+  const bar     = document.getElementById('m01-bulk-bar');
+  const cnt     = document.getElementById('m01-selected-count');
+  const allCb   = document.getElementById('m01-check-all');
+  const total   = document.querySelectorAll('.m01-cb').length;
+
+  if (checked.length > 0) {
+    bar.style.display = 'flex';
+    cnt.textContent   = checked.length + '명 선택됨';
+  } else {
+    bar.style.display = 'none';
+  }
+  // 전체선택 체크박스 상태 동기화
+  if (allCb) {
+    allCb.checked       = total > 0 && checked.length === total;
+    allCb.indeterminate = checked.length > 0 && checked.length < total;
+  }
+}
+
+function clearM01Selection() {
+  document.querySelectorAll('.m01-cb').forEach(cb => { cb.checked = false; });
+  const allCb = document.getElementById('m01-check-all');
+  if (allCb) { allCb.checked = false; allCb.indeterminate = false; }
+  updateM01BulkBar();
+}
+
+async function bulkDeleteM01() {
+  const checked = document.querySelectorAll('.m01-cb:checked');
+  if (!checked.length) return;
+
+  const names = Array.from(checked).map(cb => cb.dataset.name).slice(0, 5).join(', ');
+  const more  = checked.length > 5 ? ` 외 ${checked.length - 5}명` : '';
+  if (!confirm(`선택한 ${checked.length}명을 삭제하시겠습니까?\n\n${names}${more}\n\n⚠️ 삭제된 고객의 방문 기록은 남아 있습니다.`)) return;
+
+  showLoading(`${checked.length}명 삭제 중...`);
+  try {
+    const ids = Array.from(checked).map(cb => cb.dataset.id);
+    // 배치로 삭제
+    for (const id of ids) {
+      await db.collection('customers').doc(String(id)).delete();
+    }
+    invalidateCache('customers');
+    clearM01Selection();
+    await renderM01();
+    showToast(`✅ ${ids.length}명 삭제 완료`, 'success');
+  } catch(e) {
+    alert('삭제 실패: ' + e.message);
+  } finally {
+    hideLoading();
+  }
+}
+
+// ── 중복 고객 확인 ─────────────────────────────────────────────────
+async function checkDuplicateCustomers() {
+  showLoading('중복 고객 확인 중...');
+  try {
+    const all = await getAll('customers');
+
+    // 이름+전화번호 기준 그룹핑
+    const groups = {};
+    all.forEach(c => {
+      const phone = (c.phone||'').replace(/\D/g,'');
+      const key   = (c.name||'').trim() + '_' + phone;
+      if (phone.length >= 10) {
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(c);
+      }
+    });
+
+    // 중복 그룹만 추출
+    const dups = Object.entries(groups).filter(([k,v]) => v.length > 1);
+    hideLoading();
+
+    if (!dups.length) {
+      alert('✅ 중복 고객이 없어요!');
+      return;
+    }
+
+    // 중복 목록 표시
+    let msg = `⚠️ 중복 고객 ${dups.length}그룹 발견\n\n`;
+    dups.forEach(([key, custs]) => {
+      const name  = custs[0].name || '-';
+      const phone = custs[0].phone || '-';
+      const ids   = custs.map(c => c.customerId || c.id).join(', ');
+      const stamps= custs.map(c => c.stampTotal||0).reduce((a,b)=>a+b,0);
+      msg += `▪ ${name} (${phone})\n  고객번호: ${ids}\n  합산 스탬프: ${stamps}개\n\n`;
+    });
+    msg += '중복 목록을 확인하고 필요 없는 항목은 직접 삭제해 주세요.';
+    alert(msg);
+  } catch(e) {
+    hideLoading();
+    alert('오류: ' + e.message);
+  }
+}
+
 async function deleteM01(id) {
   if(!confirm('삭제하시겠습니까?'))return;
   showLoading('삭제 중...');
@@ -4392,7 +4533,8 @@ async function renderM01() {
     if(data.length===0){tbody.innerHTML='';empty.style.display='block';}
     else{
       empty.style.display='none';
-      tbody.innerHTML=data.map(c=>{ const docId = c.__docId || c.id; const safeName = String(c.name||'').replace(/'/g, "\'"); return `<tr>
+      tbody.innerHTML=data.map(c=>{ const docId = c.__docId || c.id; const safeName = String(c.name||'').replace(/'/g, "\'"); return `<tr id="m01-row-${docId}">
+        <td style="text-align:center;padding:8px 6px;"><input type="checkbox" class="m01-cb" data-id="${docId}" data-name="${safeName}" onchange="updateM01BulkBar()" style="width:15px;height:15px;cursor:pointer;accent-color:var(--primary);"></td>
         <td><span class="badge badge-blue">${c.customerId||docId}</span></td>
         <td><b>${c.name||'-'}</b></td><td>${c.phone||'-'}</td>
         <td>${formatDate(c.date)}</td>
