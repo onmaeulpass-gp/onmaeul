@@ -175,10 +175,21 @@ body{min-height:100vh;background:#0A120C;color:#F2EDE6;font-family:'Noto Sans KR
           onkeydown="if(event.key==='Enter')verifyToken()">
         <div class="fmsg info" id="tmsg">발급받은 패스번호를 입력하세요</div>
       </div>
-      <button class="btn" onclick="verifyToken()">확인하기 →</button>
-      <div style="margin-top:14px;text-align:center;">
-        <button onclick="showRegisterPanel()" style="background:none;border:none;font-size:12px;color:rgba(184,150,90,.5);text-decoration:none;letter-spacing:.05em;cursor:pointer;font-family:inherit;">
-          패스가 없으신가요? 무료 발급하기 →
+      <button class="btn" onclick="verifyToken()">패스번호 확인하기 →</button>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;">
+        <button onclick="showLookupPanel()"
+          style="background:rgba(255,255,255,.06);border:1px solid rgba(242,237,230,.15);
+                 border-radius:12px;padding:13px 8px;font-size:12px;font-weight:600;
+                 color:rgba(242,237,230,.55);font-family:inherit;cursor:pointer;
+                 display:flex;align-items:center;justify-content:center;gap:5px;">
+          🔍 패스번호 찾기
+        </button>
+        <button onclick="showRegisterPanel()"
+          style="background:rgba(184,150,90,.12);border:1px solid rgba(184,150,90,.35);
+                 border-radius:12px;padding:13px 8px;font-size:12px;font-weight:600;
+                 color:#B8965A;font-family:inherit;cursor:pointer;
+                 display:flex;align-items:center;justify-content:center;gap:5px;">
+          🎫 무료 발급하기
         </button>
       </div>
     </div>
@@ -189,8 +200,8 @@ body{min-height:100vh;background:#0A120C;color:#F2EDE6;font-family:'Noto Sans KR
     <div class="card">
       <div class="ci" style="padding:32px 28px 28px;">
         <div class="sec-step">STEP 00</div>
-        <div class="sec-title" style="margin-bottom:8px;">무료 패스 발급</div>
-        <div class="sec-desc" style="margin-bottom:28px;">성함과 전화번호로 기존 패스를 찾아드려요.<br>등록된 고객이면 패스번호를 바로 확인할 수 있어요.</div>
+        <div class="sec-title" id="reg-panel-title" style="margin-bottom:8px;">무료 패스 발급</div>
+        <div class="sec-desc" id="reg-panel-desc" style="margin-bottom:28px;">성함과 전화번호로 기존 패스를 찾아드려요.<br>등록된 고객이면 패스번호를 바로 확인할 수 있어요.</div>
 
         <div style="margin-bottom:20px;">
           <label class="flbl">성함</label>
@@ -423,7 +434,20 @@ function exifTs(file){
 }
 
 // ── 무료 발급 패널 ────────────────────────────────────────
+function showLookupPanel(){
+  // 타이틀만 "패스번호 찾기"로 변경 후 패널 열기
+  document.getElementById('reg-panel-title').textContent    = '패스번호 찾기';
+  document.getElementById('reg-panel-desc').innerHTML       =
+    '성함과 전화번호를 입력하면<br>패스번호를 바로 확인할 수 있어요.';
+  showRegisterPanel();
+}
+
 function showRegisterPanel(){
+  // 무료발급으로 열 때 타이틀 기본값 복원
+  var tEl=document.getElementById('reg-panel-title');
+  var dEl=document.getElementById('reg-panel-desc');
+  if(tEl) tEl.textContent='무료 패스 발급';
+  if(dEl) dEl.innerHTML='성함과 전화번호로 기존 패스를 찾아드려요.<br>등록된 고객이면 패스번호를 바로 확인할 수 있어요.';
   hide('s1');
   document.getElementById('reg-panel').style.display='block';
   document.getElementById('reg-panel').style.animation='fadeUp .35s ease both';
