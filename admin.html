@@ -511,6 +511,11 @@ body.role-viewer .perm-write { display: none !important; }
   .print-title { display: block !important; text-align: center; font-size: 18px; font-weight: 800; margin: 0 0 10px; }
 }
 .print-title { display: none; }
+
+/* ── 쿠폰 탭 CSS ── */
+.ctab{padding:10px 18px;font-size:13px;font-weight:600;border:none;border-bottom:3px solid transparent;background:none;cursor:pointer;color:var(--text-muted);font-family:inherit;transition:all .15s;}
+.ctab:hover{color:var(--primary);}
+.ctab.ctab-active{color:var(--primary);border-bottom-color:var(--primary);}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
@@ -1535,6 +1540,51 @@ body.role-viewer .perm-write { display: none !important; }
 
     <!-- ===== M08 이벤트 발송 ===== -->
     <div id="module-m08" class="module">
+      <!-- 카카오 채널 현황 카드 -->
+      <div class="card" style="margin-bottom:0;border:2px solid rgba(254,229,0,.3);background:linear-gradient(135deg,#fefce8,#fff);">
+        <div class="card-header" style="background:linear-gradient(135deg,#fef9c3,#fefce8);">
+          <h3 style="color:#854d0e;">
+            <svg width="18" height="18" viewBox="0 0 22 22" fill="none" style="vertical-align:middle;margin-right:4px;">
+              <ellipse cx="11" cy="10" rx="9" ry="8" fill="#3B1E08"/>
+              <path d="M11 4.5C7.41 4.5 4.5 6.74 4.5 9.5c0 1.78 1.1 3.34 2.75 4.27l-.7 2.57 3.07-2.02c.44.07.9.11 1.38.11 3.59 0 6.5-2.24 6.5-5s-2.91-4.93-6.5-4.93z" fill="#FEE500"/>
+            </svg>
+            카카오 채널 현황
+          </h3>
+          <button class="btn btn-ghost btn-sm" onclick="loadKakaoChannelStats()">🔄 새로고침</button>
+        </div>
+        <div class="card-body">
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;" id="kakao-ch-stats">
+            <div style="background:#fef9c3;border:1px solid #fde68a;border-radius:10px;padding:14px;text-align:center;">
+              <div style="font-size:24px;font-weight:900;color:#854d0e;" id="kakao-ch-total">-</div>
+              <div style="font-size:11px;color:#a16207;">채널 추가 고객</div>
+            </div>
+            <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px;text-align:center;">
+              <div style="font-size:24px;font-weight:900;color:#166534;" id="kakao-ch-week">-</div>
+              <div style="font-size:11px;color:#166534;">이번 주 신규</div>
+            </div>
+            <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:14px;text-align:center;">
+              <div style="font-size:24px;font-weight:900;color:#1e40af;" id="kakao-ch-rate">-%</div>
+              <div style="font-size:11px;color:#1e40af;">전체 전환율</div>
+            </div>
+          </div>
+
+          <!-- 일괄 알림 발송 -->
+          <div style="background:#fef9c3;border:1px solid #fde68a;border-radius:12px;padding:16px;">
+            <div style="font-size:13px;font-weight:700;color:#854d0e;margin-bottom:8px;">📣 채널 추가 고객 일괄 알림 발송</div>
+            <textarea id="kakao-broadcast-msg" rows="3"
+              style="width:100%;border:1px solid #fde68a;border-radius:8px;padding:10px;font-size:13px;font-family:inherit;resize:vertical;background:#fffde7;"
+              placeholder="예) 🌿 이번 주 온마을 가평 특가 안내&#10;자카란다 카페 아메리카노 20% 할인&#10;이번 주말까지만!"></textarea>
+            <div style="display:flex;gap:8px;margin-top:10px;align-items:center;flex-wrap:wrap;">
+              <button class="btn btn-primary btn-sm" onclick="sendKakaoBroadcast()"
+                style="background:#FEE500;color:#191600;border:none;font-weight:700;">
+                📤 Make 웹훅으로 일괄 발송
+              </button>
+              <span style="font-size:11px;color:#a16207;">채널 추가 고객 전체에게 발송됩니다</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="card">
         <div class="card-header">
           <h3>📣 이벤트 발송 목록</h3>
@@ -1606,38 +1656,204 @@ body.role-viewer .perm-write { display: none !important; }
 
     <!-- ===== COUPON 쿠폰 관리 ===== -->
     <div id="module-coupon" class="module perm-admin">
-      <div class="card">
-        <div class="card-header">
-          <h3>🎫 쿠폰 발급 현황</h3>
-          <button class="btn btn-ghost btn-sm" onclick="renderCouponDashboard()">🔄 새로고침</button>
+
+      <!-- 탭 네비게이션 -->
+      <div style="display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:16px;">
+        <button id="ctab-rewards" class="ctab ctab-active" onclick="switchCouponTab('rewards')">🎯 달성 보상 설정</button>
+        <button id="ctab-issued"  class="ctab" onclick="switchCouponTab('issued')">🎫 발급 현황</button>
+        <button id="ctab-used"    class="ctab" onclick="switchCouponTab('used')">✅ 사용 내역</button>
+      </div>
+
+      <!-- ① 달성 보상 설정 -->
+      <div id="cpanel-rewards">
+        <div class="card">
+          <div class="card-header">
+            <h3>🎯 스탬프 달성 보상 설정</h3>
+            <button class="btn btn-primary btn-sm" onclick="openRewardAdd()">+ 보상 추가</button>
+          </div>
+          <div class="card-body" style="padding:0;">
+            <table class="table" style="width:100%;margin:0;">
+              <thead><tr>
+                <th style="width:60px;">달성</th>
+                <th>보상명</th>
+                <th>보상 내용</th>
+                <th>사용 가맹점</th>
+                <th>유효기간</th>
+                <th>성수기제외</th>
+                <th>상태</th>
+                <th style="width:80px;">관리</th>
+              </tr></thead>
+              <tbody id="reward-tbody">
+                <tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text-muted);">불러오는 중...</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
-        <div class="card-body">
-          <div id="coupon-dashboard"><div style="text-align:center;padding:40px;color:var(--text-muted);">불러오는 중...</div></div>
+
+        <!-- 등급별 상시 할인율 -->
+        <div class="card" style="margin-top:12px;">
+          <div class="card-header"><h3>🏅 등급별 상시 할인율</h3>
+            <button class="btn btn-ghost btn-sm" onclick="saveTierDiscounts()">💾 저장</button>
+          </div>
+          <div class="card-body">
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">
+              <div style="text-align:center;background:#f8f0e8;border-radius:12px;padding:16px;border:2px solid #cd7f32;">
+                <div style="font-size:20px;margin-bottom:6px;">🌱 새싹</div>
+                <div style="font-size:11px;color:#888;margin-bottom:8px;">0~4개</div>
+                <div style="display:flex;align-items:center;justify-content:center;gap:4px;">
+                  <input type="number" id="tier-bronze" min="0" max="30" value="0"
+                    style="width:52px;text-align:center;border:1.5px solid #cd7f32;border-radius:6px;padding:4px;font-size:16px;font-weight:700;color:#cd7f32;">
+                  <span style="color:#cd7f32;font-weight:700;">%</span>
+                </div>
+              </div>
+              <div style="text-align:center;background:#f0f4f8;border-radius:12px;padding:16px;border:2px solid #a0b0b0;">
+                <div style="font-size:20px;margin-bottom:6px;">🌿 새싹</div>
+                <div style="font-size:11px;color:#888;margin-bottom:8px;">5~9개</div>
+                <div style="display:flex;align-items:center;justify-content:center;gap:4px;">
+                  <input type="number" id="tier-silver" min="0" max="30" value="5"
+                    style="width:52px;text-align:center;border:1.5px solid #a0b0b0;border-radius:6px;padding:4px;font-size:16px;font-weight:700;color:#607080;">
+                  <span style="color:#607080;font-weight:700;">%</span>
+                </div>
+              </div>
+              <div style="text-align:center;background:#faf8e8;border-radius:12px;padding:16px;border:2px solid #ffd700;">
+                <div style="font-size:20px;margin-bottom:6px;">🍃 골드</div>
+                <div style="font-size:11px;color:#888;margin-bottom:8px;">10~19개</div>
+                <div style="display:flex;align-items:center;justify-content:center;gap:4px;">
+                  <input type="number" id="tier-gold" min="0" max="30" value="10"
+                    style="width:52px;text-align:center;border:1.5px solid #ffd700;border-radius:6px;padding:4px;font-size:16px;font-weight:700;color:#b8860b;">
+                  <span style="color:#b8860b;font-weight:700;">%</span>
+                </div>
+              </div>
+              <div style="text-align:center;background:#f4f0ff;border-radius:12px;padding:16px;border:2px solid #c084fc;">
+                <div style="font-size:20px;margin-bottom:6px;">🏡 VIP</div>
+                <div style="font-size:11px;color:#888;margin-bottom:8px;">20개↑</div>
+                <div style="display:flex;align-items:center;justify-content:center;gap:4px;">
+                  <input type="number" id="tier-vip" min="0" max="50" value="20"
+                    style="width:52px;text-align:center;border:1.5px solid #c084fc;border-radius:6px;padding:4px;font-size:16px;font-weight:700;color:#7c3aed;">
+                  <span style="color:#7c3aed;font-weight:700;">%</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-      <div class="card" style="margin-top:16px;">
-        <div class="card-header"><h3>⚙️ 스탬프 미션 기준</h3></div>
-        <div class="card-body">
-          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
-            <div style="background:var(--bg2);border-radius:10px;padding:14px;text-align:center;">
-              <div style="font-size:22px;font-weight:700;color:var(--primary);">6칸</div>
-              <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">데일리 코스 완성</div>
-              <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">당일 15% 추가 할인 쿠폰</div>
-            </div>
-            <div style="background:var(--bg2);border-radius:10px;padding:14px;text-align:center;">
-              <div style="font-size:22px;font-weight:700;color:var(--primary);">10칸</div>
-              <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">스테이 코스 완성</div>
-              <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">숙박 1박 무료 쿠폰</div>
-            </div>
-            <div style="background:var(--bg2);border-radius:10px;padding:14px;text-align:center;">
-              <div style="font-size:22px;font-weight:700;color:var(--primary);">+2</div>
-              <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">숙박 체크인 보너스</div>
-              <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">동일 업소 당일 재방문 = 스탬프 불인정</div>
+
+      <!-- ② 발급 현황 -->
+      <div id="cpanel-issued" style="display:none;">
+        <div class="card">
+          <div class="card-header">
+            <h3>🎫 쿠폰 발급 현황</h3>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <select id="issued-filter-reward" onchange="renderIssuedCoupons()"
+                style="border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:12px;">
+                <option value="">전체 보상</option>
+              </select>
+              <button class="btn btn-ghost btn-sm" onclick="renderIssuedCoupons()">🔄</button>
             </div>
           </div>
-          <div style="margin-top:12px;background:#FFF8E1;border-radius:8px;padding:10px 14px;font-size:12px;color:#E65100;line-height:1.8;">
-            등급 — 🌱 새싹(0~4개, 5%) · 🌿 초록(5~24개, 10%) · 🌳 숲 Gold(25개↑, 20%)
+          <div class="card-body" style="padding:0;">
+            <table class="table" style="width:100%;margin:0;">
+              <thead><tr>
+                <th>발급일</th><th>고객명</th><th>전화번호</th>
+                <th>보상명</th><th>쿠폰코드</th><th>유효기간</th><th>상태</th>
+              </tr></thead>
+              <tbody id="issued-tbody">
+                <tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text-muted);">불러오는 중...</td></tr>
+              </tbody>
+            </table>
           </div>
+        </div>
+      </div>
+
+      <!-- ③ 사용 내역 -->
+      <div id="cpanel-used" style="display:none;">
+        <div class="card">
+          <div class="card-header">
+            <h3>✅ 쿠폰 사용 내역</h3>
+            <button class="btn btn-ghost btn-sm" onclick="renderUsedCoupons()">🔄</button>
+          </div>
+          <div class="card-body" style="padding:0;">
+            <table class="table" style="width:100%;margin:0;">
+              <thead><tr>
+                <th>사용일</th><th>고객명</th><th>보상명</th>
+                <th>사용 가맹점</th><th>할인금액</th><th>처리자</th>
+              </tr></thead>
+              <tbody id="used-tbody">
+                <tr><td colspan="6" style="text-align:center;padding:32px;color:var(--text-muted);">불러오는 중...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 보상 추가/수정 모달 -->
+    <div class="modal-overlay" id="reward-modal">
+      <div class="modal" style="max-width:520px;">
+        <div class="modal-header">
+          <h3 id="reward-modal-title">보상 추가</h3>
+          <button class="modal-close" onclick="closeModal('reward-modal')">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>달성 스탬프 수 <span style="color:var(--danger);">*</span></label>
+            <input type="number" id="rw-stamps" min="1" max="100" placeholder="예) 5"
+              style="border:1px solid var(--border);border-radius:8px;padding:8px 12px;width:100%;">
+          </div>
+          <div class="form-group">
+            <label>보상명 <span style="color:var(--danger);">*</span></label>
+            <input type="text" id="rw-name" placeholder="예) 카페 음료 1잔 무료"
+              style="border:1px solid var(--border);border-radius:8px;padding:8px 12px;width:100%;">
+          </div>
+          <div class="form-group">
+            <label>보상 내용 (상세)</label>
+            <textarea id="rw-desc" rows="2" placeholder="예) 자카란다 카페에서 아메리카노 또는 아이스티 1잔 무료 제공"
+              style="border:1px solid var(--border);border-radius:8px;padding:8px 12px;width:100%;resize:vertical;font-family:inherit;font-size:13px;"></textarea>
+          </div>
+          <div class="form-group">
+            <label>사용 가맹점</label>
+            <select id="rw-coop" style="border:1px solid var(--border);border-radius:8px;padding:8px 12px;width:100%;">
+              <option value="all">전체 가맹점</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>할인율 (쿠폰형일 때)</label>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <input type="number" id="rw-discount" min="0" max="100" value="0" placeholder="0"
+                style="border:1px solid var(--border);border-radius:8px;padding:8px 12px;width:80px;">
+              <span style="font-weight:700;color:var(--primary);">%</span>
+              <span style="font-size:12px;color:var(--text-muted);">(0이면 무료 제공)</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>유효기간 (발급 후 일수)</label>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <input type="number" id="rw-validity" min="1" max="365" value="30"
+                style="border:1px solid var(--border);border-radius:8px;padding:8px 12px;width:80px;">
+              <span style="font-size:13px;color:var(--text-muted);">일</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+              <input type="checkbox" id="rw-no-peak" style="width:15px;height:15px;accent-color:var(--primary);">
+              성수기(7~8월) 사용 제외
+            </label>
+          </div>
+          <div class="form-group">
+            <label>월 발급 한도 (0=무제한)</label>
+            <input type="number" id="rw-monthly-limit" min="0" value="0" placeholder="0"
+              style="border:1px solid var(--border);border-radius:8px;padding:8px 12px;width:120px;">
+          </div>
+          <div class="form-group">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+              <input type="checkbox" id="rw-active" checked style="width:15px;height:15px;accent-color:var(--primary);">
+              활성화
+            </label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-ghost" onclick="closeModal('reward-modal')">취소</button>
+          <button class="btn btn-primary" onclick="saveReward()">💾 저장</button>
         </div>
       </div>
     </div>
@@ -3822,7 +4038,7 @@ function showModule(mod) {
   if(mod==='report') initReport();
   if(mod==='m09') initM09();
   if(mod==='biz-settings') loadBizSettings();
-  if(mod==='coupon') renderCouponDashboard();
+  if(mod==='coupon') { renderRewards(); loadTierDiscounts(); return; }
   if(mod==='stamp-review') renderStampReview();
   if(mod==='admin-monitor') renderAdminMonitor();
   if(mod==='backup') renderBackupDashboard();
@@ -3909,6 +4125,270 @@ async function confirmWelcomeMember(docId, btn) {
   } catch(e) {
     showToast('처리 실패 — 다시 시도해 주세요', 'error');
   }
+}
+
+// ═══════════════════════════════════════════════════════════
+// COUPON MODULE — 달성 보상 / 발급 / 사용 내역
+// ═══════════════════════════════════════════════════════════
+
+var _rewardEditId = null;
+var _couponTabCur = 'rewards';
+
+function switchCouponTab(tab) {
+  _couponTabCur = tab;
+  ['rewards','issued','used'].forEach(t => {
+    document.getElementById('cpanel-'+t).style.display  = (t===tab)?'block':'none';
+    const btn = document.getElementById('ctab-'+t);
+    if(btn) btn.className = 'ctab' + (t===tab?' ctab-active':'');
+  });
+  if(tab==='rewards') renderRewards();
+  if(tab==='issued')  renderIssuedCoupons();
+  if(tab==='used')    renderUsedCoupons();
+}
+
+// ── 달성 보상 목록 렌더 ──────────────────────────────────
+async function renderRewards() {
+  const tbody = document.getElementById('reward-tbody');
+  if(!tbody) return;
+  try {
+    const snap = await db.collection('stamp_rewards').orderBy('stamps','asc').get()
+      .catch(() => db.collection('stamp_rewards').get());
+    const rows = snap.docs.map(d => ({...d.data(), __id: d.id}));
+    if(!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text-muted);">보상이 없습니다. + 보상 추가 버튼을 눌러주세요.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = rows.map(r => `<tr>
+      <td><span style="background:var(--primary-light);color:var(--primary);font-weight:700;padding:3px 10px;border-radius:10px;">${r.stamps}개</span></td>
+      <td><strong>${r.name||'-'}</strong></td>
+      <td style="font-size:12px;color:var(--text-muted);max-width:160px;">${r.desc||'-'}</td>
+      <td style="font-size:12px;">${r.coopId==='all'?'전체 가맹점':(r.coopName||r.coopId||'-')}</td>
+      <td style="font-size:12px;">${r.validity||30}일</td>
+      <td style="font-size:12px;">${r.noPeak?'<span style="color:#e65100;">성수기 제외</span>':'없음'}</td>
+      <td><span style="background:${r.active!==false?'#e8f5e9':'#fce4e4'};color:${r.active!==false?'#2e7d32':'#c62828'};font-size:11px;padding:2px 8px;border-radius:8px;font-weight:700;">${r.active!==false?'활성':'비활성'}</span></td>
+      <td>
+        <button class="btn btn-ghost btn-sm btn-icon" onclick="openRewardEdit('${r.__id}')">✏️</button>
+        <button class="btn btn-danger btn-sm btn-icon" onclick="deleteReward('${r.__id}')">🗑️</button>
+      </td>
+    </tr>`).join('');
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="8" style="color:var(--danger);padding:20px;">오류: ${e.message}</td></tr>`;
+  }
+}
+
+// ── 보상 추가/수정 모달 ──────────────────────────────────
+async function openRewardAdd() {
+  _rewardEditId = null;
+  document.getElementById('reward-modal-title').textContent = '보상 추가';
+  document.getElementById('rw-stamps').value = '';
+  document.getElementById('rw-name').value = '';
+  document.getElementById('rw-desc').value = '';
+  document.getElementById('rw-discount').value = 0;
+  document.getElementById('rw-validity').value = 30;
+  document.getElementById('rw-no-peak').checked = false;
+  document.getElementById('rw-monthly-limit').value = 0;
+  document.getElementById('rw-active').checked = true;
+  await loadCoopsIntoSelect('rw-coop');
+  openModal('reward-modal');
+}
+
+async function openRewardEdit(id) {
+  _rewardEditId = id;
+  document.getElementById('reward-modal-title').textContent = '보상 수정';
+  const doc = await db.collection('stamp_rewards').doc(id).get();
+  const r   = doc.data();
+  document.getElementById('rw-stamps').value        = r.stamps||'';
+  document.getElementById('rw-name').value          = r.name||'';
+  document.getElementById('rw-desc').value          = r.desc||'';
+  document.getElementById('rw-discount').value      = r.discount||0;
+  document.getElementById('rw-validity').value      = r.validity||30;
+  document.getElementById('rw-no-peak').checked     = !!r.noPeak;
+  document.getElementById('rw-monthly-limit').value = r.monthlyLimit||0;
+  document.getElementById('rw-active').checked      = r.active!==false;
+  await loadCoopsIntoSelect('rw-coop', r.coopId);
+  openModal('reward-modal');
+}
+
+async function loadCoopsIntoSelect(selId, selectedVal) {
+  const sel = document.getElementById(selId);
+  if(!sel) return;
+  sel.innerHTML = '<option value="all">전체 가맹점</option>';
+  try {
+    const coops = await getAll('coops');
+    coops.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.coopCode || String(c.id);
+      opt.textContent = c.name;
+      if(selectedVal && opt.value === selectedVal) opt.selected = true;
+      sel.appendChild(opt);
+    });
+  } catch(e) {}
+  if(selectedVal) sel.value = selectedVal;
+}
+
+async function saveReward() {
+  const stamps = parseInt(document.getElementById('rw-stamps').value);
+  const name   = document.getElementById('rw-name').value.trim();
+  if(!stamps || !name) { alert('달성 스탬프 수와 보상명은 필수입니다.'); return; }
+  const coopSel  = document.getElementById('rw-coop');
+  const coopId   = coopSel.value;
+  const coopName = coopId==='all' ? '전체 가맹점' : (coopSel.options[coopSel.selectedIndex].text);
+  const data = {
+    stamps, name,
+    desc:         document.getElementById('rw-desc').value.trim(),
+    discount:     parseInt(document.getElementById('rw-discount').value)||0,
+    validity:     parseInt(document.getElementById('rw-validity').value)||30,
+    noPeak:       document.getElementById('rw-no-peak').checked,
+    monthlyLimit: parseInt(document.getElementById('rw-monthly-limit').value)||0,
+    active:       document.getElementById('rw-active').checked,
+    coopId, coopName,
+    updatedAt: new Date().toISOString()
+  };
+  showLoading('저장 중...');
+  try {
+    if(_rewardEditId) {
+      await db.collection('stamp_rewards').doc(_rewardEditId).update(data);
+    } else {
+      data.createdAt = new Date().toISOString();
+      await db.collection('stamp_rewards').add(data);
+    }
+    closeModal('reward-modal');
+    await renderRewards();
+    showToast('보상이 저장됐어요', 'success');
+  } catch(e) { alert('저장 실패: '+e.message); }
+  finally   { hideLoading(); }
+}
+
+async function deleteReward(id) {
+  if(!confirm('이 보상을 삭제하시겠습니까?')) return;
+  await db.collection('stamp_rewards').doc(id).delete();
+  renderRewards();
+  showToast('삭제됐어요', 'success');
+}
+
+// ── 등급별 할인율 저장 ──────────────────────────────────
+async function saveTierDiscounts() {
+  const data = {
+    bronze: parseInt(document.getElementById('tier-bronze').value)||0,
+    silver: parseInt(document.getElementById('tier-silver').value)||5,
+    gold:   parseInt(document.getElementById('tier-gold').value)||10,
+    vip:    parseInt(document.getElementById('tier-vip').value)||20,
+    updatedAt: new Date().toISOString()
+  };
+  try {
+    await db.collection('config').doc('tier_discounts').set(data);
+    showToast('등급별 할인율이 저장됐어요', 'success');
+  } catch(e) { alert('저장 실패: '+e.message); }
+}
+
+async function loadTierDiscounts() {
+  try {
+    const doc = await db.collection('config').doc('tier_discounts').get();
+    if(!doc.exists) return;
+    const d = doc.data();
+    if(document.getElementById('tier-bronze')) document.getElementById('tier-bronze').value = d.bronze||0;
+    if(document.getElementById('tier-silver')) document.getElementById('tier-silver').value = d.silver||5;
+    if(document.getElementById('tier-gold'))   document.getElementById('tier-gold').value   = d.gold||10;
+    if(document.getElementById('tier-vip'))    document.getElementById('tier-vip').value    = d.vip||20;
+  } catch(e) {}
+}
+
+// ── 발급 현황 ──────────────────────────────────────────
+async function renderIssuedCoupons() {
+  const tbody = document.getElementById('issued-tbody');
+  if(!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text-muted);">불러오는 중...</td></tr>';
+  try {
+    const snap = await db.collection('issued_coupons').orderBy('issuedAt','desc').limit(100).get()
+      .catch(() => db.collection('issued_coupons').get());
+    const rows = snap.docs.map(d => ({...d.data(), __id: d.id}));
+    if(!rows.length) { tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text-muted);">발급된 쿠폰이 없습니다.</td></tr>'; return; }
+    const today = new Date().toISOString().slice(0,10);
+    tbody.innerHTML = rows.map(r => {
+      const expired = r.expiresAt && r.expiresAt < today;
+      const status  = r.used ? '사용완료' : expired ? '만료' : '유효';
+      const statusColor = r.used ? '#888' : expired ? '#e53935' : '#2e7d32';
+      return `<tr>
+        <td style="font-size:12px;">${(r.issuedAt||'').slice(0,10)}</td>
+        <td><strong>${r.custName||'-'}</strong></td>
+        <td style="font-size:12px;">${r.custPhone||'-'}</td>
+        <td style="font-size:12px;">${r.rewardName||'-'}</td>
+        <td><code style="font-size:10px;background:var(--bg2);padding:2px 6px;border-radius:4px;">${r.code||'-'}</code></td>
+        <td style="font-size:12px;">${r.expiresAt||'-'}</td>
+        <td><span style="color:${statusColor};font-size:11px;font-weight:700;">${status}</span></td>
+      </tr>`;
+    }).join('');
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="7" style="color:var(--danger);padding:20px;">오류: ${e.message}</td></tr>`;
+  }
+}
+
+// ── 사용 내역 ──────────────────────────────────────────
+async function renderUsedCoupons() {
+  const tbody = document.getElementById('used-tbody');
+  if(!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text-muted);">불러오는 중...</td></tr>';
+  try {
+    const snap = await db.collection('issued_coupons')
+      .where('used','==',true).orderBy('usedAt','desc').limit(100).get()
+      .catch(() => db.collection('issued_coupons').where('used','==',true).get());
+    const rows = snap.docs.map(d => ({...d.data(), __id: d.id}));
+    if(!rows.length) { tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text-muted);">사용 내역이 없습니다.</td></tr>'; return; }
+    tbody.innerHTML = rows.map(r => `<tr>
+      <td style="font-size:12px;">${(r.usedAt||'').slice(0,16).replace('T',' ')}</td>
+      <td><strong>${r.custName||'-'}</strong></td>
+      <td style="font-size:12px;">${r.rewardName||'-'}</td>
+      <td style="font-size:12px;">${r.usedAtCoop||'-'}</td>
+      <td style="font-size:12px;color:var(--danger);">-${r.discountAmt||0}원</td>
+      <td style="font-size:12px;">${r.processedBy||'-'}</td>
+    </tr>`).join('');
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="6" style="color:var(--danger);padding:20px;">오류: ${e.message}</td></tr>`;
+  }
+}
+
+if(mod==='coupon') {
+  renderRewards();
+  loadTierDiscounts();
+  return;
+}
+
+// ── 스탬프 달성 시 쿠폰 자동 발급 ────────────────────
+async function autoIssueCoupons(custDocId, custName, custPhone, newTotal) {
+  try {
+    const rewardSnap = await db.collection('stamp_rewards')
+      .where('stamps','==', newTotal)
+      .where('active','==', true).get();
+    if(rewardSnap.empty) return;
+
+    for(const rdoc of rewardSnap.docs) {
+      const r = rdoc.data();
+      // 이미 발급됐는지 확인
+      const dup = await db.collection('issued_coupons')
+        .where('custDocId','==',custDocId)
+        .where('rewardId','==',rdoc.id).limit(1).get();
+      if(!dup.empty) continue;
+
+      const code     = 'ONM-' + newTotal + '-' + Math.random().toString(36).slice(2,6).toUpperCase();
+      const issued   = new Date().toISOString();
+      const expires  = new Date(Date.now() + (r.validity||30)*24*60*60*1000).toISOString().slice(0,10);
+      await db.collection('issued_coupons').add({
+        custDocId, custName, custPhone,
+        rewardId:   rdoc.id,
+        rewardName: r.name,
+        code,
+        discount:   r.discount||0,
+        coopId:     r.coopId||'all',
+        coopName:   r.coopName||'전체 가맹점',
+        noPeak:     r.noPeak||false,
+        issuedAt:   issued,
+        expiresAt:  expires,
+        used:       false,
+        usedAt:     null
+      });
+      console.log('쿠폰 발급:', r.name, custName);
+    }
+  } catch(e) { console.warn('쿠폰 자동 발급 실패:', e); }
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -5798,17 +6278,23 @@ async function cyclePayStatus(taskId, el) {
           createdAt:    nowISO
         });
 
-        // 고객 문서 stampTotal +1
+        // 고객 문서 stampTotal 증가
+        // 체험(program) 결제는 가중치 +2, 일반 가맹점 방문은 +1
+        const isExp   = (task.program||'').includes('체험') ||
+                        (task.category||'') === 'exp' ||
+                        (task.type||'') === 'experience';
+        const stampAdd = isExp ? 2 : 1;
+
         const custSnap = await db.collection('customers').doc(custId).get();
         if (custSnap.exists) {
           const prev = Number(custSnap.data().stampTotal || 0);
           await db.collection('customers').doc(custId).update({
-            stampTotal: prev + 1,
+            stampTotal: prev + stampAdd,
             lastVisit:  nowISO
           });
           invalidateCache('visits');
           invalidateCache('customers');
-          showToast(`🌿 ${task.customerName||'고객'}님 스탬프 +1 적립 (${prev+1}개)`, 'success');
+          showToast(`🌿 ${task.customerName||'고객'}님 스탬프 +${stampAdd} 적립 (${prev+stampAdd}개)${isExp?' ⭐체험 가중치':''}`, 'success');
         } else {
           showToast('⚠️ 고객 패스를 찾을 수 없어요. 수동으로 확인해 주세요.', 'warning');
         }
@@ -8055,8 +8541,61 @@ async function testSMSWebhook() {
 // ═══════════════════════════════════════════════════════════
 let _m08AllCustomers = [];
 
+// ── 카카오 채널 현황 ────────────────────────────────────────
+async function loadKakaoChannelStats() {
+  try {
+    const all     = await getAll('customers');
+    const added   = all.filter(c => c.kakaoChannelAdded);
+    const weekAgo = new Date(Date.now() - 7*24*60*60*1000).toISOString();
+    const newWeek = added.filter(c => c.kakaoChannelAddedAt && c.kakaoChannelAddedAt > weekAgo);
+    const rate    = all.length > 0 ? Math.round(added.length / all.length * 100) : 0;
+    const totEl   = document.getElementById('kakao-ch-total');
+    const wkEl    = document.getElementById('kakao-ch-week');
+    const rtEl    = document.getElementById('kakao-ch-rate');
+    if (totEl) totEl.textContent = added.length;
+    if (wkEl)  wkEl.textContent  = newWeek.length;
+    if (rtEl)  rtEl.textContent  = rate + '%';
+  } catch(e) { console.warn('채널 통계 로드 실패:', e); }
+}
+
+async function sendKakaoBroadcast() {
+  const msg = (document.getElementById('kakao-broadcast-msg').value||'').trim();
+  if (!msg) { alert('발송할 메시지를 입력해 주세요.'); return; }
+
+  const all    = await getAll('customers');
+  const added  = all.filter(c => c.kakaoChannelAdded && c.phone);
+  if (!added.length) { alert('채널 추가 고객이 없어요.'); return; }
+
+  if (!confirm(`채널 추가 고객 ${added.length}명에게\n아래 메시지를 발송하시겠습니까?\n\n${msg.slice(0,80)}...`)) return;
+
+  showLoading('알림 발송 중...');
+  try {
+    const phones = added.map(c => c.phone.replace(/\D/g,''));
+    await fetch('https://hook.us2.make.com/mpdncqtym3a5ud370g4hpd95b1g6c42j', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        type:'kakao_broadcast', message:msg,
+        phones, count:phones.length, sentAt:new Date().toISOString()
+      })
+    }).catch(()=>{});
+
+    await db.collection('events').add({
+      title:    '[채널] ' + msg.slice(0,20) + (msg.length>20?'...':''),
+      message:  msg, targets: phones.length,
+      channel:  'kakao_broadcast', status:'발송완료',
+      sentAt:   new Date().toISOString(), createdAt: new Date().toISOString()
+    });
+    invalidateCache('events');
+    showToast(`✅ ${phones.length}명에게 발송 완료!`, 'success');
+    document.getElementById('kakao-broadcast-msg').value = '';
+    await renderM08();
+  } catch(e) { alert('발송 오류: ' + e.message); }
+  finally    { hideLoading(); }
+}
+
 async function renderM08() {
   showLoading();
+  loadKakaoChannelStats(); // 통계 병렬 로드
   try {
     const snap = await db.collection('events').get();
     const events = snap.docs.map(d=>d.data());
@@ -9934,6 +10473,11 @@ async function approveStamp(submId, custId, custName) {
     });
     invalidateCache('visits');
     invalidateCache('customers');
+    // 스탬프 달성 쿠폰 자동 발급
+    if(typeof autoIssueCoupons === 'function') {
+      const updCust = custDoc ? custDoc.data() : {};
+      autoIssueCoupons(custDoc?.id||'', custName, updCust.phone||'', (updCust.stampTotal||0)+1);
+    }
     showToast(`✅ ${custName}님 스탬프 승인 + 사진 삭제 완료`, 'success');
     await renderStampReview();
   } catch(e) { alert('오류: '+e.message); }

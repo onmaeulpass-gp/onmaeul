@@ -129,6 +129,51 @@ html, body { min-height: 100vh; background: #0a1a0a; font-family: 'Noto Sans KR'
   font-size: 13px; color: #81c784; line-height: 1.8;
 }
 
+/* ── 카카오 채널 섹션 ── */
+.kakao-channel-section {
+  width: 100%;
+  background: linear-gradient(135deg, #1a1a0a, #2a2a10);
+  border: 1.5px solid rgba(254,229,0,.25);
+  border-radius: 16px;
+  padding: 18px 20px;
+  margin-top: 12px;
+}
+.kakao-channel-header {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 8px;
+}
+.kakao-channel-icon {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: #FEE500; display: flex; align-items: center;
+  justify-content: center; flex-shrink: 0;
+}
+.kakao-channel-title { font-size: 14px; font-weight: 700; color: #FEE500; }
+.kakao-channel-desc  { font-size: 12px; color: rgba(254,229,0,.55); line-height: 1.7; margin-bottom: 14px; }
+.kakao-channel-benefits {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 8px; margin-bottom: 14px;
+}
+.kakao-benefit-item {
+  background: rgba(254,229,0,.07); border: 1px solid rgba(254,229,0,.15);
+  border-radius: 10px; padding: 10px 12px;
+  font-size: 12px; color: rgba(254,229,0,.7); line-height: 1.5;
+}
+.kakao-benefit-item strong { color: #FEE500; display: block; margin-bottom: 2px; }
+.btn-kakao-channel {
+  width: 100%; padding: 14px;
+  background: #FEE500; color: #191600;
+  border: none; border-radius: 12px;
+  font-size: 14px; font-weight: 700; font-family: inherit;
+  cursor: pointer; transition: background 0.15s, transform 0.1s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.btn-kakao-channel:active { background: #F5DA00; transform: scale(0.98); }
+.kakao-channel-added {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  font-size: 13px; font-weight: 600; color: rgba(254,229,0,.6);
+  padding: 10px;
+}
+
 .footer-note { margin-top: 16px; font-size: 11px; color: #2a4a2a; text-align: center; line-height: 2; }
 
 /* ── 웰컴 배너 ── */
@@ -166,31 +211,6 @@ html, body { min-height: 100vh; background: #0a1a0a; font-family: 'Noto Sans KR'
 .welcome-dup-banner .dup-icon { font-size: 28px; margin-bottom: 6px; }
 .welcome-dup-banner .dup-msg { font-size: 14px; font-weight: 700; color: #9090c0; }
 .welcome-dup-banner .dup-sub { font-size: 12px; color: #4a4a7a; margin-top: 4px; line-height: 1.6; }
-
-/* ── 패스 찾기 안내 박스 ── */
-.find-pass-box {
-  background: #0d1a0d;
-  border: 1px dashed #2a5a2a;
-  border-radius: 12px;
-  padding: 14px 16px;
-  margin-top: 14px;
-  text-align: center;
-}
-.find-pass-box .fp-label { font-size: 12px; color: #3a6a3a; margin-bottom: 10px; }
-.btn-find-pass {
-  width: 100%; padding: 12px;
-  background: transparent; border: 1px solid #2a5a2a;
-  color: #81c784; border-radius: 10px;
-  font-size: 13px; font-weight: 700; font-family: inherit;
-  cursor: pointer; transition: background 0.15s;
-}
-.btn-find-pass:active { background: #1a3a1a; }
-.dup-warning {
-  background: #1a1000; border: 1px solid #5a4000;
-  border-radius: 10px; padding: 12px 14px;
-  font-size: 13px; color: #f0c040; line-height: 1.7;
-  margin-bottom: 12px; display: none;
-}
 
 /* ── 이름 입력 팝업 ── */
 .name-input-card {
@@ -589,38 +609,22 @@ html, body { min-height: 100vh; background: #0a1a0a; font-family: 'Noto Sans KR'
     <div style="font-size:36px;margin-bottom:12px;">🌿</div>
     <h3>온마을 스테이패스</h3>
     <p id="name-input-store-label">가맹점 방문 스탬프 적립을 위해<br>간단한 정보를 입력해 주세요</p>
-
-    <!-- 중복 경고 메시지 -->
-    <div class="dup-warning" id="dup-warning">
-      ⚠️ 같은 이름과 연락처로 이미 발급된 패스가 있어요.<br>
-      아래에서 기존 패스를 바로 불러올 수 있어요.
-    </div>
-
     <input class="name-input-field" id="name-input-field"
            placeholder="이름 (예: 홍길동)" maxlength="10"
-           style="margin-bottom:10px;"
-           oninput="resetDupWarning()">
+           style="margin-bottom:10px;">
     <input class="name-input-field" id="phone-input-field"
            placeholder="연락처 (예: 010-1234-5678)"
            maxlength="13" inputmode="tel"
-           oninput="formatPhonePass(this); resetDupWarning();"
+           oninput="formatPhonePass(this)"
            style="margin-bottom:12px;">
     <div style="font-size:11px;color:#2a5a2a;margin-bottom:14px;line-height:1.6;">
-      📌 연락처는 패스 분실 시 복구와 혜택 안내에만 사용됩니다
+      📌 연락처는 패스 분실 시 복구와 혜택 안내에만 사용돼요
     </div>
     <button class="btn-welcome-issue" id="name-input-btn" onclick="issueWelcomePass()">
       🎫 패스 발급 + 스탬프 받기
     </button>
     <br>
     <button class="btn-welcome-skip" onclick="issueWelcomePass(true)">이름 없이 발급</button>
-
-    <!-- 패스 찾기 섹션 -->
-    <div class="find-pass-box">
-      <div class="fp-label">이미 패스를 발급받으셨나요?<br>이름과 연락처 입력 후 아래 버튼으로 찾아드려요</div>
-      <button class="btn-find-pass" onclick="findPassByNamePhone()">
-        🔍 내 패스 번호 찾기
-      </button>
-    </div>
   </div>
 
   <!-- ④ 초대 소개 화면 — ?ref=TOKEN 진입 시 표시 -->
@@ -777,13 +781,13 @@ html, body { min-height: 100vh; background: #0a1a0a; font-family: 'Noto Sans KR'
     <div class="photo-cert-title">📸 스탬프 현장 인증</div>
     <div class="photo-cert-desc">
       4곳 가맹점에서 각각 사진을 찍어 올려주세요.<br>
-      제출하시면 확인 후 스탬프 적립!
+      관리자 확인 후 스탬프 1개가 적립돼요.
     </div>
 
     <!-- 이미 제출한 경우 -->
     <div class="cert-done-box" id="cert-done-box" style="display:none;">
       ✅ 인증 신청이 접수됐어요!<br>
-      확인 후 스탬프가 적립돼요 🌿
+      관리자 확인 후 스탬프가 적립돼요 🌿
     </div>
 
     <!-- 업로드 UI -->
@@ -795,7 +799,7 @@ html, body { min-height: 100vh; background: #0a1a0a; font-family: 'Noto Sans KR'
       <button class="btn-cert-submit" id="btn-cert-submit" onclick="submitCertPhotos()">
         📸 스탬프 인증 신청
       </button>
-      <p style="font-size:11px;color:#4a7a4a;text-align:center;margin-top:8px;">제출하시고 스탬프 1개 받아보세요 🌿</p>
+    </div>
   </div>
 
   <!-- 공유 리워드 섹션 — 패스 로드 후 표시 -->
@@ -822,6 +826,58 @@ html, body { min-height: 100vh; background: #0a1a0a; font-family: 'Noto Sans KR'
 
   <!-- 전송 완료 토스트 -->
   <div class="pass-toast" id="pass-toast">✓ 카카오톡 나에게 전송 완료</div>
+
+  <!-- 카카오 채널 추가 섹션 -->
+  <div class="kakao-channel-section" id="kakao-channel-section" style="display:none;">
+    <div class="kakao-channel-header">
+      <div class="kakao-channel-icon">
+        <svg width="20" height="20" viewBox="0 0 22 22" fill="none">
+          <ellipse cx="11" cy="10" rx="9" ry="8" fill="#3B1E08"/>
+          <path d="M11 4.5C7.41 4.5 4.5 6.74 4.5 9.5c0 1.78 1.1 3.34 2.75 4.27l-.7 2.57 3.07-2.02c.44.07.9.11 1.38.11 3.59 0 6.5-2.24 6.5-5s-2.91-4.93-6.5-4.93z" fill="#FEE500"/>
+        </svg>
+      </div>
+      <div class="kakao-channel-title">카카오 채널 친구 추가</div>
+    </div>
+    <div class="kakao-channel-desc">
+      온마을 가평 소식을 카카오톡으로 받아보세요.<br>
+      채널 추가하면 <strong style="color:#FEE500;">스탬프 +1 보너스</strong>가 적립돼요!
+    </div>
+    <div class="kakao-channel-benefits">
+      <div class="kakao-benefit-item">
+        <strong>🎁 즉시 혜택</strong>채널 추가 시 스탬프 +1 적립
+      </div>
+      <div class="kakao-benefit-item">
+        <strong>🔔 할인 알림</strong>가맹점 특가·이벤트 알림
+      </div>
+      <div class="kakao-benefit-item">
+        <strong>🌿 체험 소식</strong>신규 체험 프로그램 우선 안내
+      </div>
+      <div class="kakao-benefit-item">
+        <strong>💬 1:1 문의</strong>패스 분실·문의 즉시 응답
+      </div>
+    </div>
+
+    <!-- 추가 전 -->
+    <div id="kakao-ch-before">
+      <button class="btn-kakao-channel" onclick="addKakaoChannel()">
+        <svg width="18" height="18" viewBox="0 0 22 22" fill="none">
+          <ellipse cx="11" cy="10" rx="9" ry="8" fill="#3B1E08"/>
+          <path d="M11 4.5C7.41 4.5 4.5 6.74 4.5 9.5c0 1.78 1.1 3.34 2.75 4.27l-.7 2.57 3.07-2.02c.44.07.9.11 1.38.11 3.59 0 6.5-2.24 6.5-5s-2.91-4.93-6.5-4.93z" fill="#FEE500"/>
+        </svg>
+        @온마을가평 채널 추가하기
+      </button>
+      <div style="font-size:11px;color:rgba(254,229,0,.3);text-align:center;margin-top:8px;">
+        카카오톡 앱이 열리며 채널 추가 화면으로 이동해요
+      </div>
+    </div>
+
+    <!-- 추가 완료 후 -->
+    <div id="kakao-ch-done" style="display:none;">
+      <div class="kakao-channel-added">
+        ✅ 채널 추가 완료! 스탬프 +1 적립됐어요 🌿
+      </div>
+    </div>
+  </div>
 
   <div class="footer-note">
     업주에게 이 화면을 보여주세요 · 카카오채널 @온마을가평<br>
@@ -1230,6 +1286,99 @@ function renderStampBoard(cnt, visits) {
 }
 
 // ════════════════════════════════════════════════
+// 📣 카카오 채널 연동
+// ════════════════════════════════════════════════
+
+var KAKAO_CHANNEL_URL = 'http://pf.kakao.com/_FVxjZX';
+var _kakaoChCustId    = null;
+var _kakaoChPassToken = null;
+
+/* 채널 추가 버튼 클릭 */
+function addKakaoChannel() {
+  /* 카카오 채널 추가 딥링크 */
+  var isIOS     = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  var isAndroid = /android/i.test(navigator.userAgent);
+  var deepLink  = 'kakaoplus://plusfriend/home/_FVxjZX';
+  var webLink   = KAKAO_CHANNEL_URL + '/friend';
+
+  /* 앱으로 이동 */
+  if (isIOS || isAndroid) {
+    /* 앱 열기 시도 — 1.5초 후 웹 폴백 */
+    var fallbackTimer = setTimeout(function() {
+      window.open(webLink, '_blank');
+    }, 1500);
+    window.location.href = deepLink;
+    window.addEventListener('blur', function() { clearTimeout(fallbackTimer); }, { once: true });
+  } else {
+    window.open(webLink, '_blank');
+  }
+
+  /* 채널 추가 완료 처리 (사용자가 채널을 추가했다고 가정 — 버튼 클릭 자체로 처리) */
+  setTimeout(function() { completeKakaoChannel(); }, 2000);
+}
+
+/* 채널 추가 완료 처리 */
+async function completeKakaoChannel() {
+  /* UI 변경 */
+  document.getElementById('kakao-ch-before').style.display = 'none';
+  document.getElementById('kakao-ch-done').style.display   = 'block';
+  showPassToast('📣 카카오 채널 추가 완료! 스탬프 +1 적립됐어요 🌿');
+
+  if (!_kakaoChCustId || !db) return;
+  var now = new Date().toISOString();
+
+  try {
+    /* 중복 체크 — 이미 적립했는지 */
+    var custSnap = await db.collection('customers').doc(_kakaoChCustId).get();
+    if (custSnap.exists && custSnap.data().kakaoChannelAdded) return;
+
+    /* 스탬프 +1 + 채널 추가 기록 */
+    await db.collection('customers').doc(_kakaoChCustId).update({
+      stampTotal:         firebase.firestore.FieldValue.increment(1),
+      kakaoChannelAdded:  true,
+      kakaoChannelAddedAt: now
+    });
+
+    /* 방문 기록 */
+    db.collection('visits').add({
+      customerId:   _kakaoChCustId,
+      coopName:     '카카오 채널 추가 보너스',
+      visitType:    'kakao_channel',
+      visitDate:    now.slice(0, 10),
+      visitedAt:    now,
+      source:       'kakao_channel',
+      discountRate: 0
+    }).catch(function() {});
+
+    /* 스탬프 보드 갱신 */
+    var newTotal = (custSnap.data().stampTotal || 0) + 1;
+    document.getElementById('visit-count').textContent = newTotal;
+    document.getElementById('sb-count-big').textContent = newTotal;
+    renderProgressBar(newTotal);
+    renderStampGrid(newTotal);
+    renderMilestones(newTotal);
+
+  } catch(e) { console.warn('카카오 채널 스탬프 오류:', e); }
+}
+
+/* showPass에서 채널 섹션 초기화 */
+function initKakaoChannelSection(custDocId, custData) {
+  _kakaoChCustId    = custDocId;
+  _kakaoChPassToken = custData.qrToken || '';
+
+  var section = document.getElementById('kakao-channel-section');
+  if (!section) return;
+
+  section.style.display = 'block';
+
+  /* 이미 추가한 경우 완료 상태로 표시 */
+  if (custData.kakaoChannelAdded) {
+    document.getElementById('kakao-ch-before').style.display = 'none';
+    document.getElementById('kakao-ch-done').style.display   = 'block';
+  }
+}
+
+// ════════════════════════════════════════════════
 // 📸 사진 인증 시스템
 // ════════════════════════════════════════════════
 
@@ -1239,17 +1388,14 @@ var _certCustId = null;
 var _certCustName = '';
 var _certPassToken = '';
 
-/* 이미지 압축 — canvas로 600px 리사이즈, JPEG 45% (Firestore 1MB 한도 대응) */
-/* 이미지 압축 — 320px, JPEG 30% → 장당 ~8KB, 4장 합계 ~30KB */
+/* 이미지 압축 — canvas로 800px 리사이즈, JPEG 70% */
 function compressImage(file) {
   return new Promise(function(resolve) {
     var reader = new FileReader();
-    reader.onerror = function() { resolve(null); };
     reader.onload = function(e) {
       var img = new Image();
-      img.onerror = function() { resolve(null); };
       img.onload = function() {
-        var MAX = 320;
+        var MAX = 800;
         var w = img.width, h = img.height;
         if (w > MAX || h > MAX) {
           if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
@@ -1258,7 +1404,7 @@ function compressImage(file) {
         var canvas = document.createElement('canvas');
         canvas.width = w; canvas.height = h;
         canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-        resolve(canvas.toDataURL('image/jpeg', 0.30));
+        resolve(canvas.toDataURL('image/jpeg', 0.70));
       };
       img.src = e.target.result;
     };
@@ -1332,65 +1478,50 @@ function updateCertCount() {
 async function submitCertPhotos() {
   if (Object.keys(_certPhotos).length < 4) return;
   var btn = document.getElementById('btn-cert-submit');
-  if (btn) { btn.textContent = '압축 중...'; btn.classList.remove('ready'); }
+  if (btn) { btn.textContent = '제출 중...'; btn.classList.remove('ready'); }
 
   var today  = new Date().toISOString().slice(0, 10);
   var nowISO = new Date().toISOString();
   var submId = _certPassToken + '_' + Date.now();
-
-  /* 용량 체크 — 4장 합계 800KB 초과 시 재압축 */
-  var totalBytes = CERT_SPOTS.reduce(function(sum, s, idx) {
-    return sum + (_certPhotos[idx] || '').length;
-  }, 0);
-  if (totalBytes > 800000) {
-    showPassToast('사진 용량 최적화 중...');
-    for (var ri = 0; ri < CERT_SPOTS.length; ri++) {
-      var slot = document.getElementById('cert-file-' + ri);
-      if (slot && slot.files[0]) {
-        var recomp = await compressImage(slot.files[0]);
-        if (recomp) _certPhotos[ri] = recomp;
-      }
-    }
-  }
 
   var photos = CERT_SPOTS.map(function(spot, idx) {
     return { spot: spot, dataUrl: _certPhotos[idx] || '' };
   });
 
   var doc = {
-    submissionId:  submId,
-    customerId:    _certCustId    || '',
-    customerName:  _certCustName  || '',
-    passToken:     _certPassToken || '',
-    photos:        photos,
-    status:        'pending',
-    submittedAt:   nowISO,
-    submittedDate: today,
-    stampGranted:  false,
-    reviewedBy:    null,
-    reviewedAt:    null
+    submissionId:     submId,
+    customerId:       _certCustId   || '',
+    customerName:     _certCustName || '',
+    passToken:        _certPassToken || '',
+    photos:           photos,
+    status:           'pending',
+    submittedAt:      nowISO,
+    submittedDate:    today,
+    stampGranted:     false,
+    reviewedBy:       null,
+    reviewedAt:       null
   };
-
-  if (btn) btn.textContent = '제출 중...';
 
   try {
     await db.collection('stamp_submissions').doc(submId).set(doc);
 
+    /* 관리자 알림 */
     db.collection('notifications').doc('CERT-' + Date.now()).set({
       type:      'stamp_cert',
       title:     '📸 스탬프 인증 신청',
       body:      (_certCustName || '고객') + '님 · 사진 4장 제출',
-      custName:  _certCustName  || '',
+      custName:  _certCustName || '',
       passToken: _certPassToken || '',
       read:      false,
       createdAt: nowISO
     }).catch(function() {});
 
+    /* 완료 UI */
     document.getElementById('cert-upload-ui').style.display = 'none';
     document.getElementById('cert-done-box').style.display  = 'block';
-    showPassToast('📸 인증 신청 완료! 확인 후 스탬프 적립돼요 🌿');
+    showPassToast('📸 인증 신청 완료! 관리자 확인 후 적립돼요 🌿');
   } catch(e) {
-    showPassToast('제출 실패(' + e.message + ') — 다시 시도해 주세요');
+    showPassToast('제출 실패 — 다시 시도해 주세요');
     if (btn) { btn.textContent = '📸 스탬프 인증 신청'; btn.classList.add('ready'); }
   }
 }
@@ -1467,6 +1598,11 @@ function showPass(cust, visitCnt, visits) {
   // 사진 인증 섹션 초기화
   if (cust.id) {
     initCertSection(cust.id, cust.name || '온마을 게스트', cust.qrToken || '');
+  }
+
+  // 카카오 채널 섹션 초기화
+  if (cust.id) {
+    initKakaoChannelSection(cust.id, cust);
   }
 
   // 버튼 표시
@@ -1624,6 +1760,15 @@ function checkDupVisit(custDocId, coopDocId) {
 function addWelcomeStamp(custDocId, coopDocId, coopName, custName) {
   var today   = new Date().toISOString().slice(0, 10);
   var nowISO  = new Date().toISOString();
+
+  // 가맹점 업종(cat) 조회 → 숙박(stay)이면 +2, 나머지 +1
+  var stampPromise = coopDocId
+    ? db.collection('coops').doc(coopDocId).get().then(function(snap) {
+        return snap.exists && snap.data().cat === 'stay' ? 2 : 1;
+      }).catch(function() { return 1; })
+    : Promise.resolve(1);
+
+  return stampPromise.then(function(stampAdd) {
   var batch   = db.batch();
 
   // 방문 기록 추가
@@ -1636,18 +1781,23 @@ function addWelcomeStamp(custDocId, coopDocId, coopName, custName) {
     visitDate:    today,
     visitedAt:    nowISO,
     source:       'welcome_qr',
+    stampAdded:   stampAdd,
     discountRate: 0
   });
 
-  // 고객 stampTotal 증가
+  // 고객 stampTotal 증가 (숙박 +2, 일반 +1)
   var custRef = db.collection('customers').doc(custDocId);
   batch.update(custRef, {
-    stampTotal: firebase.firestore.FieldValue.increment(1),
+    stampTotal: firebase.firestore.FieldValue.increment(stampAdd),
     lastVisit:  nowISO
   });
 
   return batch.commit()
     .then(function() {
+      // 가중치 토스트 안내
+      if (stampAdd > 1) {
+        showPassToast('🏡 숙박 방문 스탬프 +' + stampAdd + ' 적립!');
+      }
       // ── 공유자(referredBy) 첫 방문 리워드 처리 ──
       return db.collection('customers').doc(custDocId).get();
     })
@@ -1696,237 +1846,72 @@ function addWelcomeStamp(custDocId, coopDocId, coopName, custName) {
         });
     })
     .catch(function(e) { console.warn('리워드 처리 오류:', e); });
+  }); // end stampPromise.then
 }
 
 /* 신규 패스 발급 (이름+연락처 입력 화면에서 호출) */
-/* ── 이름+전화번호로 기존 패스 조회 ── */
-/* ── 전화번호 정규화 헬퍼 ── */
-function normalizePhone(p) { return (p || '').replace(/\D/g, ''); }
-
-async function findExistingCustomer(name, phone) {
-  if (!name || !phone || name === '온마을 게스트') return null;
-  var normPhone = normalizePhone(phone);
-  try {
-    /* ① name 정확히 일치하는 고객 전체 조회 후 phone 정규화 비교 */
-    var snap = await db.collection('customers')
-      .where('name', '==', name)
-      .get();
-    if (snap.empty) return null;
-    var found = null;
-    snap.forEach(function(doc) {
-      var d = doc.data();
-      if (normalizePhone(d.phone) === normPhone && d.qrToken) {
-        found = d;
-        found.id = doc.id;
-      }
-    });
-    return found;
-  } catch(e) { console.warn('기존 패스 조회 실패:', e); return null; }
-}
-
-/* ── 중복 경고 초기화 ── */
-function resetDupWarning() {
-  var w = document.getElementById('dup-warning');
-  if (w) { w.style.display = 'none'; w.innerHTML = ''; }
-}
-
-/* ── 중복 패스 발견 시 복사 버튼 표시 ── */
-function showDupPassCard(existingToken) {
-  var w = document.getElementById('dup-warning');
-  if (!w) return;
-  w.style.display = 'block';
-  w.style.background = '#0d1a0d';
-  w.style.border = '1px solid #2a5a2a';
-  w.style.borderRadius = '12px';
-  w.style.padding = '16px';
-  w.style.marginBottom = '12px';
-  w.style.textAlign = 'center';
-  w.innerHTML =
-    '<div style="font-size:13px;color:#81c784;font-weight:700;margin-bottom:4px;">🌿 이미 발급된 패스가 있어요!</div>' +
-    '<div style="font-size:11px;color:#4a7a4a;margin-bottom:12px;">아래 패스번호를 복사해서 입력창에 붙여넣기 해주세요</div>' +
-    '<div style="font-size:13px;font-family:monospace;color:#a5d6a7;background:#0a150a;border:1px solid #2a5a2a;border-radius:8px;padding:10px 12px;letter-spacing:1px;margin-bottom:12px;word-break:break-all;" id="dup-token-display">' + existingToken + '</div>' +
-    '<button id="dup-copy-btn" onclick="doCopyPassToken(\'' + existingToken + '\')" ' +
-    'style="width:100%;padding:12px;background:#1b3a1b;border:1px solid #2a5a2a;color:#81c784;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">' +
-    '📋 패스번호 복사하기</button>';
-}
-
-function doCopyPassToken(token) {
-  var btn = document.getElementById('dup-copy-btn');
-  function onSuccess() {
-    if (btn) {
-      btn.textContent = '✅ 복사 완료! 이전 화면으로 돌아갑니다...';
-      btn.style.background = '#2E7D32';
-      btn.style.color = '#a5d6a7';
-    }
-    showPassToast('패스번호 복사 완료 — 이전 화면에서 붙여넣기 해주세요');
-    setTimeout(function() { history.back(); }, 1500);
-  }
-  if (navigator.clipboard) {
-    navigator.clipboard.writeText(token).then(onSuccess).catch(function() {
-      var ta = document.createElement('textarea');
-      ta.value = token; document.body.appendChild(ta); ta.select();
-      try { document.execCommand('copy'); onSuccess(); } catch(e) {}
-      document.body.removeChild(ta);
-    });
-  } else {
-    var ta = document.createElement('textarea');
-    ta.value = token; document.body.appendChild(ta); ta.select();
-    try { document.execCommand('copy'); onSuccess(); } catch(e) {}
-    document.body.removeChild(ta);
-  }
-}
-
-/* ── "내 패스 번호 찾기" 버튼 클릭 ── */
-async function findPassByNamePhone() {
-  var nameVal  = (document.getElementById('name-input-field').value  || '').trim();
-  var phoneVal = (document.getElementById('phone-input-field').value || '').trim();
-  if (!nameVal || !phoneVal) {
-    showPassToast('이름과 연락처를 모두 입력해 주세요');
-    return;
-  }
-  document.getElementById('name-input-card').style.display = 'none';
-  document.getElementById('loading').style.display = 'block';
-
-  firebase.auth().signInAnonymously().then(async function() {
-    var existing = await findExistingCustomer(nameVal, phoneVal);
-    if (existing) {
-      /* 기존 패스 발견 → localStorage 저장 + 복사 버튼 안내 */
-      localStorage.setItem('onmaeul_pass_token', existing.qrToken);
-      history.replaceState(null, '', location.origin + location.pathname + '?pass=' + existing.qrToken);
-      /* 가맹점 웰컴 QR 경유 시 스탬프 적립 처리 후 패스 표시 */
-      if (_welcomeCoopDoc) {
-        return checkDupVisit(existing.id, _welcomeCoopDoc).then(function(isDup) {
-          if (!isDup) {
-            return addWelcomeStamp(existing.id, _welcomeCoopDoc, _welcomeCoopName, existing.name)
-              .then(function() { return db.collection('visits').where('customerId','==',existing.id).get(); })
-              .then(function(vSnap) {
-                existing.stampTotal = (existing.stampTotal || 0) + 1;
-                document.getElementById('loading').style.display = 'none';
-                showWelcomeBanner(_welcomeCoopName, false, false);
-                showPass(existing, vSnap.size, vSnap.docs.map(function(d){return d.data();}));
-                showPassToast('🌿 ' + _welcomeCoopName + ' 스탬프 적립 완료!');
-              });
-          } else {
-            return db.collection('visits').where('customerId','==',existing.id).get()
-              .then(function(vSnap) {
-                document.getElementById('loading').style.display = 'none';
-                showWelcomeBanner(_welcomeCoopName, false, true);
-                showPass(existing, vSnap.size, vSnap.docs.map(function(d){return d.data();}));
-              });
-          }
-        });
-      } else {
-        /* 가맹점 없이 찾은 경우 → 패스 직접 표시 */
-        return db.collection('visits').where('customerId','==',existing.id).get()
-          .then(function(vSnap) {
-            document.getElementById('loading').style.display = 'none';
-            showPass(existing, vSnap.size, vSnap.docs.map(function(d){return d.data();}));
-            showPassToast('🌿 기존 패스를 불러왔어요!');
-          });
-      }
-    } else {
-      /* 기존 패스 없음 → 다시 입력 화면으로 */
-      document.getElementById('loading').style.display = 'none';
-      document.getElementById('name-input-card').style.display = 'block';
-      showPassToast('일치하는 패스가 없어요 — 새로 발급받아 주세요');
-    }
-  }).catch(function(e) {
-    console.error('패스 찾기 오류:', e);
-    document.getElementById('loading').style.display = 'none';
-    document.getElementById('name-input-card').style.display = 'block';
-    showPassToast('오류가 발생했어요. 다시 시도해 주세요');
-  });
-}
-
 function issueWelcomePass(skipName) {
   var nameVal  = skipName ? '온마을 게스트'
                : (document.getElementById('name-input-field').value.trim() || '온마을 게스트');
   var phoneVal = skipName ? ''
                : (document.getElementById('phone-input-field').value.trim() || '');
 
-  /* ── 중복 체크 (이름+전화번호 모두 입력된 경우만) ── */
-  if (!skipName && nameVal !== '온마을 게스트' && phoneVal) {
-    document.getElementById('name-input-card').style.display = 'none';
-    document.getElementById('loading').style.display = 'block';
-
-    firebase.auth().signInAnonymously()
-      .then(async function() {
-        var existing = await findExistingCustomer(nameVal, phoneVal);
-        if (existing) {
-          /* ── 기존 패스 발견 → 복사 버튼 안내 ── */
-          document.getElementById('loading').style.display = 'none';
-          document.getElementById('name-input-card').style.display = 'block';
-          showDupPassCard(existing.qrToken);
-          return;
-        }
-        /* 중복 없음 → 신규 발급 */
-        doIssueNewPass(nameVal, phoneVal);
-      })
-      .catch(function(err) { console.error('중복 체크 오류:', err); doIssueNewPass(nameVal, phoneVal); });
-    return;
-  }
-
-  /* 이름 없이 발급 또는 전화번호 없는 경우 → 바로 신규 발급 */
-  document.getElementById('name-input-card').style.display = 'none';
-  document.getElementById('loading').style.display = 'block';
-  firebase.auth().signInAnonymously()
-    .then(function() { doIssueNewPass(nameVal, phoneVal); })
-    .catch(function(err) { console.error('auth error:', err); showError(); });
-}
-
-/* ── 실제 신규 패스 발급 ── */
-function doIssueNewPass(nameVal, phoneVal) {
   var newToken = generateToken();
   var now      = new Date();
   var nowISO   = now.toISOString();
 
+  document.getElementById('name-input-card').style.display = 'none';
   document.getElementById('loading').style.display = 'block';
 
-  db.collection('customers').add({
-    name:        nameVal,
-    phone:       phoneVal,
-    program:     '온마을 가평 체험',
-    qrToken:     newToken,
-    date:        nowISO.slice(0, 10),
-    people:      1,
-    stampTotal:  0,
-    isGuestPass: true,
-    issuedAt:    nowISO,
-    welcomeCoop:     _welcomeCoopId || '',
-    welcomeCoopName: _welcomeCoopName || '',
-    referredBy:      _pendingRefToken || '',
-    referralUsed:    false,
-    referralExpiry:  (function(){ var e=new Date(nowISO); e.setDate(e.getDate()+30); return e.toISOString().slice(0,10); })()
-  })
-  .then(function(docRef) {
-    localStorage.setItem('onmaeul_pass_token', newToken);
-    history.replaceState(null, '', location.origin + location.pathname + '?pass=' + newToken);
+  firebase.auth().signInAnonymously()
+    .then(function() {
+      return db.collection('customers').add({
+        name:        nameVal,
+        phone:       phoneVal,
+        program:     '온마을 가평 체험',
+        qrToken:     newToken,
+        date:        nowISO.slice(0, 10),
+        people:      1,
+        stampTotal:  0,
+        isGuestPass: true,
+        issuedAt:    nowISO,
+        welcomeCoop:     _welcomeCoopId || '',
+        welcomeCoopName: _welcomeCoopName || '',
+        referredBy:      _pendingRefToken || '',     // 초대 링크 경유 시 공유자 토큰 저장
+        referralUsed:    false,
+        referralExpiry:  (function(){ var e=new Date(nowISO); e.setDate(e.getDate()+30); return e.toISOString().slice(0,10); })()
+      });
+    })
+    .then(function(docRef) {
+      localStorage.setItem('onmaeul_pass_token', newToken);
+      history.replaceState(null, '', location.origin + location.pathname + '?pass=' + newToken);
 
-    sendWelcomeNotif(nameVal, phoneVal, _welcomeCoopName, _welcomeCoopId, newToken);
+      /* 관리자 알림 전송 */
+      sendWelcomeNotif(nameVal, phoneVal, _welcomeCoopName, _welcomeCoopId, newToken);
 
-    if (_welcomeCoopDoc) {
-      return addWelcomeStamp(docRef.id, _welcomeCoopDoc, _welcomeCoopName, nameVal)
-        .then(function() {
-          return db.collection('customers').doc(docRef.id).get();
-        })
-        .then(function(updSnap) {
-          var cust = updSnap.data(); cust.id = docRef.id;
-          showWelcomeBanner(_welcomeCoopName, true, false);
-          showPass(cust, 1, []);
-          showPassToast('🌿 패스 발급 완료! 스탬프 +1');
-        });
-    } else {
-      var cust = { name: nameVal, phone: phoneVal,
-                   program: '온마을 가평 체험', qrToken: newToken,
-                   date: nowISO.slice(0,10), people:1, stampTotal:0, id: docRef.id };
-      showWelcomeBanner('온마을 가맹점', true, false);
-      showPass(cust, 0, []);
-    }
-  })
-  .catch(function(err) {
-    console.error('welcome issue error:', err);
-    showError();
-  });
+      if (_welcomeCoopDoc) {
+        return addWelcomeStamp(docRef.id, _welcomeCoopDoc, _welcomeCoopName, nameVal)
+          .then(function() {
+            return db.collection('customers').doc(docRef.id).get();
+          })
+          .then(function(updSnap) {
+            var cust = updSnap.data(); cust.id = docRef.id;
+            showWelcomeBanner(_welcomeCoopName, true, false);
+            showPass(cust, 1, []);
+            showPassToast('🌿 패스 발급 완료! 스탬프 +1');
+          });
+      } else {
+        var cust = { name: nameVal, phone: phoneVal,
+                     program: '온마을 가평 체험', qrToken: newToken,
+                     date: nowISO.slice(0,10), people:1, stampTotal:0, id: docRef.id };
+        showWelcomeBanner('온마을 가맹점', true, false);
+        showPass(cust, 0, []);
+      }
+    })
+    .catch(function(err) {
+      console.error('welcome issue error:', err);
+      showError();
+    });
 }
 
 /* 웰컴 QR 진입 처리 메인 함수 */
@@ -2064,20 +2049,8 @@ if (token) {
   loadPass(storedToken);
 
 } else {
-  // ⑤ 아무것도 없음 → 안내 화면 표시 (대시보드 노출 방지)
-  document.getElementById('loading').style.display = 'none';
-  var nopassDiv = document.createElement('div');
-  nopassDiv.style.cssText = 'text-align:center;padding:48px 24px;';
-  nopassDiv.innerHTML =
-    '<div style="font-size:48px;margin-bottom:16px;">🌿</div>' +
-    '<div style="font-size:18px;font-weight:700;color:#c8e6c9;margin-bottom:8px;">온마을 스테이패스</div>' +
-    '<div style="font-size:13px;color:#4a7a4a;line-height:2;margin-bottom:24px;">' +
-    '가맹점 QR코드를 스캔하거나<br>초대 링크로 접속해 주세요</div>' +
-    '<a href="https://onmaeulpass-gp.github.io/onmaeul/" ' +
-    'style="display:inline-block;padding:14px 28px;background:#1b3a1b;border:1px solid #2a5a2a;' +
-    'color:#81c784;border-radius:14px;font-size:14px;font-weight:700;text-decoration:none;">' +
-    '🌿 온마을 홈페이지 바로가기</a>';
-  document.querySelector('.wrap').appendChild(nopassDiv);
+  // ⑤ 아무것도 없음 → 랜딩으로 이동
+  location.replace('https://onmaeulpass-gp.github.io/onmaeul/');
 }
 </script>
 </body>
