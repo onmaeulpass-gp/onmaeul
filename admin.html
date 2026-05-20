@@ -4349,12 +4349,6 @@ async function renderUsedCoupons() {
   }
 }
 
-if(mod==='coupon') {
-  renderRewards();
-  loadTierDiscounts();
-  return;
-}
-
 // ── 스탬프 달성 시 쿠폰 자동 발급 ────────────────────
 async function autoIssueCoupons(custDocId, custName, custPhone, newTotal) {
   try {
