@@ -6280,10 +6280,7 @@ async function cyclePayStatus(taskId, el) {
 
         // 고객 문서 stampTotal 증가
         // 체험(program) 결제는 가중치 +2, 일반 가맹점 방문은 +1
-        const isExp   = (task.program||'').includes('체험') ||
-                        (task.category||'') === 'exp' ||
-                        (task.type||'') === 'experience';
-        const stampAdd = isExp ? 2 : 1;
+        const stampAdd = 1; // 체험 포함 모든 결제 +1 (숙박 가중치는 웰컴 QR에서만 적용)
 
         const custSnap = await db.collection('customers').doc(custId).get();
         if (custSnap.exists) {
@@ -6294,7 +6291,7 @@ async function cyclePayStatus(taskId, el) {
           });
           invalidateCache('visits');
           invalidateCache('customers');
-          showToast(`🌿 ${task.customerName||'고객'}님 스탬프 +${stampAdd} 적립 (${prev+stampAdd}개)${isExp?' ⭐체험 가중치':''}`, 'success');
+          showToast(`🌿 ${task.customerName||'고객'}님 스탬프 +1 적립 (${prev+stampAdd}개)`, 'success');
         } else {
           showToast('⚠️ 고객 패스를 찾을 수 없어요. 수동으로 확인해 주세요.', 'warning');
         }
