@@ -1497,6 +1497,7 @@ async function submitCertPhotos() {
     status:           'pending',
     submittedAt:      nowISO,
     submittedDate:    today,
+    submittedMonth:   today.slice(0, 7),
     stampGranted:     false,
     reviewedBy:       null,
     reviewedAt:       null
@@ -1529,9 +1530,10 @@ async function submitCertPhotos() {
 /* 오늘 이미 제출 여부 확인 */
 async function checkCertAlready(custId, today) {
   try {
+    var thisMonth = today.slice(0, 7); // "2026-05"
     var snap = await db.collection('stamp_submissions')
       .where('customerId',    '==', custId)
-      .where('submittedDate', '==', today)
+      .where('submittedMonth','==', thisMonth)
       .limit(1).get();
     return !snap.empty;
   } catch(e) { return false; }

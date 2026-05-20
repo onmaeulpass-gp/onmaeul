@@ -616,13 +616,21 @@ async function verifyToken(){
       .find(c=>c.qrToken===val||c.customerId===val);
     if(!cust){msg.className='fmsg err';msg.textContent='패스번호를 찾을 수 없습니다.';hideLoad();return;}
 
-    // 오늘 중복 확인
-    const sub=await _db.collection('stamp_submissions')
+    // 이번 달 중복 확인 (월 1회 제한)
+    const thisMonth = new Date().toISOString().slice(0,7); // "2026-05"
+    const sub = await _db.collection('stamp_submissions')
       .where('customerId','==',String(cust.id))
-      .where('submittedDate','==',today()).get().catch(()=>({docs:[]}));
+      .where('submittedMonth','==',thisMonth)
+      .limit(1).get().catch(()=>({docs:[]}));
     if(sub.docs.length>0){
+      const subData = sub.docs[0].data();
+      const subDate = (subData.submittedDate||'').slice(0,10);
       msg.className='fmsg err';
-      msg.innerHTML='오늘 이미 스탬프 인증을 완료했습니다 😊<br><span style="font-size:11px;opacity:.7;">하루 1회만 가능합니다.</span>';
+      msg.innerHTML=
+        '이번 달 스탬프 인증을 이미 완료했어요 😊<br>' +
+        '<span style="font-size:11px;opacity:.7;">' +
+          '인증일: ' + subDate + ' · 다음 달 1일부터 다시 가능합니다.' +
+        '</span>';
       hideLoad();return;
     }
 
@@ -747,6 +755,7 @@ async function submitStamp(){
       status:'pending',
       submittedAt:new Date().toISOString(),
       submittedDate:td,
+      submittedMonth:new Date().toISOString().slice(0,7),
       stampGranted:false,
       reviewedBy:null,
       reviewedAt:null
