@@ -777,7 +777,7 @@ body.role-viewer .perm-write { display: none !important; }
               oninput="onBizCodeInput(this.value)"
               onkeydown="if(event.key==='Enter')checkBizCode()">
           </div>
-          <div id="biz-code-msg" style="font-size:12px;margin-top:6px;min-height:16px;"></div>
+          <div id="biz-code-msg" style="font-size:12px;margin-top:6px;min-height:16px;color:var(--text-muted);">숫자 4자리만 입력하세요 (CP- 제외)</div>
         </div>
         <button class="login-btn" id="biz-code-btn" onclick="checkBizCode()" style="opacity:0.45;cursor:not-allowed;" disabled>
           다음 →
@@ -3225,15 +3225,17 @@ let _bizCurrentUserId = null; // 코드 확인 후 저장
 
 // 코드 입력창 실시간 — 숫자 4자리 입력 시 버튼 활성화
 function onBizCodeInput(val){
-  // 숫자만 허용, 4자리 초과 차단
-  const digits = val.replace(/\D/g,'').slice(0,4);
+  // CP-0001 또는 0001 형식 모두 허용
+  const digits = val.replace(/[^0-9]/g,'').slice(0,4);
   document.getElementById('biz-code-input').value = digits;
   const btn = document.getElementById('biz-code-btn');
   const isValid = digits.length === 4;
   btn.disabled = !isValid;
   btn.style.opacity = isValid ? '1' : '0.45';
   btn.style.cursor  = isValid ? 'pointer' : 'not-allowed';
-  document.getElementById('biz-code-msg').textContent = '';
+  const msg = document.getElementById('biz-code-msg');
+  msg.textContent = isValid ? '' : '숫자 4자리를 입력하세요 (예: 0001)';
+  msg.style.color = 'var(--text-muted)';
 }
 
 // "다음 →" 클릭 — 코드 Firestore 확인 후 단계 분기
