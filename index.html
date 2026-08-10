@@ -1924,6 +1924,73 @@ body.has-weather .hero-content { padding-top: 136px; }
   .visit-section { padding: 80px 24px; }
 }
 
+
+/* ══════════════════════════════
+   온마을 스테이 소개 섹션
+══════════════════════════════ */
+.intro-section {
+  background: var(--cream);
+  padding: 100px 48px;
+}
+.intro-inner { max-width: 1100px; margin: 0 auto; }
+.intro-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 72px;
+  margin-top: 56px;
+  align-items: start;
+}
+.intro-text p { font-size: 15px; color: var(--fog); line-height: 2; margin-bottom: 20px; }
+.intro-text .big-quote {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(18px, 2.5vw, 30px);
+  font-weight: 300; font-style: italic;
+  line-height: 1.7; color: var(--stone);
+  border-left: 2px solid var(--gold);
+  padding-left: 28px; margin-bottom: 32px;
+}
+.intro-cards { display: flex; flex-direction: column; gap: 14px; }
+.intro-card {
+  background: var(--white);
+  padding: 28px 28px;
+  border-top: 2px solid var(--gold);
+  transition: box-shadow 0.3s;
+}
+.intro-card:hover { box-shadow: 0 8px 32px rgba(0,0,0,0.06); }
+.intro-card-icon { font-size: 22px; margin-bottom: 12px; display: block; }
+.intro-card-title {
+  font-family: 'Noto Serif KR', serif;
+  font-size: 17px; font-weight: 300; color: var(--ink); margin-bottom: 4px;
+}
+.intro-card-en {
+  font-family: 'Cormorant Garamond', serif; font-style: italic;
+  font-size: 11px; color: var(--gold); letter-spacing: 2px;
+  display: block; margin-bottom: 11px;
+}
+.intro-card-desc { font-size: 13px; color: var(--fog); line-height: 1.9; }
+.intro-badge {
+  display: inline-block;
+  background: rgba(184,150,90,0.1);
+  border: 1px solid rgba(184,150,90,0.3);
+  color: var(--gold); font-size: 10px; letter-spacing: 1.5px;
+  padding: 3px 10px; border-radius: 2px; margin-top: 10px;
+}
+/* 소개 섹션 fade-in */
+.intro-section {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.9s ease, transform 0.9s ease;
+}
+.intro-section.in-view {
+  opacity: 1;
+  transform: translateY(0);
+}
+@media (max-width: 900px) {
+  .intro-section { padding: 64px 20px; }
+  .intro-grid { grid-template-columns: 1fr; gap: 36px; }
+}
+
+
 </style>
 <!-- Firebase SDK (인터넷 환경에서 자동 로드) -->
 <script>
@@ -2123,9 +2190,14 @@ async function saveToFirebase(payload) {
       <!-- [로고 2] 메인 히어로 섹션 로고 (중앙 대형, .hero-logo-img CSS로 크기 제어) -->
       <img src="onmaeullogo.svg" alt="온마을 ONMAEUL" class="hero-logo-img">
     </div>
-    <div class="hero-cta-wrap">
-      <a href="#experiences" class="btn-primary">체험 예약하기 <span style="font-size:9px;opacity:0.7;display:block;letter-spacing:2px;margin-top:3px;">BOOK EXPERIENCE</span></a>
-      <a href="#experiences" class="btn-ghost">체험 둘러보기 <span style="font-size:9px;opacity:0.6;display:block;letter-spacing:2px;margin-top:3px;">EXPLORE</span></a>
+    <!-- ── 히어로 하단 문구 ── -->
+    <div class="hero-tagline-bottom" style="margin-top:48px;opacity:0;animation:fadeUp 1s ease 1.4s forwards;text-align:center;">
+      <p style="font-family:'Noto Serif KR',serif;font-size:clamp(14px,2.2vw,20px);font-weight:200;color:rgba(250,247,242,0.72);line-height:2.2;letter-spacing:0.12em;">
+        마실 오듯, 온마을에 머무세요
+      </p>
+      <p style="font-family:'Noto Serif KR',serif;font-size:clamp(13px,1.8vw,17px);font-weight:200;color:var(--gold-pale);line-height:2;letter-spacing:0.1em;opacity:0.85;">
+        마을 전체가 당신의 호텔입니다
+      </p>
     </div>
   </div>
 
@@ -2133,6 +2205,83 @@ async function saveToFirebase(payload) {
     <span class="hero-footer-left">운영 by 아침고요상생연대</span>
     <!-- [탭배경 4] 히어로 하단 우측 링크 이미지 (아침고요상생연대) · src 및 href 함께 수정 -->
     <span class="hero-footer-right"><a href="https://mcc.kr" target="_blank" rel="noopener" style="display:inline-block;line-height:0;"><img src="images/img_01.png" alt="아침고요상생연대" style="height:52px;width:auto;opacity:0.85;vertical-align:middle;transition:opacity 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.85'"></a></span>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════
+     온마을 스테이 소개 섹션
+     히어로 다음 · 첫 스크롤 fade-in
+══════════════════════════════════════ -->
+<section class="intro-section" id="intro">
+  <div class="intro-inner">
+
+    <div class="reveal">
+      <span class="sec-eyebrow">ONMAEUL STAY · 2026</span>
+      <h2 class="sec-title">온마을 스테이란? <em>What is Onmaeul Stay?</em></h2>
+    </div>
+
+    <div class="intro-grid">
+
+      <!-- 왼쪽: 소개 텍스트 -->
+      <div class="intro-text reveal reveal-d1">
+        <p class="big-quote">
+          "마을 전체가 하나의 호텔입니다.<br>
+          카페에서 아침을, 공방에서 오후를,<br>
+          펜션에서 하룻밤을 — 온마을이 연결합니다."
+        </p>
+        <p>
+          <strong style="color:var(--ink);">온마을 스테이</strong>는 경기도 가평군 상면,
+          연간 100만 명이 찾는 아침고요수목원 인근의
+          <strong style="color:var(--ink);">마을 단위 복합 체류 플랫폼</strong>입니다.
+          카페·식당·공방·펜션 등 <strong style="color:var(--ink);">8개 가맹점</strong>이 하나로 연결되어,
+          방문객이 마을 전체를 자유롭게 누릴 수 있습니다.
+        </p>
+        <p>
+          아침고요수목원 산책 후 온마을 가맹점을 순환하며 머무는 새로운 여행 방식.
+          짧은 여행이 아닌,
+          <em style="color:var(--gold);">마실 오듯 머무는 가평의 하루</em>를 경험해 보세요.
+        </p>
+      </div>
+
+      <!-- 오른쪽: 혜택 카드 3종 -->
+      <div class="intro-cards">
+
+        <div class="intro-card reveal reveal-d2">
+          <span class="intro-card-icon">🎫</span>
+          <div class="intro-card-title">QR 체류패스</div>
+          <span class="intro-card-en">Digital Stay Pass</span>
+          <p class="intro-card-desc">
+            방문 시 QR 디지털 패스를 발급받으세요.
+            온마을 8개 가맹점 어디서든 패스 하나로
+            <strong>5~20% 할인 혜택</strong>이 자동 적용됩니다.
+            티어(등급)에 따라 혜택이 달라지며, 방문 횟수가 쌓일수록 더 큰 혜택을 드립니다.
+          </p>        </div>
+
+        <div class="intro-card reveal reveal-d3">
+          <span class="intro-card-icon">🎟️</span>
+          <div class="intro-card-title">재방문 쿠폰</div>
+          <span class="intro-card-en">Return Visit Coupon</span>
+          <p class="intro-card-desc">
+            방문 후 자동으로 발송되는
+            <strong>재방문 전용 특별 할인 쿠폰</strong>.
+            온마을 카카오채널 <em>@온마을가평</em>을 구독하면
+            가장 먼저 혜택을 받을 수 있습니다.
+          </p>        </div>
+
+        <div class="intro-card reveal reveal-d4">
+          <span class="intro-card-icon">🗺️</span>
+          <div class="intro-card-title">스탬프 투어</div>
+          <span class="intro-card-en">Village Stamp Tour</span>
+          <p class="intro-card-desc">
+            마을 곳곳 가맹점을 방문하며 스탬프를 모아보세요.
+            모든 스탬프를 채우면 <strong>특별 리워드와 굿즈</strong>가 기다립니다.
+            아침고요수목원 입장 할인 혜택도 협약 추진 중입니다.
+          </p>        </div>
+
+      </div>
+    </div><!-- /intro-grid -->
+
   </div>
 </section>
 
@@ -3502,6 +3651,23 @@ window.온마을디버그 = function() {
 };
 console.log('온마을디버그() 함수 준비됨 — 콘솔에서 실행하세요');
 
+</script>
+
+<script>
+/* 온마을 소개 섹션 · 첫 스크롤 fade-in */
+(function() {
+  var el = document.querySelector('.intro-section');
+  if (!el) return;
+  var io = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) {
+      if (e.isIntersecting) {
+        e.target.classList.add('in-view');
+        io.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.10 });
+  io.observe(el);
+})();
 </script>
 
 </body>
