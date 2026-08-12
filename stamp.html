@@ -10,6 +10,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -364,7 +365,7 @@ const MILESTONES=[
   {at:25, icon:'🌳', msg:'숲 Gold 등급 달성 (20% 할인)'}
 ];
 
-let _db=null, _st=null, _cust=null, _photos={}, _urls=[];
+let _db=null, _st=null, _fn=null, _cust=null, _photos={}, _urls=[], _passIssueRequestId=null, _stampSubmissionRequestId=null;
 
 // Firebase init
 (function(){
@@ -372,6 +373,7 @@ let _db=null, _st=null, _cust=null, _photos={}, _urls=[];
     firebase.initializeApp(FB_CFG);
     _db=firebase.firestore();
     _st=firebase.storage();
+    _fn=firebase.app().functions('asia-northeast3');
     firebase.auth().signInAnonymously().catch(()=>{});
   }catch(e){console.warn('FB init:',e.message);}
 })();
@@ -383,6 +385,10 @@ const show=id=>{const el=document.getElementById(id);if(el){el.style.display='bl
 const hide=id=>{const el=document.getElementById(id);if(el)el.style.display='none';};
 const showLoad=m=>{document.getElementById('ldo').classList.add('show');document.getElementById('ldmsg').textContent=m||'처리 중...';};
 const hideLoad=()=>document.getElementById('ldo').classList.remove('show');
+const newPassRequestId=()=>window.crypto&&typeof window.crypto.randomUUID==='function'
+  ? window.crypto.randomUUID()
+  : Array.from(window.crypto.getRandomValues(new Uint8Array(16)),b=>b.toString(16).padStart(2,'0')).join('');
+const callPassFunction=(name,data)=>_fn.httpsCallable(name)(data).then(response=>response.data);
 function toast(m){const el=document.getElementById('toast');el.textContent=m;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2800);}
 function setStep(n){
   [1,2,3].forEach(i=>{
@@ -473,19 +479,12 @@ async function lookupPass(){
     msg.textContent='성함과 전화번호를 모두 입력해 주세요.';
     return;
   }
-  if(!_db){msg.className='fmsg err';msg.textContent='네트워크 연결을 확인해 주세요.';return;}
+  if(!_fn){msg.className='fmsg err';msg.textContent='네트워크 연결을 확인해 주세요.';return;}
 
   showLoad('고객 정보 확인 중...');
   try{
-    // 이름 + 전화번호 중복 체크
-    const snap = await _db.collection('customers').get();
-    const match = snap.docs
-      .map(d=>({...d.data(),__docId:d.id}))
-      .find(c=>{
-        const cName  = (c.name||'').trim();
-        const cPhone = (c.phone||c.tel||'').replace(/-/g,'');
-        return cName===name && cPhone===phone;
-      });
+    const result = await callPassFunction('recoverPublicPass',{name,phone});
+    const match = result.pass;
 
     hideLoad();
 
@@ -506,7 +505,7 @@ async function lookupPass(){
     const tier = getTier(Number(match.stampTotal||0));
     document.getElementById('reg-found-name').textContent  = match.name||'-';
     document.getElementById('reg-found-meta').textContent  =
-      (match.phone||'') + ' · ' + tier.icon + ' ' + tier.name + ' · 스탬프 ' + (match.stampTotal||0) + '개';
+      phone + ' · ' + tier.icon + ' ' + tier.name + ' · 스탬프 ' + (match.stampTotal||0) + '개';
     document.getElementById('reg-found-token').textContent = match.qrToken||'-';
 
     const res = document.getElementById('reg-result');
@@ -519,7 +518,10 @@ async function lookupPass(){
   }catch(e){
     hideLoad();
     msg.className='fmsg err';
-    msg.textContent='오류: '+e.message;
+    msg.innerHTML='고객 정보를 찾을 수 없어요.<br><span style="font-size:11px;opacity:.7;">처음 방문이시면 무료로 패스를 발급받으세요.</span>';
+    document.getElementById('reg-new-btn-wrap').style.display='block';
+    document.getElementById('reg-new-btn-wrap').style.animation='fadeUp .3s ease both';
+    document.getElementById('reg-result').style.display='none';
   }
 }
 
@@ -539,28 +541,20 @@ async function issueNewPass() {
   const phone = (document.getElementById('new-phone').value||'').trim();
   if (!name)  { alert('이름을 입력해 주세요.'); return; }
   if (!phone || phone.replace(/\D/g,'').length < 10) { alert('전화번호를 정확히 입력해 주세요.'); return; }
-  if (!_db)   { alert('네트워크 연결을 확인해 주세요.'); return; }
+  if (!_fn)   { alert('네트워크 연결을 확인해 주세요.'); return; }
 
   showLoad('패스 발급 중...');
   try {
-    // 토큰 생성
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    const seg = () => Array.from({length:4}, ()=>chars[Math.floor(Math.random()*chars.length)]).join('');
-    const newToken = 'ONM-' + seg() + '-' + seg();
-
-    const now = new Date().toISOString();
-    const docRef = await _db.collection('customers').add({
+    if(!_passIssueRequestId) _passIssueRequestId=newPassRequestId();
+    const result = await callPassFunction('issuePublicPass',{
+      requestId:_passIssueRequestId,
       name,
       phone,
-      qrToken:     newToken,
-      program:     '온마을 가평 체험',
-      date:        now.slice(0,10),
-      people:      1,
-      stampTotal:  0,
-      isGuestPass: true,
-      issuedAt:    now,
-      issuedFrom:  'stamp_selfReg'
+      coopCode:'',
+      referredBy:'',
+      source:'stamp'
     });
+    const newToken = result.pass.qrToken;
 
     hideLoad();
 
@@ -579,14 +573,6 @@ async function issueNewPass() {
 
     // 패스번호 자동 입력
     document.getElementById('tinp').value = newToken;
-
-    // 관리자 알림
-    _db.collection('notifications').doc('NEW-'+Date.now()).set({
-      type:'welcome_new', title:'신규 패스 발급',
-      body: name + ' · ' + phone + ' · stamp.html 자가발급',
-      custName: name, custPhone: phone, passToken: newToken,
-      coopName: '자가발급', read: false, createdAt: now
-    }).catch(()=>{});
 
   } catch(e) {
     hideLoad();
@@ -608,23 +594,13 @@ async function verifyToken(){
   const val=(document.getElementById('tinp').value||'').trim();
   const msg=document.getElementById('tmsg');
   if(!val){msg.className='fmsg err';msg.textContent='패스번호를 입력해 주세요.';return;}
-  if(!_db){msg.className='fmsg err';msg.textContent='네트워크 연결을 확인해 주세요.';return;}
+  if(!_fn){msg.className='fmsg err';msg.textContent='네트워크 연결을 확인해 주세요.';return;}
   showLoad('패스 확인 중...');
   try{
-    const snap=await _db.collection('customers').get();
-    const cust=snap.docs.map(d=>({...d.data(),__docId:d.id}))
-      .find(c=>c.qrToken===val||c.customerId===val);
-    if(!cust){msg.className='fmsg err';msg.textContent='패스번호를 찾을 수 없습니다.';hideLoad();return;}
-
-    // 이번 달 중복 확인 (월 1회 제한)
-    const thisMonth = new Date().toISOString().slice(0,7); // "2026-05"
-    const sub = await _db.collection('stamp_submissions')
-      .where('customerId','==',String(cust.id))
-      .where('submittedMonth','==',thisMonth)
-      .limit(1).get().catch(()=>({docs:[]}));
-    if(sub.docs.length>0){
-      const subData = sub.docs[0].data();
-      const subDate = (subData.submittedDate||'').slice(0,10);
+    const result=await callPassFunction('getStampEligibility',{token:val});
+    const cust={...result.customer,__docId:result.customer.id};
+    if(!result.eligible){
+      const subDate = (result.lastSubmittedDate||'').slice(0,10);
       msg.className='fmsg err';
       msg.innerHTML=
         '이번 달 스탬프 인증을 이미 완료했어요 😊<br>' +
@@ -634,7 +610,7 @@ async function verifyToken(){
       hideLoad();return;
     }
 
-    _cust=cust; _photos={}; _urls=[];
+    _cust=cust; _photos={}; _urls=[]; _stampSubmissionRequestId=null;
     msg.className='fmsg ok'; msg.textContent='확인되었습니다!';
     setTimeout(()=>{hide('s1');buildGrid();renderBadge();show('s2');setStep(2);},400);
   }catch(e){msg.className='fmsg err';msg.textContent='오류: '+e.message;}
@@ -645,7 +621,7 @@ function renderBadge(){
   if(!_cust)return;
   const tot=Number(_cust.stampTotal||0),tier=getTier(tot);
   document.getElementById('cname').textContent=_cust.name||'-';
-  document.getElementById('cmeta').textContent=(_cust.phone||'')+' · '+tier.icon+' '+tier.name+' ('+tier.rate+'% 할인)';
+  document.getElementById('cmeta').textContent=tier.icon+' '+tier.name+' ('+tier.rate+'% 할인)';
   document.getElementById('csnum').textContent=tot;
 }
 
@@ -701,15 +677,13 @@ function updateBtn(){
 // ── STEP 2: 제출 + 즉시 적립 ─────────────────────────────
 async function submitStamp(){
   if(Object.keys(_photos).length<SPOTS.length)return;
-  if(!_cust||!_db){toast('연결 오류. 잠시 후 다시 시도하세요.');return;}
+  if(!_cust||!_fn){toast('연결 오류. 잠시 후 다시 시도하세요.');return;}
   document.getElementById('sbtn').disabled=true;
   const prg=document.getElementById('uprg');
   const pb=document.getElementById('pbar');
   const pt=document.getElementById('uptxt');
   prg.style.display='block';
   try{
-    const td=today();
-    const sid=String(_cust.id)+'_'+Date.now();
     _urls=[];
 
     // 사진 4장 — canvas 압축 후 base64 저장 (Storage SDK 불필요)
@@ -742,32 +716,13 @@ async function submitStamp(){
 
     pt.textContent='제출 중...'; pb.style.width='90%';
 
-    // stamp_submissions 저장 — status: pending (관리자 확인 후 적립)
     const cur=Number(_cust.stampTotal||0);
-    await _db.collection('stamp_submissions').doc(sid).set({
-      submissionId:sid,
-      customerId:String(_cust.id),
-      customerName:_cust.name||'',
-      phone:_cust.phone||'',
-      passToken:_cust.qrToken||'',
-      stampTotalBefore:cur,
-      photos:_urls,
-      status:'pending',
-      submittedAt:new Date().toISOString(),
-      submittedDate:td,
-      submittedMonth:new Date().toISOString().slice(0,7),
-      stampGranted:false,
-      reviewedBy:null,
-      reviewedAt:null
+    _stampSubmissionRequestId=_stampSubmissionRequestId||newPassRequestId();
+    await callPassFunction('submitStampCertification',{
+      requestId:_stampSubmissionRequestId,
+      token:_cust.qrToken,
+      photos:_urls
     });
-
-    // 관리자 알림
-    _db.collection('notifications').doc('CERT-'+Date.now()).set({
-      type:'stamp_cert',title:'📸 스탬프 인증 신청',
-      body:(_cust.name||'고객')+'님 · 사진 4장 제출',
-      custName:_cust.name||'',passToken:_cust.qrToken||'',
-      read:false,createdAt:new Date().toISOString()
-    }).catch(()=>{});
 
     pb.style.width='100%';
     await new Promise(r=>setTimeout(r,300));
